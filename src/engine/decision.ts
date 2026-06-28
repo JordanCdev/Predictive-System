@@ -72,8 +72,10 @@ export interface HourPick {
 export interface SubScores {
   officer: number;
   road: number;
-  personal: number;
-  hour: number;
+  /** null when the day was evaluated without a personal chart (almanac-only). */
+  personal: number | null;
+  /** null when not personalized — best-hour selection needs the subject's chart. */
+  hour: number | null;
 }
 
 export interface ConfidenceBreakdown {
@@ -93,9 +95,13 @@ export interface DayRecommendation {
   isoDate: string;
   civil: { year: number; month: number; day: number };
   weekday: string;
+  /** true when scored against the subject's BaZi chart; false = general almanac. */
+  personalized: boolean;
   tongshu: TongShuDay;
-  dayStemTenGod: TenGod;
-  bestHour: HourPick;
+  /** null in almanac-only mode (no Day Master to relate the day stem to). */
+  dayStemTenGod: TenGod | null;
+  /** null in almanac-only mode (best-hour needs the subject's chart). */
+  bestHour: HourPick | null;
   allHours: HourPick[];
   subScores: SubScores;
   finalScore: number;
@@ -104,13 +110,14 @@ export interface DayRecommendation {
   rejectReasons: string[];
   rulesFired: RuleFired[];
   conflicts: ConflictRecord[];
-  shenShaTags: { nameZh: string; nameEn: string; polarity: string; note: string }[];
+  shenShaTags: { code: string; nameZh: string; nameEn: string; polarity: string; note: string }[];
   topReasons: string[];
 }
 
 export interface DecisionRequest {
-  birth: MomentInput;
-  sex: "male" | "female";
+  /** Optional: when omitted, the engine returns the general almanac read (not personalized). */
+  birth?: MomentInput;
+  sex?: "male" | "female";
   convention: ConventionSet;
   objective: Objective;
   window: { start: { year: number; month: number; day: number }; days: number; tzOffsetMinutes: number };
@@ -130,8 +137,11 @@ export interface DecisionResult {
     unfavorableElements: FivePhase[];
     boundaryWarnings: string[];
   };
-  subjectChart: BaziChart;
-  dayun: DaYun;
+  /** true when a birth chart personalized the scoring; false = general almanac. */
+  personalized: boolean;
+  /** null in almanac-only mode. */
+  subjectChart: BaziChart | null;
+  dayun: DaYun | null;
   recommendations: DayRecommendation[]; // accepted, ranked best-first
   rejected: DayRecommendation[]; // hard-rejected, for transparency
   allDays: DayRecommendation[]; // every candidate, chronological (for the calendar)
@@ -196,14 +206,10 @@ function evaluateDay(
   civil: { year: number; month: number; day: number },
   solarInstantUtc: number,
   req: DecisionRequest,
-  chart: BaziChart,
+  chart: BaziChart | null,
 ): DayRecommendation {
   const obj = req.objective;
-  const fav = chart.dayMaster.favorableElements;
-  const unfav = chart.dayMaster.unfavorableElements;
-  const dmStem = chart.dayMaster.dayMaster.index;
-  const subjectDayBranch = chart.pillars[2].ganzhi.branch.index;
-  const subjectYearBranch = chart.pillars[0].ganzhi.branch.index;
+  const personalized = chart !== null;
   const godBias = obj.godBias;
 
   const ts = computeTongShuDay(civil, solarInstantUtc);
@@ -211,7 +217,7 @@ function evaluateDay(
   const rules: RuleFired[] = [];
   const rejectReasons: string[] = [];
 
-  // --- Evaluator 1: officer (建除 fit) ---
+  // --- Evaluator 1: officer (建除 fit) — almanac, no chart needed ---
   let officerRaw = ts.officer.base;
   if (ts.officer.good.includes(obj.primaryTag)) officerRaw += 6;
   if (ts.officer.good.includes("general") && obj.primaryTag !== "general") officerRaw += 1;
@@ -225,7 +231,7 @@ function evaluateDay(
     citation: CITES.officer,
   });
 
-  // --- Evaluator 2: road (黄黑道) ---
+  // --- Evaluator 2: road (黄黑道) — almanac, no chart needed ---
   const roadScore = DAY_GOD_SCORE[ts.dayGod.index];
   rules.push({
     code: `road_${ts.dayGod.nameEn.toLowerCase().replace(/\s/g, "_")}`,
@@ -235,60 +241,84 @@ function evaluateDay(
     citation: CITES.road,
   });
 
-  // --- Evaluator 3: personal (BaZi) ---
-  let personal = 50;
-  const dayStemTenGod = tenGodOf(STEMS[dmStem], dayGz.stem);
-  if (godBias.includes(godGroupOf(dayStemTenGod))) {
-    personal += 12;
-    rules.push({ code: "ten_god_support", layer: "bazi", label: `Day stem ${dayGz.stem.hanzi} = ${TEN_GOD_LABEL[dayStemTenGod]} — supports this goal.`, effect: 12, citation: CITES.tenGod });
-  }
-  const fStem = dayStemFavor(dayGz.stem.phase, fav, unfav);
-  if (fStem !== 0) {
-    personal += fStem * 10;
-    rules.push({ code: "element_stem", layer: "bazi", label: `Day stem element ${PHASE_LABEL[dayGz.stem.phase]} is ${fStem > 0 ? "favourable" : "unfavourable"} to your Day Master.`, effect: fStem * 10, citation: CITES.element });
-  }
-  const fBranch = dayStemFavor(dayGz.branch.phase, fav, unfav);
-  if (fBranch !== 0) {
-    personal += fBranch * 5;
-    rules.push({ code: "element_branch", layer: "bazi", label: `Day branch element ${PHASE_LABEL[dayGz.branch.phase]} is ${fBranch > 0 ? "favourable" : "unfavourable"} to you.`, effect: fBranch * 5, citation: CITES.element });
-  }
-  if (isNoblemanDay(dayGz.branch.index, dmStem)) {
-    personal += 14;
-    rules.push({ code: "nobleman", layer: "shensha", label: "天乙貴人 — Nobleman day (helpful people, protection).", effect: 14, citation: CITES.shensha });
-  }
+  // --- Evaluators 3 & 4: personal (BaZi) + hour — only when a chart is present ---
+  let dayStemTenGod: TenGod | null = null;
+  let personalScore: number | null = null;
+  let hourScore: number | null = null;
+  let bestHour: HourPick | null = null;
+  let allHours: HourPick[] = [];
+  let shenShaTags: DayRecommendation["shenShaTags"] = [];
+  let clashTags: { code: string; nameZh: string }[] = [];
 
-  // Shen Sha overlay.
-  const ss = personalShenSha(dayGz, subjectDayBranch, subjectYearBranch);
-  for (const t of ss.tags) {
-    let eff = 0;
-    if (t.code === "clash_day") eff = -20;
-    else if (t.code === "clash_zodiac") eff = -16;
-    else if (t.code === "six_harmony") eff = 8;
-    else if (t.code === "triple_harmony") eff = 8;
-    else if (t.code === "peach_blossom") eff = obj.id === "wedding_marriage" ? 6 : 0;
-    else if (t.code === "travelling_horse") eff = obj.id === "travel" || obj.id === "moving_house" ? 10 : 2;
-    if (eff !== 0) {
-      personal += eff;
-      rules.push({ code: t.code, layer: t.code.startsWith("clash") ? "bazi" : "shensha", label: `${t.nameZh} ${t.nameEn} — ${t.note}`, effect: eff, citation: t.code.startsWith("clash") ? CITES.clash : CITES.shensha });
+  if (chart) {
+    const fav = chart.dayMaster.favorableElements;
+    const unfav = chart.dayMaster.unfavorableElements;
+    const dmStem = chart.dayMaster.dayMaster.index;
+    const subjectDayBranch = chart.pillars[2].ganzhi.branch.index;
+    const subjectYearBranch = chart.pillars[0].ganzhi.branch.index;
+
+    let personal = 50;
+    dayStemTenGod = tenGodOf(STEMS[dmStem], dayGz.stem);
+    if (godBias.includes(godGroupOf(dayStemTenGod))) {
+      personal += 12;
+      rules.push({ code: "ten_god_support", layer: "bazi", label: `Day stem ${dayGz.stem.hanzi} = ${TEN_GOD_LABEL[dayStemTenGod]} — supports this goal.`, effect: 12, citation: CITES.tenGod });
     }
+    const fStem = dayStemFavor(dayGz.stem.phase, fav, unfav);
+    if (fStem !== 0) {
+      personal += fStem * 10;
+      rules.push({ code: "element_stem", layer: "bazi", label: `Day stem element ${PHASE_LABEL[dayGz.stem.phase]} is ${fStem > 0 ? "favourable" : "unfavourable"} to your Day Master.`, effect: fStem * 10, citation: CITES.element });
+    }
+    const fBranch = dayStemFavor(dayGz.branch.phase, fav, unfav);
+    if (fBranch !== 0) {
+      personal += fBranch * 5;
+      rules.push({ code: "element_branch", layer: "bazi", label: `Day branch element ${PHASE_LABEL[dayGz.branch.phase]} is ${fBranch > 0 ? "favourable" : "unfavourable"} to you.`, effect: fBranch * 5, citation: CITES.element });
+    }
+    if (isNoblemanDay(dayGz.branch.index, dmStem)) {
+      personal += 14;
+      rules.push({ code: "nobleman", layer: "shensha", label: "天乙貴人 — Nobleman day (helpful people, protection).", effect: 14, citation: CITES.shensha });
+    }
+
+    const ss = personalShenSha(dayGz, subjectDayBranch, subjectYearBranch);
+    shenShaTags = ss.tags;
+    clashTags = ss.tags.filter((t) => t.code === "clash_day" || t.code === "clash_zodiac");
+    for (const t of ss.tags) {
+      let eff = 0;
+      if (t.code === "clash_day") eff = -20;
+      else if (t.code === "clash_zodiac") eff = -16;
+      else if (t.code === "six_harmony") eff = 8;
+      else if (t.code === "triple_harmony") eff = 8;
+      else if (t.code === "peach_blossom") eff = obj.id === "wedding_marriage" ? 6 : 0;
+      else if (t.code === "travelling_horse") eff = obj.id === "travel" || obj.id === "moving_house" ? 10 : 2;
+      if (eff !== 0) {
+        personal += eff;
+        rules.push({ code: t.code, layer: t.code.startsWith("clash") ? "bazi" : "shensha", label: `${t.nameZh} ${t.nameEn} — ${t.note}`, effect: eff, citation: t.code.startsWith("clash") ? CITES.clash : CITES.shensha });
+      }
+    }
+    personalScore = clamp(personal);
+
+    const hours = scoreHours(dayGz, fav, unfav, dmStem, godBias, dmStem);
+    bestHour = hours.best;
+    allHours = hours.all;
+    hourScore = hours.best.score;
+    rules.push({ code: "best_hour", layer: "hour", label: `Best double-hour: ${hours.best.ganzhi.hanzi} (${hours.best.rangeLabel}).`, effect: hourScore - 50, citation: CITES.hour });
   }
-  const personalScore = clamp(personal);
 
-  // --- Evaluator 4: hour ---
-  const hours = scoreHours(dayGz, fav, unfav, dmStem, godBias, dmStem);
-  const hourScore = hours.best.score;
-  rules.push({ code: "best_hour", layer: "hour", label: `Best double-hour: ${hours.best.ganzhi.hanzi} (${hours.best.rangeLabel}).`, effect: hourScore - 50, citation: CITES.hour });
-
-  // --- weighted MCDA final ---
+  // --- weighted MCDA final (renormalized to officer+road when not personalized) ---
   const w = obj.weights;
-  const finalScore = round1(
-    w.officer * officerScore + w.road * roadScore + w.personal * personalScore + w.hour * hourScore,
-  );
+  let finalScore: number;
+  if (personalized && personalScore !== null && hourScore !== null) {
+    finalScore = round1(
+      w.officer * officerScore + w.road * roadScore + w.personal * personalScore + w.hour * hourScore,
+    );
+  } else {
+    const denom = w.officer + w.road || 1;
+    finalScore = round1((w.officer * officerScore + w.road * roadScore) / denom);
+  }
   const subScores: SubScores = {
     officer: round1(officerScore),
     road: round1(roadScore),
-    personal: round1(personalScore),
-    hour: round1(hourScore),
+    personal: personalScore === null ? null : round1(personalScore),
+    hour: hourScore === null ? null : round1(hourScore),
   };
 
   // --- hard constraints (vetoes) ---
@@ -297,8 +327,8 @@ function evaluateDay(
     hardReject = true;
     rejectReasons.push(`Officer ${ts.officer.nameZh} (${ts.officer.nameEn}) is forbidden for ${obj.label.toLowerCase()}.`);
   }
-  if (obj.clashVeto) {
-    const hasClash = ss.tags.find((t) => t.code === "clash_day" || t.code === "clash_zodiac");
+  if (personalized && obj.clashVeto) {
+    const hasClash = clashTags[0];
     if (hasClash) {
       hardReject = true;
       rejectReasons.push(`Day clashes your chart (${hasClash.nameZh}); a hard taboo for this objective.`);
@@ -307,11 +337,13 @@ function evaluateDay(
 
   // --- conflict detection (cross-school disagreement) ---
   const conflicts: ConflictRecord[] = [];
-  if (officerScore >= 62 && personalScore <= 40) {
-    conflicts.push({ type: "tongshu_vs_bazi", schools: ["Tong Shu (建除)", "BaZi personalization"], severity: "medium", reason: "The almanac officer favours this day, but your personal chart does not." });
-  }
-  if (personalScore >= 62 && officerScore <= 38) {
-    conflicts.push({ type: "bazi_vs_tongshu", schools: ["BaZi personalization", "Tong Shu (建除)"], severity: "medium", reason: "Your chart favours this day, but the almanac officer warns against it." });
+  if (personalized && personalScore !== null) {
+    if (officerScore >= 62 && personalScore <= 40) {
+      conflicts.push({ type: "tongshu_vs_bazi", schools: ["Tong Shu (建除)", "BaZi personalization"], severity: "medium", reason: "The almanac officer favours this day, but your personal chart does not." });
+    }
+    if (personalScore >= 62 && officerScore <= 38) {
+      conflicts.push({ type: "bazi_vs_tongshu", schools: ["BaZi personalization", "Tong Shu (建除)"], severity: "medium", reason: "Your chart favours this day, but the almanac officer warns against it." });
+    }
   }
   if (roadScore >= 78 && officerScore <= 38) {
     conflicts.push({ type: "road_vs_officer", schools: ["Yellow-road god", "建除 officer"], severity: "low", reason: "A Yellow-road (auspicious) day whose 建除 officer is poor for this activity." });
@@ -321,7 +353,7 @@ function evaluateDay(
   }
 
   // --- confidence (spec §12) ---
-  const confidence = computeConfidence(req, conflicts.length, chart);
+  const confidence = computeConfidence(req, conflicts.length, personalized);
 
   // --- top reasons (sorted positive contributions) ---
   const topReasons = rules
@@ -338,10 +370,11 @@ function evaluateDay(
     isoDate,
     civil,
     weekday,
+    personalized,
     tongshu: ts,
     dayStemTenGod,
-    bestHour: hours.best,
-    allHours: hours.all,
+    bestHour,
+    allHours,
     subScores,
     finalScore,
     confidence,
@@ -349,24 +382,36 @@ function evaluateDay(
     rejectReasons,
     rulesFired: rules,
     conflicts,
-    shenShaTags: ss.tags,
+    shenShaTags,
     topReasons,
   };
 }
 
-function computeConfidence(req: DecisionRequest, conflictCount: number, chart: BaziChart): ConfidenceBreakdown {
+function computeConfidence(req: DecisionRequest, conflictCount: number, personalized: boolean): ConfidenceBreakdown {
   const calc = 1.0; // fully deterministic
   const sourceQuality = 0.8; // classical + astronomical citations
   const sourceSpecificity = 0.7;
-  const schoolAgreement = Math.max(0.4, 1 - 0.18 * conflictCount);
-  const certainty = req.birth.timeCertainty ?? "exact";
-  let inputQuality = certainty === "exact" ? 0.95 : certainty === "approximate" ? 0.7 : 0.5;
-  // boundary sensitivity penalty
-  if (chart.dayMaster) {
-    // (chart-level; boundary warnings are surfaced separately)
-  }
-  const validation = 0.85; // kernel validated vs solar terms + golden charts
-  const ruleCoverage = 0.65; // Tong Shu + BaZi covered; Qi Men / Xuan Kong not in this build
+  // Conflicts ALWAYS pull school-agreement down so this never contradicts the conflict
+  // banner. Almanac-only consults a single school, so its ceiling is lower than a
+  // cross-checked personalized read.
+  const conflictPenalty = 0.18 * conflictCount;
+  const schoolAgreement = personalized
+    ? Math.max(0.4, 1 - conflictPenalty)
+    : Math.max(0.4, 0.75 - conflictPenalty);
+  // inputQuality reflects how well the request pins the subject. No birth = general almanac.
+  const certainty = req.birth?.timeCertainty ?? "exact";
+  const inputQuality = !personalized
+    ? 0.55
+    : certainty === "exact"
+      ? 0.95
+      : certainty === "approximate"
+        ? 0.7
+        : 0.5;
+  // Solar-term/calendar validation runs in both modes; the natal-chart check only runs
+  // when a birth chart exists — so an almanac-only read honestly claims less.
+  const validation = personalized ? 0.85 : 0.7;
+  // Almanac-only consults one school (Tong Shu); personalizing adds BaZi.
+  const ruleCoverage = personalized ? 0.65 : 0.45;
   const components = {
     calculationReproducibility: calc,
     sourceQuality,
@@ -384,9 +429,10 @@ function computeConfidence(req: DecisionRequest, conflictCount: number, chart: B
 
 /** Main entry point: evaluate a window and return ranked recommendations. */
 export function evaluateDecision(req: DecisionRequest): DecisionResult {
-  const fp = buildFourPillars(req.birth, req.convention);
-  const chart = buildBaziChart(fp);
-  const dayun = computeDaYun(fp, req.sex);
+  const personalized = req.birth !== undefined;
+  const fp = req.birth ? buildFourPillars(req.birth, req.convention) : null;
+  const chart = fp ? buildBaziChart(fp) : null;
+  const dayun = fp ? computeDaYun(fp, req.sex ?? "male") : null;
 
   const tz = req.window.tzOffsetMinutes;
   const start = Date.UTC(req.window.start.year, req.window.start.month - 1, req.window.start.day);
@@ -424,10 +470,11 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
       calculationHash,
       generatedAtNote: "Deterministic: identical inputs always yield this calculationHash and these results.",
       windowLabel,
-      favorableElements: chart.dayMaster.favorableElements,
-      unfavorableElements: chart.dayMaster.unfavorableElements,
-      boundaryWarnings: fp.meta.boundaryWarnings,
+      favorableElements: chart ? chart.dayMaster.favorableElements : [],
+      unfavorableElements: chart ? chart.dayMaster.unfavorableElements : [],
+      boundaryWarnings: fp ? fp.meta.boundaryWarnings : [],
     },
+    personalized,
     subjectChart: chart,
     dayun,
     recommendations,

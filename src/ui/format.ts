@@ -1,50 +1,40 @@
-/** Shared UI formatting helpers + the five-phase colour system. */
-import { FivePhase } from "../engine/index.ts";
+/** Shared UI colour helpers. Score thresholds + labels live in the engine
+ *  (`plainEnglish.verdictBand`); this module only maps them to colours so the
+ *  UI never re-buckets a score. */
+import { BandKey, FivePhase, verdictBand } from "../engine/index.ts";
 
 export const PHASE_COLOR: Record<FivePhase, string> = {
-  wood: "#5fae7a",
-  fire: "#d96a6a",
-  earth: "#cda35a",
-  metal: "#c2c6d6",
-  water: "#5b8def",
+  wood: "#4f9e6c",
+  fire: "#cf6a64",
+  earth: "#c79a4f",
+  metal: "#8d93a6",
+  water: "#4f86cf",
 };
 
-export const PHASE_NAME: Record<FivePhase, string> = {
-  wood: "Wood 木",
-  fire: "Fire 火",
-  earth: "Earth 土",
-  metal: "Metal 金",
-  water: "Water 水",
+// Bright hues — for dots, rings and fill swatches (not as text on light surfaces).
+export const BAND_COLOR: Record<BandKey, string> = {
+  excellent: "#4f9e6c",
+  favourable: "#7faf56",
+  neutral: "#c79a4f",
+  caution: "#cf8444",
+  avoid: "#cf6a64",
 };
 
-/** Map a 0..100 score to a traffic-light-ish colour. */
+// Darkened variants that meet WCAG AA (~4.5:1) on the rice-paper surfaces — for TEXT.
+export const BAND_TEXT_COLOR: Record<BandKey, string> = {
+  excellent: "#2f7d4f",
+  favourable: "#577a26",
+  neutral: "#8a6a1c",
+  caution: "#a85a1f",
+  avoid: "#b3403a",
+};
+
+/** Colour for a 0..100 score, via the engine's canonical band — for dots/rings/fills. */
 export function scoreColor(score: number): string {
-  if (score >= 72) return "#5fae7a"; // strong
-  if (score >= 58) return "#9bbf5a"; // good
-  if (score >= 45) return "#cda35a"; // neutral
-  if (score >= 32) return "#d98a4a"; // weak
-  return "#d96a6a"; // poor
+  return BAND_COLOR[verdictBand(score).key];
 }
 
-export function scoreLabel(score: number): string {
-  if (score >= 72) return "Excellent";
-  if (score >= 58) return "Favourable";
-  if (score >= 45) return "Neutral";
-  if (score >= 32) return "Caution";
-  return "Avoid";
-}
-
-export function confidenceLabel(c: number): string {
-  if (c >= 0.8) return "High";
-  if (c >= 0.65) return "Medium-High";
-  if (c >= 0.5) return "Medium";
-  return "Low";
-}
-
-const WEEKDAY_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-export function prettyDate(civil: { year: number; month: number; day: number }): string {
-  const wd = WEEKDAY_LONG[new Date(Date.UTC(civil.year, civil.month - 1, civil.day)).getUTCDay()];
-  return `${wd}, ${civil.day} ${MONTHS[civil.month - 1]} ${civil.year}`;
+/** Legible text colour for a 0..100 score — use whenever the score is shown AS text. */
+export function scoreTextColor(score: number): string {
+  return BAND_TEXT_COLOR[verdictBand(score).key];
 }

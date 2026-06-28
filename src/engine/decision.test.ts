@@ -51,7 +51,36 @@ describe("decision engine", () => {
     }
     expect(top.confidence.overall).toBeGreaterThan(0);
     expect(top.confidence.overall).toBeLessThanOrEqual(1);
-    expect(top.bestHour.rangeLabel).toMatch(/\d\d:00/);
+    expect(top.bestHour).not.toBeNull();
+    expect(top.bestHour!.rangeLabel).toMatch(/\d\d:00/);
+  });
+
+  it("works without birth — the general almanac read (not personalized)", () => {
+    const { birth, sex, ...rest } = baseRequest();
+    void birth;
+    void sex;
+    const res = evaluateDecision(rest);
+    expect(res.personalized).toBe(false);
+    expect(res.subjectChart).toBeNull();
+    expect(res.dayun).toBeNull();
+    expect(res.recommendations.length + res.rejected.length).toBe(31);
+    const top = res.recommendations[0];
+    expect(top.subScores.personal).toBeNull();
+    expect(top.subScores.hour).toBeNull();
+    expect(top.bestHour).toBeNull();
+    // officer + road still produce real evidence + citations
+    expect(top.rulesFired.length).toBeGreaterThan(0);
+    expect(top.finalScore).toBeGreaterThan(0);
+  });
+
+  it("almanac mode is deterministic", () => {
+    const { birth, sex, ...rest } = baseRequest();
+    void birth;
+    void sex;
+    const a = evaluateDecision(rest);
+    const b = evaluateDecision(rest);
+    expect(a.meta.calculationHash).toBe(b.meta.calculationHash);
+    expect(a.recommendations[0].isoDate).toBe(b.recommendations[0].isoDate);
   });
 
   it("different objectives can rank days differently", () => {
