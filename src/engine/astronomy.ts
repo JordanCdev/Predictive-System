@@ -359,9 +359,16 @@ export function jieWindowAround(utcMillis: number): JieWindow {
   };
 }
 
-/** The 立春 (Start of Spring) instant governing the BaZi year for `gregYear`. */
+/** The 立春 (Start of Spring) instant governing the BaZi year for `gregYear`.
+ *  Memoized by year — it depends only on the year, and a window scan asks for it
+ *  once per candidate day across only a handful of distinct years. Pure: the cache
+ *  is a deterministic function of the input, so it never changes results. */
+const lichunCache = new Map<number, number>();
 export function lichunMillis(gregYear: number): number {
+  const cached = lichunCache.get(gregYear);
+  if (cached !== undefined) return cached;
   // 立春 falls ~Feb 3–5. Seed at Feb 4 12:00 UTC of that year.
-  const guess = Date.UTC(gregYear, 1, 4, 12, 0, 0);
-  return findSolarLongitudeCrossing(315, guess);
+  const ms = findSolarLongitudeCrossing(315, Date.UTC(gregYear, 1, 4, 12, 0, 0));
+  lichunCache.set(gregYear, ms);
+  return ms;
 }
