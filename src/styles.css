@@ -18,6 +18,7 @@
   /* accents — scarce by design */
   --cinnabar: #b5432e; /* seal + verify marks only */
   --gold: #b8924a; /* the pinned pick-ring + seal */
+  --gold-text: #8a6a1c; /* darker gold for small text — meets AA on paper */
   --gold-soft: rgba(184, 146, 74, 0.16);
   --jade: #1d9e75; /* the "go" action colour — fills/rings only */
   --jade-press: #178a66;
@@ -64,6 +65,7 @@
     --hairline: rgba(255, 248, 236, 0.1);
     --hairline-strong: rgba(255, 248, 236, 0.16);
     --gold: #cda35a;
+    --gold-text: #d7af68; /* brighter gold text on dark surfaces */
     --gold-soft: rgba(205, 163, 90, 0.16);
     --jade: #43b78c;
     --jade-text: #5ec79c; /* lighter jade for text on dark surfaces */
@@ -374,7 +376,7 @@ button {
   font-weight: 600;
   letter-spacing: 0.4px;
   text-transform: uppercase;
-  color: #8a6a1c; /* darker gold — meets contrast as small bold text */
+  color: var(--gold-text); /* darker gold — meets contrast as small bold text */
   margin-bottom: 6px;
 }
 .hero .date {
@@ -1168,7 +1170,7 @@ button {
 }
 .pillar .tg {
   font-size: 11px;
-  color: #8a6a1c;
+  color: var(--gold-text);
   margin-top: 3px;
   min-height: 13px;
 }
@@ -1275,7 +1277,7 @@ button {
 }
 .dayun-cell .tg {
   font-size: 11px;
-  color: #8a6a1c;
+  color: var(--gold-text);
 }
 .warn {
   margin-top: 12px;
