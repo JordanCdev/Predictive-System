@@ -7,6 +7,8 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   base: "./",
+  // Honour a host-assigned PORT (e.g. the preview harness) when present.
+  server: { port: Number(process.env.PORT) || 5173 },
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],

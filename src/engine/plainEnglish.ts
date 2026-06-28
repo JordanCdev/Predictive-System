@@ -471,7 +471,9 @@ export function windowPlain(days: number): string {
   if (days <= 31) return "the next month";
   if (days <= 92) return "the next 3 months";
   if (days <= 186) return "the next 6 months";
-  return `the next ${Math.round(days / 30)} months`;
+  if (days <= 365) return "the next year";
+  const years = Math.round(days / 365);
+  return `the next ${years} years`;
 }
 
 // ── "What you can do" — concrete, deterministic guidance from existing facts ──

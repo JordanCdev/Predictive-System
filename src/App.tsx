@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CONVENTION_PRESETS,
   DayRecommendation,
   DecisionRequest,
   DecisionResult,
+  MAX_WINDOW_DAYS,
   OBJECTIVES,
+  WINDOW_DAYS,
   ZIPING_DEFAULT,
   evaluateDecision,
   objectiveById,
@@ -18,8 +20,12 @@ import { CalendarMonth } from "./ui/CalendarMonth.tsx";
 import { DayList, RuledOutDrawer } from "./ui/DayList.tsx";
 import { VetoState } from "./ui/VetoState.tsx";
 import { PersonalizeCard, Person } from "./ui/PersonalizeCard.tsx";
+import { ProfilePanel } from "./ui/ProfilePanel.tsx";
 import { YourChart } from "./ui/YourChart.tsx";
 import { HowItWorks } from "./ui/HowItWorks.tsx";
+
+// Shared widen ladder — matches the Ask-step window chips.
+const WINDOW_LADDER = WINDOW_DAYS as readonly number[];
 
 // Captured once at load. The engine still receives explicit values → stays deterministic.
 const NOW = new Date();
@@ -146,6 +152,19 @@ export function App() {
     const el = heroRef.current;
     if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start" });
   }, [selectedIso]);
+  // Stable per-person evaluator the profile panel uses to score other objectives
+  // and answer typed questions — same engine, same determinism.
+  const evaluate = useCallback(
+    (id: string, win: number) => evaluateDecision(buildRequest(id, win, person)),
+    [person],
+  );
+  // Jump from a recommendation / Q&A answer straight into the full reading.
+  const openReading = (id: string, win: number) => {
+    setObjectiveId(id);
+    setWindowDays(win);
+    setPhase("answer");
+    window.scrollTo({ top: 0 });
+  };
   const toAsk = () => {
     setPhase("ask");
     window.scrollTo({ top: 0 });
@@ -180,7 +199,8 @@ export function App() {
   const alternatives = computeAlternatives(recs, selectedRec.isoDate);
   const currentAge = person ? ageOn(person.birthDate) : null;
 
-  const widen = () => setWindowDays((d) => (d < 31 ? 31 : d < 92 ? 92 : 186));
+  const widen = () =>
+    setWindowDays((d) => WINDOW_LADDER.find((w) => w > d) ?? WINDOW_LADDER[WINDOW_LADDER.length - 1]);
 
   return (
     <div className="app">
@@ -204,7 +224,7 @@ export function App() {
 
       {recs.length === 0 ? (
         <>
-          <VetoState objective={objective} windowDays={windowDays} onWiden={widen} canWiden={windowDays < 186} />
+          <VetoState objective={objective} windowDays={windowDays} onWiden={widen} canWiden={windowDays < MAX_WINDOW_DAYS} />
           <RuledOutDrawer rejected={result.rejected} objective={objective} />
           <PersonalizeCard
             person={person}
@@ -213,6 +233,16 @@ export function App() {
             onApply={setPerson}
             onClear={() => setPerson(null)}
           />
+          {result.personalized && result.subjectChart && (
+            <ProfilePanel
+              chart={result.subjectChart}
+              evaluate={evaluate}
+              defaultWindowDays={windowDays}
+              todayIso={TODAY_ISO}
+              personalized={result.personalized}
+              onOpenReading={openReading}
+            />
+          )}
         </>
       ) : (
         <>
@@ -272,6 +302,17 @@ export function App() {
               presets={CONVENTION_PRESETS}
               onApply={setPerson}
               onClear={() => setPerson(null)}
+            />
+          )}
+
+          {result.personalized && result.subjectChart && (
+            <ProfilePanel
+              chart={result.subjectChart}
+              evaluate={evaluate}
+              defaultWindowDays={windowDays}
+              todayIso={TODAY_ISO}
+              personalized={result.personalized}
+              onOpenReading={openReading}
             />
           )}
 

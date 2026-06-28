@@ -14,6 +14,7 @@ export * from "./tongshu.ts";
 export * from "./objectives.ts";
 export * from "./decision.ts";
 export * from "./plainEnglish.ts";
+export * from "./advisor.ts";
 export { VERSIONS } from "./version.ts";
 export type { Versions } from "./version.ts";
 export { hashOf, canonicalJSON } from "./hash.ts";
