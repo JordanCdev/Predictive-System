@@ -269,8 +269,13 @@ export function headlineVerdict(rec: DayRecommendation, objective: Objective): s
 /** Why this day was rated as it was — plain bullets whose valence matches the verdict. */
 export function whyThisDay(rec: DayRecommendation): string[] {
   const bullets: string[] = [];
-  // On days we're steering away from, lead with the limiting factor and drop upbeat extras.
-  const cautious = rec.finalScore < 45;
+  // On days we're steering away from, lead with the limiting factor and drop upbeat
+  // extras. Strong taboos count as cautious even if the numeric score clears 45,
+  // since their penalty only dents one sub-score (the headline already says "avoid").
+  const taboo =
+    rec.rulesFired.some((r) => r.code === "year_break" || r.code === "four_departure" || r.code === "four_severance") ||
+    rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
+  const cautious = rec.finalScore < 45 || taboo;
 
   // Strong calendar taboos — lead with them.
   if (rec.rulesFired.some((r) => r.code === "year_break")) {
@@ -518,7 +523,11 @@ export function actionGuidance(rec: DayRecommendation, objective: Objective): st
 
   if (rec.personalized && rec.bestHour) {
     const noble = rec.bestHour.reasons.some((r) => r.includes("Nobleman"));
-    if (isDaytimeHour(rec.bestHour.branchIndex)) {
+    if (cautioned) {
+      // Don't sell "your strongest hours" on a day we're steering away from.
+      const ph = practicalBestHour(rec) ?? rec.bestHour;
+      tips.push(`If you must use this day, the least-bad window is ${humanHourRange(ph.rangeLabel)}.`);
+    } else if (isDaytimeHour(rec.bestHour.branchIndex)) {
       tips.push(`Aim for the ${humanHourRange(rec.bestHour.rangeLabel)} window — your strongest hours that day${noble ? ", and a “helpful-people” hour to bring in an ally or advisor" : ""}.`);
     } else {
       const day = bestDaytimeHour(rec);

@@ -107,6 +107,26 @@ describe("plainEnglish (deterministic explanation layer)", () => {
     expect(guide).not.toMatch(/green light/i); // no caution-then-green-light contradiction
   });
 
+  it("does not cheer (best window / helpful-people) on a personalized taboo day", () => {
+    // 2026 is 丙午 → every 子 day is 歲破. Such a day can still clear 45, but must
+    // never pair an "avoid" headline with upbeat reasoning.
+    const res = evaluateDecision({
+      birth: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, tzOffsetMinutes: 480, timeCertainty: "exact" },
+      sex: "male",
+      convention: ZIPING_DEFAULT,
+      objective: objectiveById("travel"),
+      window: { start: { year: 2026, month: 7, day: 1 }, days: 31, tzOffsetMinutes: 480 },
+    });
+    const day = res.allDays.find((d) => d.rulesFired.some((r) => r.code === "year_break"));
+    expect(day).toBeDefined();
+    const bullets = whyThisDay(day!).join(" ");
+    expect(bullets).toMatch(/歲破/);
+    expect(bullets).not.toMatch(/Best window|helpful-people|reinforces your/);
+    const guide = actionGuidance(day!, objectiveById("travel")).join(" ");
+    expect(guide).not.toMatch(/strongest hours/);
+    expect(guide).not.toMatch(/green light/);
+  });
+
   it("daytime classification: 午 hour is daytime, 子 hour is not", () => {
     expect(isDaytimeHour(6)).toBe(true); // 午 11:00–13:00
     expect(isDaytimeHour(0)).toBe(false); // 子 23:00–01:00
