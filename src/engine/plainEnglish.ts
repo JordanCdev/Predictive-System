@@ -295,6 +295,7 @@ export function whyThisDay(rec: DayRecommendation): string[] {
     const elementPos = rec.rulesFired.some((r) => (r.code === "element_stem" || r.code === "element_branch") && r.effect > 0);
     const elementNeg = rec.rulesFired.some((r) => (r.code === "element_stem" || r.code === "element_branch") && r.effect < 0);
     if (elementNeg) bullets.push("The day's energy runs against your chart.");
+    if (codes.has("luck_clash")) bullets.push("It clashes your current luck decade (沖大運) — an extra headwind right now.");
     for (const t of rec.shenShaTags) {
       if (t.code === "clash_day" || t.code === "clash_zodiac") bullets.push(shenShaPlain(t.code).blurb);
     }
@@ -508,6 +509,10 @@ export function actionGuidance(rec: DayRecommendation, objective: Objective): st
   }
   if (clash) {
     tips.push("This day clashes your own chart — fine for small steps, but reconsider for anything binding.");
+    cautioned = true;
+  }
+  if (tags.has("luck_clash")) {
+    tips.push("It also runs against your current luck decade (沖大運) — extra reason to pick a smoother day.");
     cautioned = true;
   }
 

@@ -92,6 +92,23 @@ describe("decision engine", () => {
     expect(c === w && contract.recommendations.length > 5).toBe(false);
   });
 
+  it("flags 沖大運 exactly on days that clash the subject's active luck pillar", () => {
+    const res = evaluateDecision(baseRequest());
+    expect(res.dayun).not.toBeNull();
+    let found = false;
+    for (const day of res.allDays) {
+      const age =
+        (Date.UTC(day.civil.year, day.civil.month - 1, day.civil.day) - Date.UTC(1990, 5, 15)) /
+        (365.25 * 86400000);
+      const lp = res.dayun!.pillars.find((p) => age >= p.startAge && age < p.endAge);
+      const clashesLuck = lp ? (((day.tongshu.dayGanzhi.branch.index - lp.ganzhi.branch.index) % 12) + 12) % 12 === 6 : false;
+      const hasRule = day.rulesFired.some((r) => r.code === "luck_clash");
+      expect(hasRule).toBe(clashesLuck);
+      if (clashesLuck) found = true;
+    }
+    expect(found).toBe(true);
+  });
+
   it("medical objective tolerates 破 days (no officer veto)", () => {
     const med = evaluateDecision({ ...baseRequest(), objective: objectiveById("medical_procedure") });
     // medical should reject far fewer (only clash vetoes are off too) — expect 0 rejects

@@ -204,11 +204,18 @@ function scoreHours(
   return { all, best };
 }
 
+/** Age in (decimal) years at a candidate civil date, relative to the birth date. */
+function ageAtDate(birth: MomentInput, civil: { year: number; month: number; day: number }): number {
+  const ms = Date.UTC(civil.year, civil.month - 1, civil.day) - Date.UTC(birth.year, birth.month - 1, birth.day);
+  return ms / (365.25 * 86400000);
+}
+
 function evaluateDay(
   civil: { year: number; month: number; day: number },
   solarInstantUtc: number,
   req: DecisionRequest,
   chart: BaziChart | null,
+  dayun: DaYun | null,
 ): DayRecommendation {
   const obj = req.objective;
   const personalized = chart !== null;
@@ -334,6 +341,16 @@ function evaluateDay(
       if (eff !== 0) {
         personal += eff;
         rules.push({ code: t.code, layer: t.code.startsWith("clash") ? "bazi" : "shensha", label: `${t.nameZh} ${t.nameEn} — ${t.note}`, effect: eff, citation: t.code.startsWith("clash") ? CITES.clash : CITES.shensha });
+      }
+    }
+
+    // 沖大運 — a day that clashes the subject's active 10-year luck pillar disrupts it.
+    if (dayun && req.birth) {
+      const age = ageAtDate(req.birth, civil);
+      const lp = dayun.pillars.find((p) => age >= p.startAge && age < p.endAge);
+      if (lp && mod(dayGz.branch.index - lp.ganzhi.branch.index, 12) === 6) {
+        personal -= 12;
+        rules.push({ code: "luck_clash", layer: "bazi", label: `沖大運 — the day clashes your current ${lp.ganzhi.hanzi} luck pillar.`, effect: -12, citation: CITES.clash });
       }
     }
     personalScore = clamp(personal);
@@ -483,7 +500,7 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
     const d = new Date(start + i * 86400000);
     const civil = { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
     const solarInstantUtc = Date.UTC(civil.year, civil.month - 1, civil.day, 12) - tz * 60000;
-    all.push(evaluateDay(civil, solarInstantUtc, req, chart));
+    all.push(evaluateDay(civil, solarInstantUtc, req, chart, dayun));
   }
 
   const recommendations = all
