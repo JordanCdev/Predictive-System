@@ -1,10 +1,12 @@
 import {
   BaziChart,
   DaYun,
+  currentLuckPillar,
   dayMasterPlain,
   elementHanzi,
   elementPlain,
   interactionPlain,
+  luckPhasePlain,
   rootingPlain,
   seasonalStatePlain,
 } from "../engine/index.ts";
@@ -24,10 +26,12 @@ export function YourChart({
   boundaryWarnings: string[];
 }) {
   const dm = chart.dayMaster;
+  const luck = currentLuckPillar(dayun, currentAge);
   return (
     <div className="card" style={{ padding: 20, marginTop: 18 }}>
       <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600 }}>Your chart</h3>
-      <p style={{ margin: "0 0 14px", fontSize: 14.5, color: "var(--muted)", lineHeight: 1.55 }}>{dayMasterPlain(dm)}</p>
+      <p style={{ margin: "0 0 8px", fontSize: 14.5, color: "var(--muted)", lineHeight: 1.55 }}>{dayMasterPlain(dm)}</p>
+      {luck && <p style={{ margin: "0 0 14px", fontSize: 14, color: "var(--muted)", lineHeight: 1.55 }}>{luckPhasePlain(luck)}</p>}
 
       <div className="element-chips">
         <span className="ec" title="旺相休囚死 — your element's vitality in your birth season">

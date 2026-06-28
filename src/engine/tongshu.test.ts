@@ -18,6 +18,17 @@ describe("四離/四絕 calendar taboo", () => {
     expect(computeTongShuDay({ year: 2024, month: 2, day: 15 }, noonUtc(2024, 2, 15)).fourBoundary).toBeNull();
   });
 
+  it("flags 歲破 (year-break) days — a 子 day clashes the 2026 太歲 (午)", () => {
+    let found = false;
+    for (let d = 1; d <= 31; d++) {
+      const ts = computeTongShuDay({ year: 2026, month: 7, day: d }, noonUtc(2026, 7, d));
+      const isZi = ts.dayGanzhi.branch.hanzi === "子";
+      expect(ts.yearBreak).toBe(isZi); // 太歲 午 → 歲破 is exactly the 子 days
+      if (isZi) found = true;
+    }
+    expect(found).toBe(true);
+  });
+
   it("penalizes a 四絕 day for a wedding (大事勿用) but spares medical", () => {
     const base = {
       convention: ZIPING_DEFAULT,

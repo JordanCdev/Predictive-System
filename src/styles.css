@@ -549,6 +549,13 @@ button {
 .todo-list li:last-child {
   margin-bottom: 0;
 }
+.cal-add {
+  margin-top: 13px;
+  width: auto;
+  padding: 8px 14px;
+  font-size: 13.5px;
+  gap: 6px;
+}
 
 .alts {
   margin-top: 22px;
@@ -1278,6 +1285,75 @@ button {
   border: 1px solid var(--warn-border);
   border-radius: var(--radius-ctl);
   padding: 9px 12px;
+}
+
+/* ---------- how it works / glossary ---------- */
+.howto {
+  margin-top: 18px;
+  padding: 2px 18px;
+}
+.howto > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jade-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.howto > summary::-webkit-details-marker {
+  display: none;
+}
+.howto > summary::before {
+  content: "▸";
+  font-size: 11px;
+  transition: transform 160ms ease;
+}
+.howto[open] > summary::before {
+  transform: rotate(90deg);
+}
+.howto-body {
+  padding: 0 0 16px;
+  animation: fade-in 180ms ease both;
+}
+.howto h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 14px 0 8px;
+}
+.howto-list {
+  margin: 0;
+  padding-left: 18px;
+}
+.howto-list li {
+  font-size: 14px;
+  line-height: 1.55;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+.glossary {
+  margin: 0;
+}
+.gloss-row {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.gloss-row:last-child {
+  border-bottom: none;
+}
+.gloss-row dt {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.gloss-row dd {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 /* ---------- footer ---------- */

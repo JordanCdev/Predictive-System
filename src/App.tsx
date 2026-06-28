@@ -19,6 +19,7 @@ import { DayList, RuledOutDrawer } from "./ui/DayList.tsx";
 import { VetoState } from "./ui/VetoState.tsx";
 import { PersonalizeCard, Person } from "./ui/PersonalizeCard.tsx";
 import { YourChart } from "./ui/YourChart.tsx";
+import { HowItWorks } from "./ui/HowItWorks.tsx";
 
 // Captured once at load. The engine still receives explicit values → stays deterministic.
 const NOW = new Date();
@@ -285,6 +286,7 @@ export function App() {
         </>
       )}
 
+      <HowItWorks />
       <Footer />
     </div>
   );

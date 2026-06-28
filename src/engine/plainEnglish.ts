@@ -14,7 +14,7 @@
 
 import { ConfidenceBreakdown, ConflictRecord, DayRecommendation, HourPick } from "./decision.ts";
 import { McdaWeights, Objective } from "./objectives.ts";
-import { BranchInteraction, DayMasterAnalysis, SeasonalState } from "./bazi.ts";
+import { BranchInteraction, DaYun, DayMasterAnalysis, LuckPillar, SeasonalState } from "./bazi.ts";
 import { BRANCHES, FivePhase, TenGod } from "./symbols.ts";
 
 // ── Verdict bands ──────────────────────────────────────────────────────────
@@ -238,8 +238,11 @@ export function shenShaPlain(code: string): Gloss {
 
 export function headlineVerdict(rec: DayRecommendation, objective: Objective): string {
   const { verb, gerund } = objectivePlain(objective.id);
-  // A 四離/四絕 eve is 大事勿用 — the top line must not say "excellent" while the
-  // reasoning says "hold off". This dominates the band-based verdict.
+  // 歲破 / 四離 / 四絕 are strong calendar taboos — the top line must not say
+  // "excellent" while the reasoning says "hold off". They dominate the band verdict.
+  if (rec.rulesFired.some((r) => r.code === "year_break")) {
+    return `Best avoided to ${verb} — it's a 歲破 day (it clashes this year's 太歲), which tradition marks “諸事不宜”.`;
+  }
   const fb = rec.rulesFired.find((r) => r.code === "four_departure" || r.code === "four_severance");
   if (fb) {
     return `Best avoided to ${verb} — it's a ${fb.code === "four_departure" ? "四離" : "四絕"} day (a season-pivot eve), which tradition marks “大事勿用”.`;
@@ -269,7 +272,10 @@ export function whyThisDay(rec: DayRecommendation): string[] {
   // On days we're steering away from, lead with the limiting factor and drop upbeat extras.
   const cautious = rec.finalScore < 45;
 
-  // A season-pivot eve is a strong taboo — lead with it.
+  // Strong calendar taboos — lead with them.
+  if (rec.rulesFired.some((r) => r.code === "year_break")) {
+    bullets.push("It's a 歲破 day — it clashes this year's 太歲 (year god), which tradition marks “諸事不宜” (avoid major matters).");
+  }
   const fb = rec.rulesFired.find((r) => r.code === "four_departure" || r.code === "four_severance");
   if (fb) {
     bullets.push(
@@ -492,6 +498,10 @@ export function actionGuidance(rec: DayRecommendation, objective: Objective): st
   const clash = rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
   let cautioned = false;
 
+  if (tags.has("year_break")) {
+    tips.push("Pick another day — this one clashes the year's 太歲 (歲破), traditionally avoided for anything that matters.");
+    cautioned = true;
+  }
   if (tags.has("four_departure") || tags.has("four_severance")) {
     tips.push("Move anything major off this season-pivot eve (四離/四絕) — a nearby day will serve you far better.");
     cautioned = true;
@@ -553,7 +563,47 @@ export function rootingPlain(rooting: DayMasterAnalysis["rooting"]): string {
   return "Rootless (無根) — no branch supplies its own element, so it leans on support from others.";
 }
 
+/** The luck pillar (大運) active at a given age. */
+export function currentLuckPillar(dayun: DaYun | null, age: number | null): LuckPillar | null {
+  if (!dayun || age === null) return null;
+  return dayun.pillars.find((p) => age >= p.startAge && age < p.endAge) ?? null;
+}
+
+/** Plain "which life chapter you're in" sentence. */
+export function luckPhasePlain(lp: LuckPillar): string {
+  return `You're in your ${lp.ganzhi.hanzi} luck decade (ages ${Math.round(lp.startAge)}–${Math.round(lp.endAge)}) — a chapter coloured by ${tenGodPlain(lp.stemTenGod)} energy.`;
+}
+
 const branchHz = (i: number) => BRANCHES[i].hanzi;
+
+// ── "How to read this" + glossary (plain definitions of the terms used) ──────
+
+export const HOW_TO_READ = [
+  "Pick what you're timing and a window — you get one clear best day, plus the runners-up.",
+  "The score (0–100) is how well a day suits that activity: the traditional almanac, and — once you add your birth details — your own chart.",
+  "Confidence is separate: it's how solid and well-sourced the reasoning is, not the odds your plans succeed.",
+  "When two traditions disagree, we show both rather than average them away — the call is yours.",
+];
+
+export interface GlossaryEntry {
+  term: string;
+  plain: string;
+}
+export const GLOSSARY: GlossaryEntry[] = [
+  { term: "Day-officer (建除)", plain: "A 12-day cycle of day-types — Achieving, Opening, Breaking… — each suiting different activities." },
+  { term: "Lucky / caution day (黄道/黑道)", plain: "An auspicious or inauspicious day-god riding over the day." },
+  { term: "歲破 (year-break)", plain: "A day that clashes the year's god (太歲) — traditionally avoided for anything that matters." },
+  { term: "四離 / 四絕", plain: "The day before a season pivot (a solstice, equinox or season-start) — “大事勿用”, hold off on big plans." },
+  { term: "Best hour (時辰)", plain: "The strongest two-hour window of the day for you (shown once you've personalized)." },
+  { term: "Your core element & strength", plain: "Your Day Master — the element that represents you — and how supported it is (strong / balanced / weak)." },
+  { term: "旺相休囚死", plain: "Your element's vitality in your birth season, from thriving (旺) down to weakest (死)." },
+  { term: "通根 (rooting)", plain: "Whether your element has a firm “root” among your birth branches — a strong base vs. a rootless one." },
+  { term: "三合 / 六合 / 六沖", plain: "Harmonies (cooperation) and clashes (tension) between the animal-branches in your chart." },
+  { term: "用神 (useful element)", plain: "The element that best balances your chart — what helps you, vs. what strains you." },
+  { term: "調候 (climate)", plain: "The climate school's view: winter charts want warmth (Fire), summer charts want cooling (Water)." },
+  { term: "神煞 (auxiliary stars)", plain: "Minor overlays like the Nobleman “helpful-people” day — kept below the main structure." },
+  { term: "大運 (luck pillars)", plain: "Your life in 10-year chapters, each with its own flavour." },
+];
 
 export function interactionPlain(it: BranchInteraction): string {
   const bs = it.branches.map(branchHz).join("");

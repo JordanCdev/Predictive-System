@@ -16,6 +16,7 @@ import {
 } from "../engine/index.ts";
 import { ConfidenceChip, ConfidencePanel, GoodMeter } from "./meters.tsx";
 import { ReasoningDossier } from "./ReasoningDossier.tsx";
+import { downloadICS } from "./ics.ts";
 import { scoreColor } from "./format.ts";
 
 export interface Alternative {
@@ -92,6 +93,9 @@ export function BestDayHero({
             <li key={i}>{t}</li>
           ))}
         </ul>
+        <button className="btn-ghost cal-add" onClick={() => downloadICS(rec, objective)}>
+          <span aria-hidden="true">＋</span> Add to calendar
+        </button>
       </div>
 
       {alternatives.length > 0 && (

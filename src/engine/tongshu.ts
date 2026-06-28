@@ -21,7 +21,7 @@ import {
   mod,
 } from "./symbols.ts";
 import { dayGanzhiIndexFromCivilDate } from "./sexagenary.ts";
-import { monthBranchIndexFromLongitude, solarLongitudeAtMillis } from "./astronomy.ts";
+import { lichunMillis, monthBranchIndexFromLongitude, solarLongitudeAtMillis } from "./astronomy.ts";
 
 export type ActivityTag =
   | "open"
@@ -103,6 +103,8 @@ export interface TongShuDay {
   sanShaDirection: string;
   /** 四離 (day before a 二分二至) / 四絕 (day before a 四立) — "大事勿用". */
   fourBoundary: "si_li" | "si_jue" | null;
+  /** 歲破 (年破) — the day branch clashes the year's 太歲; traditionally 諸事不宜. */
+  yearBreak: boolean;
 }
 
 /**
@@ -147,6 +149,11 @@ export function computeTongShuDay(
 
   const clashIdx = clashBranch(dayGanzhi.branch.index);
 
+  // 歲破: the day branch that opposes the year's 太歲 branch. Year boundary is 立春.
+  const baziYear = solarInstantUtc < lichunMillis(civil.year) ? civil.year - 1 : civil.year;
+  const yearBranchIndex = mod(baziYear - 1984, 12); // 1984 = 甲子 (子 = 0)
+  const yearBreak = mod(dayGanzhi.branch.index - yearBranchIndex, 12) === 6;
+
   return {
     civil,
     dayGanzhi,
@@ -157,6 +164,7 @@ export function computeTongShuDay(
     clashBranchIndex: clashIdx,
     sanShaDirection: SANSHA_DIRECTION[branchGroupKey(dayGanzhi.branch.index)] ?? "—",
     fourBoundary: fourBoundaryOfNextDay(solarInstantUtc),
+    yearBreak,
   };
 }
 

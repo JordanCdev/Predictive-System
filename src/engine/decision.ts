@@ -45,6 +45,7 @@ const CITES = {
   clash: "日沖 / 六沖 branch clash (spec §6.1 interactions).",
   hour: "時辰 selection — five-rats hour stem + clash avoidance (spec §5.4, §6.3).",
   fourBoundary: "四離四絕 — the day before a 二分二至/四立; classical 通書 marks it 大事勿用.",
+  yearBreak: "歲破 (年破) — the day branch opposes the year 太歲; classical 通書 marks it 諸事不宜.",
 } as const;
 
 export interface RuleFired {
@@ -246,6 +247,18 @@ function evaluateDay(
         : "四絕日 — the day before a season-start 立 term (大事勿用).",
       effect: -18,
       citation: CITES.fourBoundary,
+    });
+  }
+
+  // 歲破 — clashing the year's 太歲 is one of the strongest day-level taboos.
+  if (ts.yearBreak && obj.id !== "medical_procedure") {
+    officerScore = clamp(officerScore - 20);
+    rules.push({
+      code: "year_break",
+      layer: "tongshu",
+      label: "歲破日 — the day clashes this year's 太歲 (諸事不宜).",
+      effect: -20,
+      citation: CITES.yearBreak,
     });
   }
 
