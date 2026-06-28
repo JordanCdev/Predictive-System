@@ -12,10 +12,10 @@
  * truth; `ui/format.ts` derives colours from `verdictBand`.
  */
 
-import { ConfidenceBreakdown, ConflictRecord, DayRecommendation } from "./decision.ts";
+import { ConfidenceBreakdown, ConflictRecord, DayRecommendation, HourPick } from "./decision.ts";
 import { McdaWeights, Objective } from "./objectives.ts";
-import { DayMasterAnalysis } from "./bazi.ts";
-import { FivePhase, TenGod } from "./symbols.ts";
+import { BranchInteraction, DayMasterAnalysis, SeasonalState } from "./bazi.ts";
+import { BRANCHES, FivePhase, TenGod } from "./symbols.ts";
 
 // ── Verdict bands ──────────────────────────────────────────────────────────
 // Thresholds match the engine's classical bands. Single source of truth.
@@ -238,6 +238,16 @@ export function shenShaPlain(code: string): Gloss {
 
 export function headlineVerdict(rec: DayRecommendation, objective: Objective): string {
   const { verb, gerund } = objectivePlain(objective.id);
+  // A 四離/四絕 eve is 大事勿用 — the top line must not say "excellent" while the
+  // reasoning says "hold off". This dominates the band-based verdict.
+  const fb = rec.rulesFired.find((r) => r.code === "four_departure" || r.code === "four_severance");
+  if (fb) {
+    return `Best avoided to ${verb} — it's a ${fb.code === "four_departure" ? "四離" : "四絕"} day (a season-pivot eve), which tradition marks “大事勿用”.`;
+  }
+  const clash = rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
+  if (clash && rec.finalScore < 58) {
+    return `A risky day to ${verb} — it clashes your own chart. ${gerund} elsewhere if you can.`;
+  }
   const band = verdictBand(rec.finalScore);
   switch (band.key) {
     case "excellent":
@@ -258,6 +268,14 @@ export function whyThisDay(rec: DayRecommendation): string[] {
   const bullets: string[] = [];
   // On days we're steering away from, lead with the limiting factor and drop upbeat extras.
   const cautious = rec.finalScore < 45;
+
+  // A season-pivot eve is a strong taboo — lead with it.
+  const fb = rec.rulesFired.find((r) => r.code === "four_departure" || r.code === "four_severance");
+  if (fb) {
+    bullets.push(
+      `It's a ${fb.code === "four_departure" ? "四離" : "四絕"} day — the eve of a season pivot, which tradition marks “大事勿用” (hold off on anything major).`,
+    );
+  }
 
   const officer = officerPlain(rec.tongshu.officer);
   bullets.push(`${officer.label}: ${officer.blurb}`);
@@ -442,4 +460,114 @@ export function windowPlain(days: number): string {
   if (days <= 92) return "the next 3 months";
   if (days <= 186) return "the next 6 months";
   return `the next ${Math.round(days / 30)} months`;
+}
+
+// ── "What you can do" — concrete, deterministic guidance from existing facts ──
+
+const NEEDS_DIRECTION = new Set(["renovation", "moving_house"]);
+
+/** A double-hour that falls in daylight-ish hours (卯..酉, ≈05:00–19:00). */
+export function isDaytimeHour(branchIndex: number): boolean {
+  const hs = BRANCHES[branchIndex].hourStart;
+  return hs >= 5 && hs <= 17;
+}
+/** The best-scoring daytime double-hour (for activities people do by day). */
+export function bestDaytimeHour(rec: DayRecommendation): HourPick | null {
+  const day = rec.allHours.filter((h) => isDaytimeHour(h.branchIndex)).sort((a, b) => b.score - a.score);
+  return day[0] ?? null;
+}
+/** The window to actually recommend: the chart-best if it's in daytime, else the
+ *  best practical daytime window (most plans happen by day). */
+export function practicalBestHour(rec: DayRecommendation): HourPick | null {
+  if (!rec.bestHour) return null;
+  return isDaytimeHour(rec.bestHour.branchIndex) ? rec.bestHour : bestDaytimeHour(rec) ?? rec.bestHour;
+}
+
+/** Actionable tips for a day + objective (best window, direction taboos, cautions). */
+export function actionGuidance(rec: DayRecommendation, objective: Objective): string[] {
+  const tips: string[] = [];
+  const band = verdictBand(rec.finalScore).key;
+  const { verb } = objectivePlain(objective.id);
+  const tags = new Set(rec.rulesFired.map((r) => r.code));
+  const clash = rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
+  let cautioned = false;
+
+  if (tags.has("four_departure") || tags.has("four_severance")) {
+    tips.push("Move anything major off this season-pivot eve (四離/四絕) — a nearby day will serve you far better.");
+    cautioned = true;
+  }
+  if (clash) {
+    tips.push("This day clashes your own chart — fine for small steps, but reconsider for anything binding.");
+    cautioned = true;
+  }
+
+  if (rec.personalized && rec.bestHour) {
+    const noble = rec.bestHour.reasons.some((r) => r.includes("Nobleman"));
+    if (isDaytimeHour(rec.bestHour.branchIndex)) {
+      tips.push(`Aim for the ${humanHourRange(rec.bestHour.rangeLabel)} window — your strongest hours that day${noble ? ", and a “helpful-people” hour to bring in an ally or advisor" : ""}.`);
+    } else {
+      const day = bestDaytimeHour(rec);
+      tips.push(
+        day
+          ? `Your chart's strongest hours fall overnight (${humanHourRange(rec.bestHour.rangeLabel)})${noble ? " — a helpful-people window" : ""}; for a daytime plan, the best practical window is ${humanHourRange(day.rangeLabel)}.`
+          : `Your strongest window that day is ${humanHourRange(rec.bestHour.rangeLabel)}.`,
+      );
+    }
+  }
+  if (tags.has("nobleman") && !(rec.bestHour && rec.bestHour.reasons.some((r) => r.includes("Nobleman")))) {
+    tips.push("A “helpful-people” day (天乙貴人) — a good one to involve mentors, allies or advisors.");
+  }
+
+  if (NEEDS_DIRECTION.has(objective.id) && rec.tongshu.sanShaDirection && rec.tongshu.sanShaDirection !== "—") {
+    tips.push(`When breaking ground or moving in, avoid facing ${rec.tongshu.sanShaDirection} — it's the day's 三煞 (Three-Killings) direction.`);
+  }
+  if (rec.shenShaTags.some((t) => t.code === "travelling_horse") && (objective.id === "travel" || objective.id === "moving_house")) {
+    tips.push("A “Travelling-Horse” momentum day — well-suited to setting off or relocating.");
+  }
+
+  // Closing line — never contradicts a caution shown above it.
+  if (cautioned) tips.push("On balance we'd hold off unless you have a strong reason — weigh the cautions above.");
+  else if (band === "excellent" || band === "favourable") tips.push(`Otherwise, go ahead and ${verb} — this is a green light.`);
+  else if (band === "neutral") tips.push("Nothing's stopping you, but nothing's pushing for it either — proceed if it suits your schedule.");
+  else tips.push("If you have any flexibility, an earlier or later day will treat you better.");
+
+  return tips;
+}
+
+// ── The new chart signals, in plain words ────────────────────────────────────
+
+const SEASONAL_STATE_PLAIN: Record<SeasonalState, { label: string; zh: string }> = {
+  prosperous: { label: "thriving this season", zh: "旺" },
+  strong: { label: "well-supported this season", zh: "相" },
+  resting: { label: "winding down this season", zh: "休" },
+  trapped: { label: "under pressure this season", zh: "囚" },
+  dead: { label: "weakest this season", zh: "死" },
+};
+export function seasonalStatePlain(state: SeasonalState): { label: string; zh: string } {
+  return SEASONAL_STATE_PLAIN[state];
+}
+
+export function rootingPlain(rooting: DayMasterAnalysis["rooting"]): string {
+  if (rooting.mainQiRoot) return `Firmly rooted (得地) — a strong base in ${rooting.rootBranches.join("、")}.`;
+  if (rooting.hasRoot) return `Lightly rooted in ${rooting.rootBranches.join("、")}.`;
+  return "Rootless (無根) — no branch supplies its own element, so it leans on support from others.";
+}
+
+const branchHz = (i: number) => BRANCHES[i].hanzi;
+
+export function interactionPlain(it: BranchInteraction): string {
+  const bs = it.branches.map(branchHz).join("");
+  const el = it.element ? elementPlain(it.element) : "";
+  switch (it.type) {
+    case "three_meeting":
+      return `${bs} form a ${el} season-frame (三會) — a strong block of ${el} in your chart.`;
+    case "three_harmony":
+      return `${bs} form a ${el} harmony (三合) — pooled ${el} energy.`;
+    case "three_harmony_half":
+      return `${bs} make a partial ${el} harmony (半三合).`;
+    case "six_harmony":
+      return `${bs} pair in a Six-Harmony (六合) toward ${el}.`;
+    case "clash":
+      return `${bs} clash (六沖) — an internal tension that can unsettle both.`;
+  }
 }

@@ -101,6 +101,31 @@ export interface TongShuDay {
   clashAnimal: string; // animal of the branch this day clashes
   clashBranchIndex: number;
   sanShaDirection: string;
+  /** 四離 (day before a 二分二至) / 四絕 (day before a 四立) — "大事勿用". */
+  fourBoundary: "si_li" | "si_jue" | null;
+}
+
+/**
+ * 四離/四絕: the day immediately before one of the 8 season-pivot terms (the
+ * four 立 = 四絕, the two 分 + two 至 = 四離). Those 8 terms sit at the 45°
+ * multiples of solar longitude. A candidate day is a 四離/四絕 day when one of
+ * those crossings falls on the NEXT civil day.
+ * `solarInstantUtc` is local noon of the candidate day.
+ */
+export function fourBoundaryOfNextDay(solarInstantUtc: number): "si_li" | "si_jue" | null {
+  const startNext = solarInstantUtc + 12 * 3600000; // local midnight starting the next day
+  const endNext = solarInstantUtc + 36 * 3600000; // local midnight ending the next day
+  const a = solarLongitudeAtMillis(startNext);
+  const b = solarLongitudeAtMillis(endNext);
+  const span = mod(b - a, 360); // Sun moves ~1°/day → at most one 45° boundary
+  for (let k = 0; k < 8; k++) {
+    const tgt = k * 45;
+    const d = mod(tgt - a, 360);
+    if (d >= 0 && d < span) {
+      return tgt % 90 === 0 ? "si_li" : "si_jue"; // 0/90/180/270 = 二分二至; 45/135/225/315 = 四立
+    }
+  }
+  return null;
 }
 
 /**
@@ -131,6 +156,7 @@ export function computeTongShuDay(
     clashAnimal: BRANCHES[clashIdx].animal,
     clashBranchIndex: clashIdx,
     sanShaDirection: SANSHA_DIRECTION[branchGroupKey(dayGanzhi.branch.index)] ?? "—",
+    fourBoundary: fourBoundaryOfNextDay(solarInstantUtc),
   };
 }
 

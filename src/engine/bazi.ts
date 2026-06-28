@@ -14,8 +14,11 @@ import {
   FivePhase,
   GanZhi,
   HIDDEN_STEMS,
+  SIX_HARMONY_PAIRS,
   STEMS,
   Stem,
+  THREE_HARMONY,
+  THREE_MEETING,
   TenGod,
   TEN_GOD_LABEL,
   ganZhiFromIndex,
@@ -41,20 +44,40 @@ export interface PillarReading {
   naYinPhase: FivePhase;
 }
 
+/** A 三合/三會/六合/六沖 relation detected among the natal branches (MEDIUM
+ *  confidence — the *weight* of these is school-dependent; we surface them as
+ *  features and apply a modest, labelled adjustment rather than auto-transform). */
+export interface BranchInteraction {
+  type: "three_harmony" | "three_harmony_half" | "three_meeting" | "six_harmony" | "clash";
+  branches: number[];
+  element?: FivePhase; // the pooled element (not for clash)
+  complete: boolean;
+}
+
 export interface ElementProfile {
   weights: Record<FivePhase, number>;
   percent: Record<FivePhase, number>;
   dominant: FivePhase;
   weakest: FivePhase;
+  interactions: BranchInteraction[];
 }
 
 export type Strength = "strong" | "balanced" | "weak";
+/** 旺相休囚死 — the Day Master's vitality in its birth season. */
+export type SeasonalState = "prosperous" | "strong" | "resting" | "trapped" | "dead";
 
 export interface DayMasterAnalysis {
   dayMaster: Stem;
   strength: Strength;
   supportRatio: number; // 0..1
   hasMonthCommand: boolean;
+  /** 旺相休囚死 from the month command. */
+  seasonalState: SeasonalState;
+  /** 通根 — does the Day Master have a root among the branch hidden stems? */
+  rooting: { hasRoot: boolean; mainQiRoot: boolean; rootBranches: string[] };
+  /** 調候 — climatic (warmth/moisture) need for temperature-extreme births. An
+   *  alternative-school view (窮通寶鑑); null in mild seasons. */
+  climatic: { needed: FivePhase[]; reason: string } | null;
   favorableElements: FivePhase[];
   unfavorableElements: FivePhase[];
   rationale: string;
@@ -66,6 +89,37 @@ export interface DayMasterAnalysis {
     wealth: FivePhase;
     officer: FivePhase;
   };
+}
+
+/** Detect 三合/三會/六合 frames and 六沖 clashes among the four natal branches. */
+export function detectInteractions(branchIdx: number[]): BranchInteraction[] {
+  const has = (b: number) => branchIdx.includes(b);
+  const out: BranchInteraction[] = [];
+  for (const g of THREE_MEETING) {
+    if (g.branches.every(has)) out.push({ type: "three_meeting", branches: g.branches, element: g.element, complete: true });
+  }
+  for (const g of THREE_HARMONY) {
+    const have = g.branches.filter(has);
+    const cardinal = g.branches[1]; // 子午卯酉
+    if (have.length === 3) out.push({ type: "three_harmony", branches: g.branches, element: g.element, complete: true });
+    else if (have.length === 2 && have.includes(cardinal)) out.push({ type: "three_harmony_half", branches: have, element: g.element, complete: false });
+  }
+  for (const g of SIX_HARMONY_PAIRS) {
+    if (g.branches.every(has)) out.push({ type: "six_harmony", branches: g.branches, element: g.element, complete: true });
+  }
+  const seen = new Set<string>();
+  for (let i = 0; i < branchIdx.length; i++) {
+    for (let j = i + 1; j < branchIdx.length; j++) {
+      if (mod(branchIdx[i] - branchIdx[j], 12) === 6) {
+        const key = [branchIdx[i], branchIdx[j]].sort((a, b) => a - b).join(",");
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push({ type: "clash", branches: [branchIdx[i], branchIdx[j]], complete: true });
+        }
+      }
+    }
+  }
+  return out;
 }
 
 export interface LuckPillar {
@@ -129,13 +183,63 @@ export function elementProfile(fp: FourPillars): ElementProfile {
       weights[STEMS[h.stem].phase] += h.weight * mult;
     }
   }
+
+  // Branch frames/clashes reshape the raw element pool (MEDIUM confidence — the
+  // magnitude is a labelled convention; we do not auto-transform 化).
+  const branchIdx = pillars.map((p) => p.gz.branch.index);
+  const interactions = detectInteractions(branchIdx);
+  for (const it of interactions) {
+    if (it.type === "three_meeting" && it.element) weights[it.element] += 2.0;
+    else if (it.type === "three_harmony" && it.element) weights[it.element] += 1.5;
+    else if (it.type === "three_harmony_half" && it.element) weights[it.element] += 0.6;
+    else if (it.type === "six_harmony" && it.element) weights[it.element] += 0.4;
+    else if (it.type === "clash") {
+      for (const b of it.branches) {
+        const ph = BRANCHES[b].phase;
+        weights[ph] = Math.max(0, weights[ph] - 0.5); // a clash destabilises both branches' qi
+      }
+    }
+  }
+
   const total = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
   const percent = {} as Record<FivePhase, number>;
   (Object.keys(weights) as FivePhase[]).forEach((p) => {
     percent[p] = Math.round((weights[p] / total) * 1000) / 10;
   });
   const sorted = (Object.keys(weights) as FivePhase[]).sort((a, b) => weights[b] - weights[a]);
-  return { weights, percent, dominant: sorted[0], weakest: sorted[sorted.length - 1] };
+  return { weights, percent, dominant: sorted[0], weakest: sorted[sorted.length - 1], interactions };
+}
+
+/** 旺相休囚死 of a phase given the season's ruling element (the month phase). */
+export function seasonalStateOf(phase: FivePhase, seasonPhase: FivePhase): SeasonalState {
+  if (phase === seasonPhase) return "prosperous"; // 旺
+  if (phaseGeneratedBy(phase) === seasonPhase) return "strong"; // 相 — season feeds it
+  if (phaseGenerates(phase) === seasonPhase) return "resting"; // 休 — it feeds the season
+  if (phaseControls(phase) === seasonPhase) return "trapped"; // 囚 — it fights the season
+  return "dead"; // 死 — the season controls it
+}
+
+const SEASONAL_STATE_ZH: Record<SeasonalState, string> = {
+  prosperous: "旺",
+  strong: "相",
+  resting: "休",
+  trapped: "囚",
+  dead: "死",
+};
+
+/**
+ * 調候 — the climatic regulator. Births in deep cold (亥子丑) need Fire for
+ * warmth; in peak heat (巳午未) need Water to cool/moisten. This is the core
+ * 窮通寶鑑 principle (an alternative school to 格局/strength); mild seasons get null.
+ */
+function climaticNeed(monthBranchIndex: number): DayMasterAnalysis["climatic"] {
+  if ([11, 0, 1].includes(monthBranchIndex)) {
+    return { needed: ["fire"], reason: "Born in the cold of winter — the chart wants Fire (調候) for warmth." };
+  }
+  if ([5, 6, 7].includes(monthBranchIndex)) {
+    return { needed: ["water"], reason: "Born in the heat of summer — the chart wants Water (調候) to cool and moisten." };
+  }
+  return null;
 }
 
 export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): DayMasterAnalysis {
@@ -163,9 +267,37 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
   ]);
   const hasMonthCommand = monthPhases.has(functional.companion) || monthPhases.has(functional.resource);
 
+  // 旺相休囚死 — the DM's vitality relative to the month's ruling element (得令).
+  const seasonalState = seasonalStateOf(dm.phase, monthBranch.phase);
+  const SEASON_ADJ: Record<SeasonalState, number> = {
+    prosperous: 0.12,
+    strong: 0.06,
+    resting: -0.02,
+    trapped: -0.1,
+    dead: -0.15,
+  };
+
+  // 通根 — does the DM have a root (its own phase) among the branch hidden stems? (得地)
+  const rootBranches: string[] = [];
+  let mainQiRoot = false;
+  for (const gz of [fp.year, fp.month, fp.day, fp.hour]) {
+    for (const h of HIDDEN_STEMS[gz.branch.index]) {
+      if (STEMS[h.stem].phase === dm.phase) {
+        rootBranches.push(gz.branch.hanzi);
+        if (h.weight >= 0.6) mainQiRoot = true;
+        break;
+      }
+    }
+  }
+  const rooting = { hasRoot: rootBranches.length > 0, mainQiRoot, rootBranches: [...new Set(rootBranches)] };
+  const rootAdj = mainQiRoot ? 0.1 : rooting.hasRoot ? 0.04 : -0.08;
+
+  // Combine the support ratio with the two classical axes (得令/得地).
+  const adjusted = Math.max(0, Math.min(1, supportRatio + SEASON_ADJ[seasonalState] + rootAdj));
+
   let strength: Strength;
-  if (supportRatio >= 0.55 || (supportRatio >= 0.45 && hasMonthCommand)) strength = "strong";
-  else if (supportRatio <= 0.32) strength = "weak";
+  if (adjusted >= 0.52 || (adjusted >= 0.45 && hasMonthCommand)) strength = "strong";
+  else if (adjusted <= 0.34) strength = "weak";
   else strength = "balanced";
 
   let favorableElements: FivePhase[];
@@ -183,16 +315,25 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
     unfavorableElements = [];
   }
 
+  const rootDesc = rooting.mainQiRoot
+    ? `rooted (得地, strong root in ${rooting.rootBranches.join("")})`
+    : rooting.hasRoot
+      ? `lightly rooted (${rooting.rootBranches.join("")})`
+      : "rootless (無根)";
   const rationale =
     `Day Master ${dm.hanzi} (${dm.phase}); support (印+比劫) vs drain (食傷+財+官殺) ratio ` +
-    `${(supportRatio * 100).toFixed(0)}%. ${hasMonthCommand ? "Holds month command (得令)." : "Lacks month command (失令)."} ` +
-    `Classified ${strength}. Favourable elements support a balanced chart and are MEDIUM confidence (school-dependent).`;
+    `${(supportRatio * 100).toFixed(0)}%. ${hasMonthCommand ? "Holds month command (得令)" : "Lacks month command (失令)"}, ` +
+    `${SEASONAL_STATE_ZH[seasonalState]} (${seasonalState}) in season, ${rootDesc}. ` +
+    `Classified ${strength}. Strength + useful-element reading is MEDIUM confidence (school-dependent).`;
 
   return {
     dayMaster: dm,
     strength,
     supportRatio,
     hasMonthCommand,
+    seasonalState,
+    rooting,
+    climatic: climaticNeed(monthBranch.index),
     favorableElements: dedupe(favorableElements),
     unfavorableElements: dedupe(unfavorableElements),
     rationale,

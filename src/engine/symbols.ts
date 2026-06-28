@@ -264,6 +264,36 @@ export function ganZhiFromIndex(index: number): GanZhi {
   };
 }
 
+/**
+ * 三合 (Three-Harmony) frames → the element they pool into. The middle branch
+ * (index 1) is the cardinal/旺 branch (子午卯酉); a half-frame (2 of 3) only
+ * counts when it includes that cardinal.
+ */
+export const THREE_HARMONY: { branches: number[]; element: FivePhase }[] = [
+  { branches: [8, 0, 4], element: "water" }, // 申子辰
+  { branches: [2, 6, 10], element: "fire" }, // 寅午戌
+  { branches: [5, 9, 1], element: "metal" }, // 巳酉丑
+  { branches: [11, 3, 7], element: "wood" }, // 亥卯未
+];
+
+/** 三會 (Three-Meeting, directional/seasonal) frames → element. */
+export const THREE_MEETING: { branches: number[]; element: FivePhase }[] = [
+  { branches: [2, 3, 4], element: "wood" }, // 寅卯辰 (spring/east)
+  { branches: [5, 6, 7], element: "fire" }, // 巳午未 (summer/south)
+  { branches: [8, 9, 10], element: "metal" }, // 申酉戌 (autumn/west)
+  { branches: [11, 0, 1], element: "water" }, // 亥子丑 (winter/north)
+];
+
+/** 六合 (Six-Harmony) pairs → the element commonly assigned to the union. */
+export const SIX_HARMONY_PAIRS: { branches: number[]; element: FivePhase }[] = [
+  { branches: [0, 1], element: "earth" }, // 子丑
+  { branches: [2, 11], element: "wood" }, // 寅亥
+  { branches: [3, 10], element: "fire" }, // 卯戌
+  { branches: [4, 9], element: "metal" }, // 辰酉
+  { branches: [5, 8], element: "water" }, // 巳申
+  { branches: [6, 7], element: "fire" }, // 午未
+];
+
 /** Two branches clash (相沖) when they sit opposite on the 12-branch ring. */
 export function branchesClash(a: number, b: number): boolean {
   return mod(a - b, 12) === 6;

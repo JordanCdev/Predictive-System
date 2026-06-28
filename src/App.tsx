@@ -51,6 +51,7 @@ function buildRequest(objectiveId: string, windowDays: number, person: Person | 
       hour: bh,
       minute: bmin,
       tzOffsetMinutes: person.tzOffset,
+      longitudeEast: person.longitudeEast,
       timeCertainty: noTime ? "hour_unknown" : person.timeCertainty,
     },
     sex: person.sex,

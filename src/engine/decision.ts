@@ -44,6 +44,7 @@ const CITES = {
   shensha: "神煞 overlay — weightable, demoted beneath structure (spec §6.4).",
   clash: "日沖 / 六沖 branch clash (spec §6.1 interactions).",
   hour: "時辰 selection — five-rats hour stem + clash avoidance (spec §5.4, §6.3).",
+  fourBoundary: "四離四絕 — the day before a 二分二至/四立; classical 通書 marks it 大事勿用.",
 } as const;
 
 export interface RuleFired {
@@ -222,7 +223,7 @@ function evaluateDay(
   if (ts.officer.good.includes(obj.primaryTag)) officerRaw += 6;
   if (ts.officer.good.includes("general") && obj.primaryTag !== "general") officerRaw += 1;
   if (ts.officer.bad.includes(obj.primaryTag)) officerRaw -= 8;
-  const officerScore = clamp(50 + officerRaw * 3.5);
+  let officerScore = clamp(50 + officerRaw * 3.5);
   rules.push({
     code: `officer_${ts.officer.nameEn.toLowerCase()}`,
     layer: "tongshu",
@@ -230,6 +231,23 @@ function evaluateDay(
     effect: officerRaw,
     citation: CITES.officer,
   });
+
+  // 四離/四絕 — "大事勿用". A strong calendar taboo the almanac applies to major
+  // undertakings (medical/求醫 is the traditional exception). Applies in both
+  // almanac-only and personalized modes since it is a pure calendar property.
+  if (ts.fourBoundary && obj.id !== "medical_procedure") {
+    const isLi = ts.fourBoundary === "si_li";
+    officerScore = clamp(officerScore - 18);
+    rules.push({
+      code: isLi ? "four_departure" : "four_severance",
+      layer: "tongshu",
+      label: isLi
+        ? "四離日 — the day before a solstice/equinox (大事勿用)."
+        : "四絕日 — the day before a season-start 立 term (大事勿用).",
+      effect: -18,
+      citation: CITES.fourBoundary,
+    });
+  }
 
   // --- Evaluator 2: road (黄黑道) — almanac, no chart needed ---
   const roadScore = DAY_GOD_SCORE[ts.dayGod.index];
@@ -259,14 +277,23 @@ function evaluateDay(
 
     let personal = 50;
     dayStemTenGod = tenGodOf(STEMS[dmStem], dayGz.stem);
-    if (godBias.includes(godGroupOf(dayStemTenGod))) {
-      personal += 12;
-      rules.push({ code: "ten_god_support", layer: "bazi", label: `Day stem ${dayGz.stem.hanzi} = ${TEN_GOD_LABEL[dayStemTenGod]} — supports this goal.`, effect: 12, citation: CITES.tenGod });
-    }
+    const tenGodHit = godBias.includes(godGroupOf(dayStemTenGod));
     const fStem = dayStemFavor(dayGz.stem.phase, fav, unfav);
-    if (fStem !== 0) {
-      personal += fStem * 10;
-      rules.push({ code: "element_stem", layer: "bazi", label: `Day stem element ${PHASE_LABEL[dayGz.stem.phase]} is ${fStem > 0 ? "favourable" : "unfavourable"} to your Day Master.`, effect: fStem * 10, citation: CITES.element });
+    if (tenGodHit && fStem > 0) {
+      // The Ten-God bias and the favourable element are the SAME fact here (the
+      // day's stem reinforces a useful god) — credit once, not twice (no +22 stack).
+      const eff = Math.max(12, fStem * 10);
+      personal += eff;
+      rules.push({ code: "ten_god_support", layer: "bazi", label: `Day stem ${dayGz.stem.hanzi} = ${TEN_GOD_LABEL[dayStemTenGod]}, favourable to you and to this goal.`, effect: eff, citation: CITES.tenGod });
+    } else {
+      if (tenGodHit) {
+        personal += 12;
+        rules.push({ code: "ten_god_support", layer: "bazi", label: `Day stem ${dayGz.stem.hanzi} = ${TEN_GOD_LABEL[dayStemTenGod]} — supports this goal.`, effect: 12, citation: CITES.tenGod });
+      }
+      if (fStem !== 0) {
+        personal += fStem * 10;
+        rules.push({ code: "element_stem", layer: "bazi", label: `Day stem element ${PHASE_LABEL[dayGz.stem.phase]} is ${fStem > 0 ? "favourable" : "unfavourable"} to your Day Master.`, effect: fStem * 10, citation: CITES.element });
+      }
     }
     const fBranch = dayStemFavor(dayGz.branch.phase, fav, unfav);
     if (fBranch !== 0) {
@@ -285,10 +312,12 @@ function evaluateDay(
       let eff = 0;
       if (t.code === "clash_day") eff = -20;
       else if (t.code === "clash_zodiac") eff = -16;
-      else if (t.code === "six_harmony") eff = 8;
-      else if (t.code === "triple_harmony") eff = 8;
+      // 神煞 harmonies sit strictly below officer/element structure (spec §6.4).
+      else if (t.code === "six_harmony") eff = 6;
+      else if (t.code === "triple_harmony") eff = 6;
       else if (t.code === "peach_blossom") eff = obj.id === "wedding_marriage" ? 6 : 0;
-      else if (t.code === "travelling_horse") eff = obj.id === "travel" || obj.id === "moving_house" ? 10 : 2;
+      // Travelling Horse only credited where movement is the point — no blanket bonus.
+      else if (t.code === "travelling_horse") eff = obj.id === "travel" || obj.id === "moving_house" ? 10 : 0;
       if (eff !== 0) {
         personal += eff;
         rules.push({ code: t.code, layer: t.code.startsWith("clash") ? "bazi" : "shensha", label: `${t.nameZh} ${t.nameEn} — ${t.note}`, effect: eff, citation: t.code.startsWith("clash") ? CITES.clash : CITES.shensha });

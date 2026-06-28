@@ -6,7 +6,7 @@
 
 export type YearBoundary = "lichun_exact";
 export type DayBoundary = "civil_midnight" | "zi_23";
-export type HourBasis = "civil_clock" | "local_mean_solar";
+export type HourBasis = "civil_clock" | "local_mean_solar" | "true_solar";
 export type DayunStartRule = "three_days_one_year";
 
 export interface ConventionSet {
@@ -42,8 +42,10 @@ export const ZIPING_ZI_ROLLOVER: ConventionSet = {
 export const ZIPING_TRUE_SOLAR: ConventionSet = {
   ...ZIPING_DEFAULT,
   id: "ziping_true_solar_v1",
-  label: "Zi Ping with local mean solar time",
-  hourBasis: "local_mean_solar",
+  label: "Zi Ping with true solar time (真太陽時)",
+  // true_solar = mean-solar longitude correction + equation of time (apparent Sun),
+  // the basis many practitioners require for the hour pillar.
+  hourBasis: "true_solar",
 };
 
 export const CONVENTION_PRESETS: ConventionSet[] = [

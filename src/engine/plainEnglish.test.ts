@@ -3,10 +3,12 @@ import { evaluateDecision } from "./decision.ts";
 import { ZIPING_DEFAULT } from "./conventions.ts";
 import { objectiveById } from "./objectives.ts";
 import {
+  actionGuidance,
   confidencePlain,
   headlineVerdict,
   humanDate,
   humanHourRange,
+  isDaytimeHour,
   relativeDay,
   subScoreNarrative,
   verdictBand,
@@ -87,6 +89,29 @@ describe("plainEnglish (deterministic explanation layer)", () => {
     expect(sub).toHaveLength(2);
     // renormalized weights sum to 100%
     expect(sub[0].weightPct + sub[1].weightPct).toBe(100);
+  });
+
+  it("the headline and the action guidance never contradict each other on a 四絕 eve", () => {
+    // 2024-02-03 is a 四絕 day (eve of 立春). A wedding there is 大事勿用.
+    const res = evaluateDecision({
+      convention: ZIPING_DEFAULT,
+      objective: objectiveById("wedding_marriage"),
+      window: { start: { year: 2024, month: 2, day: 3 }, days: 1, tzOffsetMinutes: 480 },
+    });
+    const rec = res.allDays[0];
+    const head = headlineVerdict(rec, objectiveById("wedding_marriage"));
+    expect(head).toMatch(/大事勿用|Best avoided|四絕/);
+    expect(head).not.toMatch(/excellent/i);
+    const guide = actionGuidance(rec, objectiveById("wedding_marriage")).join(" ");
+    expect(guide).toMatch(/season-pivot|hold off/i);
+    expect(guide).not.toMatch(/green light/i); // no caution-then-green-light contradiction
+  });
+
+  it("daytime classification: 午 hour is daytime, 子 hour is not", () => {
+    expect(isDaytimeHour(6)).toBe(true); // 午 11:00–13:00
+    expect(isDaytimeHour(0)).toBe(false); // 子 23:00–01:00
+    expect(isDaytimeHour(2)).toBe(false); // 寅 03:00–05:00
+    expect(isDaytimeHour(9)).toBe(true); // 酉 17:00–19:00
   });
 
   it("headlineVerdict reads as plain English", () => {

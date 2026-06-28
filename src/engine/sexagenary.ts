@@ -11,6 +11,7 @@ import {
   STEMS,
 } from "./symbols.ts";
 import {
+  equationOfTimeMinutes,
   gregorianToJDN,
   jieWindowAround,
   lichunMillis,
@@ -59,11 +60,17 @@ export interface NormalizedMoment {
 export function normalizeMoment(m: MomentInput, conv: ConventionSet): NormalizedMoment {
   const utcMillis = Date.UTC(m.year, m.month - 1, m.day, m.hour, m.minute) - m.tzOffsetMinutes * 60000;
 
-  // Local-mean-solar correction: 4 minutes per degree from the zone meridian.
+  // Solar-time correction. Mean-solar: 4 minutes per degree from the zone
+  // meridian (needs the birth longitude). True-solar (真太陽時): additionally
+  // applies the equation of time (apparent − mean Sun, ±~16 min, date-only).
   let solarCorrectionMinutes = 0;
-  if (conv.hourBasis === "local_mean_solar" && m.longitudeEast !== undefined) {
+  const usesSolar = conv.hourBasis === "local_mean_solar" || conv.hourBasis === "true_solar";
+  if (usesSolar && m.longitudeEast !== undefined) {
     const zoneMeridian = (m.tzOffsetMinutes / 60) * 15;
-    solarCorrectionMinutes = (m.longitudeEast - zoneMeridian) * 4;
+    solarCorrectionMinutes += (m.longitudeEast - zoneMeridian) * 4;
+  }
+  if (conv.hourBasis === "true_solar") {
+    solarCorrectionMinutes += equationOfTimeMinutes(utcMillis);
   }
 
   // Work in a "local frame" treated as UTC for date arithmetic.

@@ -1,4 +1,13 @@
-import { BaziChart, DaYun, dayMasterPlain, elementHanzi, elementPlain } from "../engine/index.ts";
+import {
+  BaziChart,
+  DaYun,
+  dayMasterPlain,
+  elementHanzi,
+  elementPlain,
+  interactionPlain,
+  rootingPlain,
+  seasonalStatePlain,
+} from "../engine/index.ts";
 import { ChartPanel } from "./ChartPanel.tsx";
 import { PHASE_COLOR } from "./format.ts";
 
@@ -21,6 +30,9 @@ export function YourChart({
       <p style={{ margin: "0 0 14px", fontSize: 14.5, color: "var(--muted)", lineHeight: 1.55 }}>{dayMasterPlain(dm)}</p>
 
       <div className="element-chips">
+        <span className="ec" title="旺相休囚死 — your element's vitality in your birth season">
+          {seasonalStatePlain(dm.seasonalState).label} ({seasonalStatePlain(dm.seasonalState).zh})
+        </span>
         {dm.favorableElements.map((e) => (
           <span className="ec" key={`f-${e}`}>
             <span className="dot" style={{ background: PHASE_COLOR[e] }} />
@@ -34,6 +46,33 @@ export function YourChart({
           </span>
         ))}
       </div>
+
+      <p style={{ margin: "12px 0 0", fontSize: 13.5, color: "var(--muted)", lineHeight: 1.55 }}>{rootingPlain(dm.rooting)}</p>
+
+      {chart.elements.interactions.length > 0 && (
+        <ul className="why-list" style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+          {chart.elements.interactions.map((it, i) => (
+            <li key={i} style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5, marginBottom: 3 }}>
+              {interactionPlain(it)}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {dm.climatic && (
+        <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--muted)", lineHeight: 1.55 }}>
+          {dm.climatic.reason}
+          {!dm.favorableElements.includes(dm.climatic.needed[0]) && (
+            <>
+              {" "}
+              <b style={{ color: "var(--warn-ink)", fontWeight: 600 }}>
+                The balance school and the climate (調候) school differ here
+              </b>{" "}
+              — we show both rather than pick one for you.
+            </>
+          )}
+        </p>
+      )}
 
       {boundaryWarnings.map((w, i) => (
         <div className="warn" key={i}>

@@ -4,10 +4,12 @@ import {
   DecisionResult,
   Objective,
   Versions,
+  actionGuidance,
   conflictSentence,
   headlineVerdict,
   humanDate,
   humanHourRange,
+  practicalBestHour,
   relativeDay,
   shortDate,
   vetoExplain,
@@ -66,10 +68,10 @@ export function BestDayHero({
       </div>
       {confOpen && <ConfidencePanel confidence={rec.confidence} personalized={meta.personalized} />}
 
-      {rec.personalized && rec.bestHour && (
+      {rec.personalized && practicalBestHour(rec) && (
         <div className="besthour">
           <span className="ico" aria-hidden="true">◷</span>
-          Best window&nbsp;<b>{humanHourRange(rec.bestHour.rangeLabel)}</b>
+          Best window&nbsp;<b>{humanHourRange(practicalBestHour(rec)!.rangeLabel)}</b>
         </div>
       )}
 
@@ -82,6 +84,15 @@ export function BestDayHero({
           </span>
         </div>
       )}
+
+      <div className="todo">
+        <div className="todo-label">What to do</div>
+        <ul className="todo-list">
+          {actionGuidance(rec, objective).map((t, i) => (
+            <li key={i}>{t}</li>
+          ))}
+        </ul>
+      </div>
 
       {alternatives.length > 0 && (
         <div className="alts">

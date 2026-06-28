@@ -8,6 +8,8 @@ export interface Person {
   timeCertainty: "exact" | "approximate" | "hour_unknown";
   tzOffset: number;
   conventionId: string;
+  /** Birth longitude °E — only used by the true-solar / mean-solar conventions. */
+  longitudeEast?: number;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -165,6 +167,17 @@ export function PersonalizeCard({
               ))}
             </select>
             <div className="note-soft">Every calculation is bound to an explicit convention, so disputes are visible, not hidden.</div>
+          </label>
+          <label className="field" style={{ marginTop: 10 }}>
+            <span>Birth longitude °E (optional — sharpens true-solar time)</span>
+            <input
+              type="number"
+              step="0.1"
+              placeholder="e.g. 103.8 for Singapore"
+              value={draft.longitudeEast ?? ""}
+              onChange={(e) => set("longitudeEast", e.target.value === "" ? undefined : Number(e.target.value))}
+            />
+            <div className="note-soft">With the true-solar doctrine, your hour pillar uses the real Sun (longitude + equation of time).</div>
           </label>
         </details>
 
