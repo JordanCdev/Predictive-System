@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConventionSet } from "../engine/index.ts";
+import { CITIES, CITY_REGIONS, cityByName } from "./cities.ts";
 
 export interface Person {
   birthDate: string;
@@ -8,9 +9,15 @@ export interface Person {
   timeCertainty: "exact" | "approximate" | "hour_unknown";
   tzOffset: number;
   conventionId: string;
-  /** Birth longitude °E — only used by the true-solar / mean-solar conventions. */
+  /** Birth longitude °E — used by the true-solar / mean-solar conventions. */
   longitudeEast?: number;
+  /** Birth city name — sets the timezone + longitude, and shown in the summary. */
+  birthCity?: string;
 }
+
+// Default doctrine: true solar time (真太陽時), matching most online BaZi tools —
+// so the hour pillar lines up once a birth city (→ longitude) is chosen.
+const DEFAULT_CONVENTION_ID = "ziping_true_solar_v1";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const TZ_OPTIONS = (() => {
@@ -44,11 +51,17 @@ export function PersonalizeCard({
       sex: "male",
       timeCertainty: "exact",
       tzOffset: defaultTz,
-      conventionId: presets[0].id,
+      conventionId: presets.some((p) => p.id === DEFAULT_CONVENTION_ID) ? DEFAULT_CONVENTION_ID : presets[0].id,
     },
   );
   const set = <K extends keyof Person>(k: K, v: Person[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const noTime = draft.timeCertainty === "hour_unknown";
+
+  // Selecting a city sets both timezone and longitude in one move.
+  const pickCity = (name: string) => {
+    const c = cityByName(name);
+    setDraft((d) => (c ? { ...d, birthCity: c.name, tzOffset: c.tz, longitudeEast: c.lon } : { ...d, birthCity: undefined }));
+  };
 
   // A real, fully-specified date — refuse partial/garbage rather than personalize on NaN.
   const validDate = (() => {
@@ -69,8 +82,11 @@ export function PersonalizeCard({
             <h3>Tailored to your chart</h3>
             <p>
               Born {person.birthDate}
-              {person.timeCertainty === "hour_unknown" ? " (time unknown)" : `, ${person.birthTime}`}. The reading now
-              factors in your BaZi.
+              {person.timeCertainty === "hour_unknown" ? " (time unknown)" : `, ${person.birthTime}`}
+              {person.birthCity ? ` · ${person.birthCity}` : ""}.{" "}
+              {(presets.find((p) => p.id === person.conventionId)?.hourBasis === "true_solar" && person.timeCertainty !== "hour_unknown")
+                ? "Hour pillar uses true solar time (真太陽時)."
+                : "The reading now factors in your BaZi."}
             </p>
           </div>
         </div>
@@ -144,7 +160,30 @@ export function PersonalizeCard({
             </div>
           </label>
           <label className="field">
-            <span>Birth time-zone</span>
+            <span>Birth city</span>
+            <select value={draft.birthCity ?? ""} onChange={(e) => pickCity(e.target.value)}>
+              <option value="">Select…</option>
+              {CITY_REGIONS.map((r) => (
+                <optgroup key={r} label={r}>
+                  {CITIES.filter((c) => c.region === r).map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="note-soft">
+          Your city sets the time-zone and, via true solar time (真太陽時), places the hour pillar the way most online BaZi
+          tools do. City not listed, or a summer/DST birth? Fine-tune the time-zone under Advanced.
+        </div>
+
+        <details className="advanced">
+          <summary>Advanced · for practitioners</summary>
+          <label className="field" style={{ marginTop: 10 }}>
+            <span>Birth time-zone (override)</span>
             <select value={draft.tzOffset} onChange={(e) => set("tzOffset", Number(e.target.value))}>
               {TZ_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -152,11 +191,8 @@ export function PersonalizeCard({
                 </option>
               ))}
             </select>
+            <div className="note-soft">Auto-set from your city — adjust for a summer/DST birth or an unlisted city.</div>
           </label>
-        </div>
-
-        <details className="advanced">
-          <summary>Advanced · for practitioners</summary>
           <label className="field" style={{ marginTop: 10 }}>
             <span>Doctrine (convention set)</span>
             <select value={draft.conventionId} onChange={(e) => set("conventionId", e.target.value)}>
