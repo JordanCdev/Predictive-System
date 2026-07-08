@@ -24,10 +24,29 @@ const VALENCE_LABEL: Record<PeriodValence, string> = {
 function SummaryBlock({ s }: { s: PeriodSummary }) {
   return (
     <div style={{ marginTop: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
         <span className="dot" style={{ width: 9, height: 9, borderRadius: 9, background: VALENCE_COLOR[s.valence], display: "inline-block" }} />
         <b style={{ fontSize: 14 }}>{s.label}</b>
         <span style={{ fontSize: 12, color: VALENCE_COLOR[s.valence] }}>{VALENCE_LABEL[s.valence]}</span>
+        {s.taiSui && s.taiSui.fanTaiSui && (
+          <span
+            title={s.taiSui.label}
+            style={{ fontSize: 11, fontWeight: 600, color: "#c0442e", border: "1px solid #c0442e55", borderRadius: 999, padding: "1px 8px" }}
+          >
+            犯太歲 · {s.taiSui.relation}
+          </span>
+        )}
+      </div>
+      {/* Theme + the natal life areas this period touches */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "0 0 6px" }}>
+        <span style={{ fontSize: 11.5, background: "var(--hairline)", borderRadius: 999, padding: "1px 9px", color: "var(--ink)" }}>
+          {s.theme.domain}
+        </span>
+        {s.lifeAreas.map((a) => (
+          <span key={a} style={{ fontSize: 11.5, color: "var(--muted)", border: "1px solid var(--hairline)", borderRadius: 999, padding: "1px 8px" }}>
+            {a}
+          </span>
+        ))}
       </div>
       <p style={{ margin: "0 0 6px", fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5 }}>{s.headline}</p>
       {s.tailwinds.length > 0 && (

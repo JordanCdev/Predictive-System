@@ -2,16 +2,14 @@
  * Layer 4c — Period summaries (大運 / 流年 / 流月) tied to the natal chart.
  *
  * Deterministic, explanatory-only (no network, no LLM, no wall clock beyond
- * explicit inputs). Produces structured "tendency" summaries for the active
- * luck decade, a selected year, and that year's twelve solar months, plus the
- * interaction between natal structure, the active luck pillar, the annual
- * pillar and each month pillar.
+ * explicit inputs). Reads the active luck decade, a selected year, and that
+ * year's twelve solar months against the natal chart using the traditional
+ * three-layer model (natal → 大運 → 流年 → 流月): a Ten-God THEME (what the
+ * period is about) × 用神/忌神 favourability (how it goes) × branch INTERACTIONS
+ * (合/沖/刑/害 via interactions.ts) routed to LIFE AREAS, plus 太歲 for the year.
  *
- * This layer does NOT claim what will happen. It reports element climate,
- * favourable-element tailwind/headwind, branch clashes/combinations against the
- * natal chart, Ten-God themes, and caution flags — the same doctrine the natal
- * engine already uses (扶抑用神), projected forward. Wording stays in the
- * register of "supports / strains / caution", never prophecy.
+ * It does NOT claim what will happen — every output is a tendency paired with an
+ * actionable posture, and carries the not-fate disclaimer. See docs/ROADMAP.md §B.
  */
 
 import {
@@ -19,11 +17,8 @@ import {
   FivePhase,
   GanZhi,
   GodGroup,
-  SIX_HARMONY_PAIRS,
-  THREE_HARMONY,
   TEN_GOD_LABEL,
   TenGod,
-  branchesClash,
   ganZhiFromIndex,
   godGroupOf,
   mod,
@@ -33,7 +28,14 @@ import { BaziChart, DaYun, LuckPillar } from "./bazi.ts";
 import { combineStemBranch } from "./sexagenary.ts";
 import { JIE_TERMS, findSolarLongitudeCrossing, lichunMillis } from "./astronomy.ts";
 import { elementPlain } from "./plainEnglish.ts";
-import { GOD_GROUP_THEME } from "./advisor.ts";
+import {
+  BranchHit,
+  INTERACTION_LABEL,
+  NatalBranch,
+  branchAgainstNatal,
+  interactionPolarity,
+  resolveBranchHits,
+} from "./interactions.ts";
 
 // ── Annual & monthly pillars (deterministic calendar identities) ─────────────
 
@@ -92,16 +94,105 @@ export function monthPillarsOfYear(baziYear: number): MonthPillar[] {
   return out;
 }
 
+// ── Ten-God macro-theme table (what a period is ABOUT) ───────────────────────
+
+export interface TenGodTheme {
+  domain: string;
+  supportive: string;
+  cautionary: string;
+}
+
+/** Macro life-theme per functional Ten-God group. Which side (supportive vs
+ *  cautionary) applies is decided by 用神/忌神 favourability, not by the group
+ *  being "good" or "bad" in itself (docs/ROADMAP.md §B2). */
+export const GROUP_THEME: Record<GodGroup, TenGodTheme> = {
+  companion: {
+    domain: "peers, partnership and self-reliance",
+    supportive: "a year to build alliances, act independently, and lean on peers",
+    cautionary: "a competitive stretch — watch cashflow, rivalry and partnership friction",
+  },
+  output: {
+    domain: "creativity, expression and output",
+    supportive: "a productive, expressive window — good for launching, teaching or performing",
+    cautionary: "restlessness and over-commitment; guard your words and your reputation",
+  },
+  wealth: {
+    domain: "money, effort-and-reward, and (often) relationships",
+    supportive: "an opportunity-and-effort window — income, deals and connections tend to open",
+    cautionary: "risk of over-extension or financial pressure — commit within your means",
+  },
+  officer: {
+    domain: "career, authority and structure",
+    supportive: "a career-and-responsibility window — recognition and taking on structure",
+    cautionary: "pressure, conflict or feeling controlled — pace yourself and mind health",
+  },
+  resource: {
+    domain: "study, support, health and consolidation",
+    supportive: "a learning-and-consolidation window — study, mentorship, property, recovery",
+    cautionary: "delay or over-dependence — avoid drifting; keep momentum",
+  },
+};
+
+// ── Life-area routing ────────────────────────────────────────────────────────
+
+export type LifeArea = "elders/roots" | "career" | "relationship" | "children/legacy";
+
+const POSITION_LIFE_AREA: Record<NatalBranch["position"], LifeArea> = {
+  year: "elders/roots",
+  month: "career",
+  day: "relationship", // the Day branch is the spouse palace (夫妻宮)
+  hour: "children/legacy",
+};
+
+// ── 太歲 (annual Grand Duke) ─────────────────────────────────────────────────
+
+export type TaiSuiRelation = "none" | "zhi" | "chong" | "xing" | "hai" | "po";
+
+export interface TaiSui {
+  /** Relationship of the year branch to the BIRTH-YEAR branch (folk/zodiac 太歲). */
+  relation: TaiSuiRelation;
+  /** 犯太歲 — offending Tai Sui (值/沖/刑/害; 破 excluded by default). */
+  fanTaiSui: boolean;
+  label: string;
+  /** Relationship of the year branch to the DAY branch (deeper-BaZi view), labelled distinctly. */
+  dayBranchRelation: TaiSuiRelation;
+}
+
+/** Strongest Tai-Sui-style relation of a year branch to a target branch. */
+function taiSuiRelation(yearBranch: number, target: number): TaiSuiRelation {
+  if (mod(yearBranch, 12) === mod(target, 12)) return "zhi";
+  const hits = branchAgainstNatal(yearBranch, [{ index: target, position: "year" }]);
+  if (hits.some((h) => h.type === "six_clash")) return "chong";
+  if (hits.some((h) => h.type === "punishment")) return "xing";
+  if (hits.some((h) => h.type === "six_harm")) return "hai";
+  if (hits.some((h) => h.type === "destruction")) return "po";
+  return "none";
+}
+
+const TAI_SUI_LABEL: Record<TaiSuiRelation, string> = {
+  none: "no direct 太歲 relationship",
+  zhi: "值太歲 / 本命年 — your zodiac year; a notable, handle-with-care year",
+  chong: "沖太歲 — your zodiac clashes the year; a high-change, movement year",
+  xing: "刑太歲 — a punishment relationship with the year; friction to manage",
+  hai: "害太歲 — a harm relationship with the year; subtle persistent friction",
+  po: "破太歲 — a minor destruction relationship with the year",
+};
+
+function computeTaiSui(chart: BaziChart, yearBranch: number): TaiSui {
+  const birthYearBranch = chart.pillars[0].ganzhi.branch.index;
+  const dayBranch = chart.pillars[2].ganzhi.branch.index;
+  const relation = taiSuiRelation(yearBranch, birthYearBranch);
+  return {
+    relation,
+    fanTaiSui: relation === "zhi" || relation === "chong" || relation === "xing" || relation === "hai",
+    label: TAI_SUI_LABEL[relation],
+    dayBranchRelation: taiSuiRelation(yearBranch, dayBranch),
+  };
+}
+
 // ── Influence of one external pillar on the natal chart ──────────────────────
 
 export type PeriodValence = "supportive" | "mixed" | "challenging" | "neutral";
-
-export interface BranchRelation {
-  type: "clash" | "six_harmony" | "three_harmony";
-  withBranch: string; // hanzi of the natal branch involved
-  withPosition: "year" | "month" | "day" | "hour";
-  element?: FivePhase;
-}
 
 export interface PillarInfluence {
   ganzhi: string;
@@ -111,10 +202,9 @@ export interface PillarInfluence {
   stemValence: 1 | 0 | -1; // to the Day Master's favourable/unfavourable set
   branchElement: FivePhase;
   branchValence: 1 | 0 | -1;
-  relations: BranchRelation[];
+  /** Resolved branch interactions vs the natal chart (interactions.ts vocabulary). */
+  hits: BranchHit[];
 }
-
-const NATAL_POSITIONS = ["year", "month", "day", "hour"] as const;
 
 function valenceOf(phase: FivePhase, fav: FivePhase[], unfav: FivePhase[]): 1 | 0 | -1 {
   if (fav.includes(phase)) return 1;
@@ -122,26 +212,15 @@ function valenceOf(phase: FivePhase, fav: FivePhase[], unfav: FivePhase[]): 1 | 
   return 0;
 }
 
-/** Relations of an external branch to each natal branch (clash / 六合 / 三合). */
-function relationsToNatal(extBranch: number, natalBranches: number[]): BranchRelation[] {
-  const rels: BranchRelation[] = [];
-  natalBranches.forEach((nb, i) => {
-    const pos = NATAL_POSITIONS[i];
-    if (branchesClash(extBranch, nb)) {
-      rels.push({ type: "clash", withBranch: BRANCHES[nb].hanzi, withPosition: pos });
+/** Natal branches locked in the chart's OWN 三合/三會/六合 (for 合解沖). */
+function lockedNatalBranches(chart: BaziChart): Set<number> {
+  const locked = new Set<number>();
+  for (const it of chart.elements.interactions) {
+    if (it.type === "three_harmony" || it.type === "three_meeting" || it.type === "six_harmony") {
+      it.branches.forEach((b) => locked.add(b));
     }
-    for (const p of SIX_HARMONY_PAIRS) {
-      if (p.branches.includes(extBranch) && p.branches.includes(nb) && extBranch !== nb) {
-        rels.push({ type: "six_harmony", withBranch: BRANCHES[nb].hanzi, withPosition: pos, element: p.element });
-      }
-    }
-    for (const g of THREE_HARMONY) {
-      if (g.branches.includes(extBranch) && g.branches.includes(nb) && extBranch !== nb) {
-        rels.push({ type: "three_harmony", withBranch: BRANCHES[nb].hanzi, withPosition: pos, element: g.element });
-      }
-    }
-  });
-  return rels;
+  }
+  return locked;
 }
 
 export function pillarInfluence(chart: BaziChart, gz: GanZhi): PillarInfluence {
@@ -149,7 +228,11 @@ export function pillarInfluence(chart: BaziChart, gz: GanZhi): PillarInfluence {
   const fav = chart.dayMaster.favorableElements;
   const unfav = chart.dayMaster.unfavorableElements;
   const stemTenGod = tenGodOf(dm, gz.stem);
-  const natalBranches = chart.pillars.map((p) => p.ganzhi.branch.index);
+  const natal: NatalBranch[] = chart.pillars.map((p, i) => ({
+    index: p.ganzhi.branch.index,
+    position: (["year", "month", "day", "hour"] as const)[i],
+  }));
+  const hits = resolveBranchHits(branchAgainstNatal(gz.branch.index, natal), lockedNatalBranches(chart));
   return {
     ganzhi: gz.hanzi,
     stemTenGod,
@@ -158,7 +241,7 @@ export function pillarInfluence(chart: BaziChart, gz: GanZhi): PillarInfluence {
     stemValence: valenceOf(gz.stem.phase, fav, unfav),
     branchElement: gz.branch.phase,
     branchValence: valenceOf(gz.branch.phase, fav, unfav),
-    relations: relationsToNatal(gz.branch.index, natalBranches),
+    hits,
   };
 }
 
@@ -168,66 +251,22 @@ export type PeriodKind = "luck" | "year" | "month";
 
 export interface PeriodSummary {
   kind: PeriodKind;
-  /** Stable key: the ganzhi for luck, the year for 流年, "YYYY-祭" jie for a month. */
+  /** Stable key: label for the row (ganzhi + age range / year / jie term). */
   label: string;
   ganzhi: string;
   span: { startIso: string; endIso: string } | null;
   influence: PillarInfluence;
+  /** The Ten-God macro theme (what the period is about). */
+  theme: { group: GodGroup; domain: string };
   valence: PeriodValence;
+  /** Natal life areas the period's interactions touch. */
+  lifeAreas: LifeArea[];
+  /** Present on the year summary only. */
+  taiSui: TaiSui | null;
   headline: string;
   tailwinds: string[];
   headwinds: string[];
   cautions: string[];
-}
-
-const HARMONY_WORD: Record<BranchRelation["type"], string> = {
-  clash: "clash 沖",
-  six_harmony: "Six-Harmony 六合",
-  three_harmony: "Three-Harmony 三合",
-};
-
-function scoreInfluence(inf: PillarInfluence): number {
-  let s = inf.stemValence * 2 + inf.branchValence;
-  for (const r of inf.relations) {
-    if (r.type === "clash") s -= 2;
-    else s += 1;
-  }
-  return s;
-}
-
-function valenceFrom(score: number, hasRelations: boolean): PeriodValence {
-  if (score >= 2) return "supportive";
-  if (score <= -2) return "challenging";
-  if (score !== 0 || hasRelations) return "mixed";
-  return "neutral";
-}
-
-function buildTailwinds(inf: PillarInfluence): string[] {
-  const out: string[] = [];
-  if (inf.stemValence > 0) out.push(`Reinforces your ${GOD_GROUP_THEME[inf.stemGroup]} (favourable ${elementPlain(inf.stemElement)}).`);
-  if (inf.branchValence > 0) out.push(`Its ${elementPlain(inf.branchElement)} branch is favourable to your chart.`);
-  for (const r of inf.relations) {
-    if (r.type !== "clash") {
-      out.push(`${HARMONY_WORD[r.type]} with your ${r.withPosition} branch (${r.withBranch})${r.element ? ` → pooled ${elementPlain(r.element)}` : ""} — cooperative energy.`);
-    }
-  }
-  return out;
-}
-
-function buildHeadwinds(inf: PillarInfluence): string[] {
-  const out: string[] = [];
-  if (inf.stemValence < 0) out.push(`Feeds your ${GOD_GROUP_THEME[inf.stemGroup]} (straining ${elementPlain(inf.stemElement)}).`);
-  if (inf.branchValence < 0) out.push(`Its ${elementPlain(inf.branchElement)} branch runs against your chart.`);
-  return out;
-}
-
-function buildCautions(inf: PillarInfluence): string[] {
-  return inf.relations
-    .filter((r) => r.type === "clash")
-    .map((r) => {
-      const emphasis = r.withPosition === "day" ? " — your Day Pillar, so felt personally" : r.withPosition === "year" ? " — your year branch (生肖)" : "";
-      return `Clashes your ${r.withPosition} branch (${r.withBranch})${emphasis}: a year/period of change, friction or movement on that axis.`;
-    });
 }
 
 const VALENCE_LEAD: Record<PeriodValence, string> = {
@@ -237,21 +276,119 @@ const VALENCE_LEAD: Record<PeriodValence, string> = {
   neutral: "A quiet",
 };
 
-function summarize(kind: PeriodKind, label: string, gz: GanZhi, span: PeriodSummary["span"], chart: BaziChart): PeriodSummary {
-  const influence = pillarInfluence(chart, gz);
-  const valence = valenceFrom(scoreInfluence(influence), influence.relations.length > 0);
+/** Element favourability of the interaction's pooled element (for harmonies). */
+function hitElementValence(hit: BranchHit, fav: FivePhase[], unfav: FivePhase[]): 1 | 0 | -1 {
+  return hit.element ? valenceOf(hit.element, fav, unfav) : 0;
+}
+
+function scoreInfluence(inf: PillarInfluence, fav: FivePhase[], unfav: FivePhase[]): number {
+  let s = inf.stemValence * 2 + inf.branchValence;
+  for (const h of inf.hits) {
+    if (interactionPolarity(h.type) > 0) {
+      const ev = hitElementValence(h, fav, unfav);
+      s += ev > 0 ? 2 : ev < 0 ? -1 : 1; // a harmony pooling a 忌神 element is not a win
+    } else if (h.type === "six_clash") {
+      s += h.attenuated ? -1 : -2;
+    } else if (h.type === "punishment") {
+      s -= 2;
+    } else if (h.type === "six_harm" || h.type === "self_punishment") {
+      s -= 1;
+    } // destruction: negligible, no score contribution
+  }
+  return s;
+}
+
+function valenceFrom(score: number, hasHits: boolean): PeriodValence {
+  if (score >= 2) return "supportive";
+  if (score <= -2) return "challenging";
+  if (score !== 0 || hasHits) return "mixed";
+  return "neutral";
+}
+
+function areaLabel(positions: NatalBranch["position"][]): string {
+  return [...new Set(positions.map((p) => POSITION_LIFE_AREA[p]))].join(" & ");
+}
+
+function summarize(
+  kind: PeriodKind,
+  label: string,
+  gz: GanZhi,
+  span: PeriodSummary["span"],
+  chart: BaziChart,
+  taiSui: TaiSui | null,
+): PeriodSummary {
+  const inf = pillarInfluence(chart, gz);
+  const fav = chart.dayMaster.favorableElements;
+  const unfav = chart.dayMaster.unfavorableElements;
+  const valence = valenceFrom(scoreInfluence(inf, fav, unfav), inf.hits.length > 0);
+  const theme = GROUP_THEME[inf.stemGroup];
   const noun = kind === "luck" ? "luck decade" : kind === "year" ? "year" : "month";
-  const tailwinds = buildTailwinds(influence);
-  const headwinds = buildHeadwinds(influence);
-  const cautions = buildCautions(influence);
-  const themeBits: string[] = [];
-  if (tailwinds.length) themeBits.push("supports where your chart is already favoured");
-  if (cautions.length) themeBits.push("with a clash to watch");
-  else if (headwinds.length) themeBits.push("with some elemental headwind");
-  const headline =
-    `${VALENCE_LEAD[valence]} ${noun} (${gz.hanzi}, ${TEN_GOD_LABEL[influence.stemTenGod]})` +
-    (themeBits.length ? ` — ${themeBits.join(", ")}.` : ".");
-  return { kind, label, ganzhi: gz.hanzi, span, influence, valence, headline, tailwinds, headwinds, cautions };
+
+  // Life areas touched by any non-attenuated interaction.
+  const lifeAreas = [
+    ...new Set(
+      inf.hits
+        .filter((h) => !(h.type === "six_clash" && h.attenuated))
+        .flatMap((h) => h.natalPositions.map((p) => POSITION_LIFE_AREA[p])),
+    ),
+  ];
+
+  const tailwinds: string[] = [];
+  const headwinds: string[] = [];
+  const cautions: string[] = [];
+
+  // Theme framing follows the overall valence.
+  if (valence === "supportive" || (valence === "mixed" && inf.stemValence >= 0)) tailwinds.push(theme.supportive + ".");
+  if (valence === "challenging" || (valence === "mixed" && inf.stemValence < 0)) headwinds.push(theme.cautionary + ".");
+
+  if (inf.stemValence > 0) tailwinds.push(`Its ${elementPlain(inf.stemElement)} stem is favourable to your chart.`);
+  if (inf.branchValence > 0) tailwinds.push(`Its ${elementPlain(inf.branchElement)} branch is favourable to your chart.`);
+  if (inf.stemValence < 0) headwinds.push(`Its ${elementPlain(inf.stemElement)} stem runs against your chart.`);
+  if (inf.branchValence < 0) headwinds.push(`Its ${elementPlain(inf.branchElement)} branch runs against your chart.`);
+
+  for (const h of inf.hits) {
+    const area = areaLabel(h.natalPositions);
+    const branches = h.natalBranches.map((b) => BRANCHES[b].hanzi).join("");
+    if (interactionPolarity(h.type) > 0) {
+      const ev = hitElementValence(h, fav, unfav);
+      const line = `${INTERACTION_LABEL[h.type]} with your ${area} (${branches})${h.element ? ` → pooled ${elementPlain(h.element)}` : ""}`;
+      if (ev >= 0) tailwinds.push(`${line} — cooperative energy.`);
+      else headwinds.push(`${line}, but it pools an element that strains you.`);
+    } else if (h.type === "destruction") {
+      // lowest-priority; omit from cautions to avoid noise
+    } else {
+      const emphasis =
+        h.natalPositions.includes("day")
+          ? " — the Day/spouse palace, felt personally"
+          : h.natalPositions.includes("year")
+            ? " — your year branch (生肖)"
+            : "";
+      const soft = h.attenuated ? " (softened — bound in a harmony frame)" : "";
+      cautions.push(`${INTERACTION_LABEL[h.type]} on your ${area} (${branches})${emphasis}${soft}: a period of change or friction on that axis.`);
+    }
+  }
+
+  if (taiSui && taiSui.relation !== "none") {
+    cautions.push(`${taiSui.label}.`);
+  }
+
+  const headline = `${VALENCE_LEAD[valence]} ${noun} — ${theme.domain} (${gz.hanzi}, ${TEN_GOD_LABEL[inf.stemTenGod]}).`;
+
+  return {
+    kind,
+    label,
+    ganzhi: gz.hanzi,
+    span,
+    influence: inf,
+    theme: { group: inf.stemGroup, domain: theme.domain },
+    valence,
+    lifeAreas,
+    taiSui,
+    headline,
+    tailwinds,
+    headwinds,
+    cautions,
+  };
 }
 
 // ── Full report ──────────────────────────────────────────────────────────────
@@ -261,7 +398,7 @@ export interface PeriodsReport {
   disclaimer: string;
   /** The luck decade active during the target year (null if none covers it). */
   activeLuck: PeriodSummary | null;
-  /** All luck decades, lightweight (for a life-arc strip). */
+  /** All luck decades, for a life-arc scrubber. */
   luckPillars: PeriodSummary[];
   year: PeriodSummary;
   months: PeriodSummary[];
@@ -294,38 +431,29 @@ export function buildPeriodsReport({ chart, dayun, birth, targetYear }: PeriodsI
   const luck = activeLuckPillar(dayun, age);
 
   const activeLuck = luck
-    ? summarize(
-        "luck",
-        `${luck.ganzhi.hanzi} (ages ${Math.round(luck.startAge)}–${Math.round(luck.endAge)})`,
-        luck.ganzhi,
-        null,
-        chart,
-      )
+    ? summarize("luck", `${luck.ganzhi.hanzi} (ages ${Math.round(luck.startAge)}–${Math.round(luck.endAge)})`, luck.ganzhi, null, chart, null)
     : null;
 
   const luckPillars = (dayun?.pillars ?? []).map((p) => {
     const active = luck !== null && p.index === luck.index;
     const label = `${active ? "now · " : ""}${p.ganzhi.hanzi} (ages ${Math.round(p.startAge)}–${Math.round(p.endAge)})`;
-    return summarize("luck", label, p.ganzhi, null, chart);
+    return summarize("luck", label, p.ganzhi, null, chart, null);
   });
 
   const yearGz = annualPillar(targetYear);
-  const year = summarize("year", String(targetYear), yearGz, null, chart);
+  const taiSui = computeTaiSui(chart, yearGz.branch.index);
+  const year = summarize("year", String(targetYear), yearGz, null, chart, taiSui);
 
   const months = monthPillarsOfYear(targetYear).map((mp) =>
-    summarize("month", `${mp.jieNameEn} (${mp.jieNameZh})`, mp.ganzhi, { startIso: mp.startIso, endIso: mp.endIso }, chart),
+    summarize("month", `${mp.jieNameEn} (${mp.jieNameZh})`, mp.ganzhi, { startIso: mp.startIso, endIso: mp.endIso }, chart, null),
   );
 
   // Weave the three scales into one honest sentence.
   const parts: string[] = [];
-  if (activeLuck) parts.push(`your ${activeLuck.ganzhi} luck decade is ${activeLuck.valence}`);
-  parts.push(`${targetYear} (${year.ganzhi}) is ${year.valence}`);
-  const clashCount = year.influence.relations.filter((r) => r.type === "clash").length + (activeLuck?.influence.relations.filter((r) => r.type === "clash").length ?? 0);
-  const interaction =
-    `Overall, ${parts.join(" and ")}` +
-    (clashCount > 0
-      ? ` — with ${clashCount} branch clash${clashCount > 1 ? "es" : ""} against your natal chart, so expect some movement or friction on those axes.`
-      : ` — no major clash against your natal chart this year.`);
+  if (activeLuck) parts.push(`your ${activeLuck.ganzhi} luck decade (${activeLuck.theme.domain}) is ${activeLuck.valence}`);
+  parts.push(`${targetYear} (${year.ganzhi}, ${year.theme.domain}) is ${year.valence}`);
+  const taiSuiBit = taiSui.fanTaiSui ? ` This is a 犯太歲 year (${year.taiSui!.relation}) — handle change with care.` : "";
+  const interaction = `Overall, ${parts.join(", while ")}.${taiSuiBit}`;
 
   return {
     targetYear,

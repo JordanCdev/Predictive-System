@@ -24,20 +24,34 @@ Each `PeriodSummary` carries a `valence` (`supportive` / `mixed` / `challenging`
 ## How a period is read (the doctrine)
 
 For each external pillar (luck decade / annual / monthly) the engine computes a
-`PillarInfluence` against the natal chart:
+`PillarInfluence` against the natal chart, combining three ingredients:
 
-- **Stem valence** — is the pillar's stem element in your favourable set (扶抑用神,
-  from `bazi.ts`)? Favourable = tailwind for that Ten-God theme; unfavourable =
-  headwind. This is the same 用神 logic the natal engine already uses.
-- **Branch valence** — same test on the pillar's branch element.
-- **Branch relations** — clash (沖), Six-Harmony (六合) or Three-Harmony (三合)
-  between the pillar's branch and each of your four natal branches. A clash to your
-  **day** branch is flagged as felt personally; a clash to your **year** branch is
-  your 生肖 (zodiac) clash.
+**1. Ten-God theme (what the period is ABOUT).** The pillar's stem, relative to the
+Day Master, maps to a functional group (`GROUP_THEME` in `periods.ts`): 比劫 Companion,
+食傷 Output, 財 Wealth, 官殺 Officer, 印 Resource — each with a life domain and a
+supportive-vs-cautionary framing. Which framing applies is decided by favourability,
+not by the group being "good" or "bad".
 
-The valence is a small deterministic score: stem (×2) + branch, plus +1 per harmony
-and −2 per clash. `supportive ≥ 2`, `challenging ≤ −2`, otherwise `mixed` (or
-`neutral` when nothing engages).
+**2. 用神/忌神 favourability (HOW it goes).** Stem and branch element valence against
+the chart's favourable/unfavourable set (扶抑用神, incl. 從格/專旺, from `bazi.ts`). The
+*same* Ten-God period reads oppositely by Day-Master strength.
+
+**3. Branch interactions (`interactions.ts`).** The full classical set — 六合/三合/
+半三合(cardinal-only)/三會/六沖/六害/刑/破 — between the pillar's branch and each natal
+branch, with a **resolution pass**: 合解沖 softens a clash whose natal branch is locked
+in the chart's own harmony frame. Each interaction is routed to a **life area** by the
+natal pillar it hits — Year → elders/roots, Month → career, **Day → relationship (spouse
+palace)**, Hour → children/legacy. A harmony pooling a *favourable* element is a tailwind;
+one pooling an unfavourable element is not. Clashes/punishments/harms become cautions.
+
+**太歲 (year only).** The year branch vs the **birth-year branch**: 值太歲 (本命年),
+沖太歲 (clash), 犯太歲 (值/沖/刑/害; 破 excluded by default). The year branch vs the
+**Day branch** is also computed and labelled distinctly (deeper-BaZi view). Framed as
+"handle with care," never doom.
+
+The valence is a small deterministic score: stem (×2) + branch, plus favourability-weighted
+interaction contributions (harmony of a favourable element +2, clash −2 [−1 if softened],
+punishment −2, harm −1). `supportive ≥ 2`, `challenging ≤ −2`, else `mixed` / `neutral`.
 
 ## Calendar identities (verified elsewhere)
 

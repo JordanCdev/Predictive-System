@@ -62,12 +62,12 @@ describe("pillar influence on the natal chart", () => {
   });
 
   it("detects a clash between an external branch and a natal branch", () => {
-    // The day branch's opposite must register as a clash relation.
+    // The day branch's opposite must register as a six_clash on the day pillar.
     const dayBranch = chart.pillars[2].ganzhi.branch.index;
     const oppIndex = (dayBranch + 6) % 12;
     const clashGz = Array.from({ length: 60 }, (_, i) => ganZhiFromIndex(i)).find((g) => g.branch.index === oppIndex)!;
-    const rels = pillarInfluence(chart, clashGz).relations;
-    expect(rels.some((r) => r.type === "clash" && r.withPosition === "day")).toBe(true);
+    const hits = pillarInfluence(chart, clashGz).hits;
+    expect(hits.some((h) => h.type === "six_clash" && h.natalPositions.includes("day"))).toBe(true);
   });
 });
 
@@ -85,6 +85,25 @@ describe("full periods report", () => {
     expect(["supportive", "mixed", "challenging", "neutral"]).toContain(report.year.valence);
     expect(report.interaction).toMatch(/2026/);
     expect(report.disclaimer).toMatch(/not forecasts/);
+  });
+
+  it("carries a Ten-God theme and life areas on each period", () => {
+    const report = buildPeriodsReport({ chart, dayun, birth: { year: 1990, month: 6, day: 15 }, targetYear: 2026 });
+    expect(["companion", "output", "wealth", "officer", "resource"]).toContain(report.year.theme.group);
+    expect(report.year.theme.domain.length).toBeGreaterThan(0);
+    expect(Array.isArray(report.year.lifeAreas)).toBe(true);
+    // The headline names the theme domain and the Ten God, never a fixed outcome.
+    expect(report.year.headline).toContain("(丙午");
+  });
+
+  it("classifies 太歲 — 2026 (午) is the 本命年 for a 1990 (午) native", () => {
+    const report = buildPeriodsReport({ chart, dayun, birth: { year: 1990, month: 6, day: 15 }, targetYear: 2026 });
+    expect(report.year.taiSui).not.toBeNull();
+    expect(report.year.taiSui!.relation).toBe("zhi"); // 1990 庚午 → 2026 丙午, same branch
+    expect(report.year.taiSui!.fanTaiSui).toBe(true);
+    expect(report.interaction).toMatch(/太歲/);
+    // luck/month summaries carry no 太歲 (year-only concept).
+    expect(report.months[0].taiSui).toBeNull();
   });
 
   it("never claims outcomes — headlines use tendency language", () => {
