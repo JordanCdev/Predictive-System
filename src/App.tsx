@@ -9,11 +9,16 @@ import {
   OBJECTIVES,
   WINDOW_DAYS,
   ZIPING_DEFAULT,
+  buildPeriodsReport,
   canonicalizeBirth,
   evaluateDecision,
+  headlineVerdict,
+  humanHourRange,
   objectiveById,
   objectivePlain,
+  practicalBestHour,
   shortDate,
+  verdictBand,
   windowPlain,
 } from "./engine/index.ts";
 import { PeriodsPanel } from "./ui/PeriodsPanel.tsx";
@@ -27,6 +32,9 @@ import { VetoState } from "./ui/VetoState.tsx";
 import { PersonalizeCard, Person } from "./ui/PersonalizeCard.tsx";
 import { ProfilePanel } from "./ui/ProfilePanel.tsx";
 import { ChatPanel } from "./ui/ChatPanel.tsx";
+import { Journal } from "./ui/Journal.tsx";
+import { JournalEntry, entryId, loadJournal, removeEntry, updateNote, upsertEntry } from "./ui/journalStore.ts";
+import { downloadReport } from "./ui/report.ts";
 import { YourChart } from "./ui/YourChart.tsx";
 import { HowItWorks } from "./ui/HowItWorks.tsx";
 
@@ -145,6 +153,7 @@ export function App() {
   const [phase, setPhase] = useState<"ask" | "answer">("ask");
   const [person, setPerson] = useState<Person | null>(null);
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
+  const [journal, setJournal] = useState<JournalEntry[]>(() => loadJournal());
   const heroRef = useRef<HTMLDivElement>(null);
   const pendingScroll = useRef(false);
 
@@ -285,6 +294,41 @@ export function App() {
   const widen = () =>
     setWindowDays((d) => WINDOW_LADDER.find((w) => w > d) ?? WINDOW_LADDER[WINDOW_LADDER.length - 1]);
 
+  // Decision journal — log/unlog the currently-viewed day (a self-contained snapshot).
+  const loggedId = entryId(objectiveId, selectedRec.isoDate);
+  const isLogged = journal.some((e) => e.id === loggedId);
+  const toggleLog = () => {
+    if (isLogged) {
+      setJournal(removeEntry(loggedId));
+      return;
+    }
+    const ph = selectedRec.personalized ? practicalBestHour(selectedRec) : null;
+    setJournal(
+      upsertEntry({
+        id: loggedId,
+        objectiveId,
+        objectiveLabel: objectivePlain(objectiveId).gerund,
+        isoDate: selectedRec.isoDate,
+        weekday: selectedRec.weekday,
+        score: selectedRec.recommendationScore,
+        band: verdictBand(selectedRec.recommendationScore).label,
+        verdict: headlineVerdict(selectedRec, objective),
+        bestHour: ph ? humanHourRange(ph.rangeLabel) : null,
+        note: "",
+        savedAt: Date.now(),
+      }),
+    );
+  };
+
+  // Shareable report — a self-contained HTML download of the current reading.
+  const downloadCurrentReport = () => {
+    const yearOutlook =
+      result.subjectChart && birthCivil
+        ? buildPeriodsReport({ chart: result.subjectChart, dayun: result.dayun, birth: birthCivil, targetYear: Number(TODAY_ISO.slice(0, 4)) }).year
+        : null;
+    downloadReport({ rec: selectedRec, objective, meta, chart: result.subjectChart, yearOutlook, generatedNote: `Generated ${TODAY_ISO}` });
+  };
+
   return (
     <div className="app">
       <Masthead />
@@ -338,6 +382,13 @@ export function App() {
               evaluateDay={evaluateDay}
             />
           )}
+          <Journal
+            entries={journal}
+            todayIso={TODAY_ISO}
+            onOpen={(id) => openReading(id, windowDays)}
+            onRemove={(id) => setJournal(removeEntry(id))}
+            onNote={(id, note) => setJournal(updateNote(id, note))}
+          />
         </>
       ) : (
         <>
@@ -362,6 +413,9 @@ export function App() {
                 onPickAlt={selectDay}
                 isPick={selectedRec.isoDate === pick?.isoDate}
                 onBackToPick={() => selectDay(pick?.isoDate ?? "")}
+                logged={isLogged}
+                onToggleLog={toggleLog}
+                onDownloadReport={downloadCurrentReport}
               />
             )}
           </div>
@@ -439,6 +493,14 @@ export function App() {
               evaluateDay={evaluateDay}
             />
           )}
+
+          <Journal
+            entries={journal}
+            todayIso={TODAY_ISO}
+            onOpen={(id) => openReading(id, windowDays)}
+            onRemove={(id) => setJournal(removeEntry(id))}
+            onNote={(id, note) => setJournal(updateNote(id, note))}
+          />
 
           {result.personalized && result.subjectChart && (
             <YourChart

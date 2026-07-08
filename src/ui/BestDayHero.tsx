@@ -34,6 +34,9 @@ export function BestDayHero({
   onPickAlt,
   isPick,
   onBackToPick,
+  logged,
+  onToggleLog,
+  onDownloadReport,
 }: {
   rec: DayRecommendation;
   objective: Objective;
@@ -43,6 +46,9 @@ export function BestDayHero({
   onPickAlt: (iso: string) => void;
   isPick: boolean;
   onBackToPick?: () => void;
+  logged?: boolean;
+  onToggleLog?: () => void;
+  onDownloadReport?: () => void;
 }) {
   const [confOpen, setConfOpen] = useState(false);
   const conflict = rec.conflicts[0];
@@ -131,9 +137,21 @@ export function BestDayHero({
             <li key={i}>{t}</li>
           ))}
         </ul>
-        <button className="btn-ghost cal-add" onClick={() => downloadICS(rec, objective)}>
-          <span aria-hidden="true">＋</span> Add to calendar
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={() => downloadICS(rec, objective)}>
+            <span aria-hidden="true">＋</span> Add to calendar
+          </button>
+          {onToggleLog && (
+            <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onToggleLog} aria-pressed={logged}>
+              <span aria-hidden="true">{logged ? "✓" : "誌"}</span> {logged ? "Saved to journal" : "Log this decision"}
+            </button>
+          )}
+          {onDownloadReport && (
+            <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onDownloadReport}>
+              <span aria-hidden="true">⇩</span> Download report
+            </button>
+          )}
+        </div>
       </div>
 
       {alternatives.length > 0 && (

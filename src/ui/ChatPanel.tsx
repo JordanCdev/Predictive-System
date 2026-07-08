@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { BaziChart, DaYun, DecisionResult } from "../engine/index.ts";
 import type { AiToolContext } from "../ai/tools.ts";
 import type { ChatMessage, ChatSettings } from "../ai/chatClient.ts";
@@ -77,7 +77,9 @@ export function ChatPanel({
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryText, setRetryText] = useState<string | null>(null);
   const historyRef = useRef<ChatMessage[]>([]);
+  const abortRef = useRef<AbortController | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
   const configured = Boolean(PROXY_URL || apiKey);
@@ -107,6 +109,7 @@ export function ChatPanel({
       const text = raw.trim();
       if (!text || busy) return;
       setError(null);
+      setRetryText(null);
       setInput("");
       const assistantIdx = { current: -1 };
       setBubbles((prev) => {
@@ -115,28 +118,55 @@ export function ChatPanel({
         return next;
       });
       setBusy(true);
+      const controller = new AbortController();
+      abortRef.current = controller;
       const patch = (fn: (b: Bubble) => Bubble) =>
         setBubbles((prev) => prev.map((b, i) => (i === assistantIdx.current ? fn(b) : b)));
       try {
         const mod = await import("../ai/chatClient.ts");
-        const updated = await mod.runChat(historyRef.current, text, settings, ctx, {
-          onTextDelta: (t) => patch((b) => ({ ...b, text: b.text + t })),
-          onToolStart: (name) => patch((b) => ({ ...b, tools: [...b.tools, TOOL_LABEL[name] ?? name] })),
-        });
+        const updated = await mod.runChat(
+          historyRef.current,
+          text,
+          settings,
+          ctx,
+          {
+            onTextDelta: (t) => patch((b) => ({ ...b, text: b.text + t })),
+            onToolStart: (name) => patch((b) => ({ ...b, tools: [...b.tools, TOOL_LABEL[name] ?? name] })),
+          },
+          controller.signal,
+        );
         historyRef.current = updated;
         patch((b) => (b.text ? b : { ...b, text: "(no reply)" }));
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        setError(msg);
-        // Drop the empty assistant bubble on failure.
-        setBubbles((prev) => prev.filter((_, i) => i !== assistantIdx.current));
+        const aborted = controller.signal.aborted || (e instanceof DOMException && e.name === "AbortError");
+        if (aborted) {
+          // Keep whatever streamed before the stop.
+          patch((b) => ({ ...b, text: b.text ? `${b.text} …(stopped)` : "(stopped)" }));
+        } else {
+          setError(e instanceof Error ? e.message : String(e));
+          setRetryText(text);
+          // Roll back the just-added user + empty assistant bubbles; restore the input.
+          setBubbles((prev) => prev.slice(0, Math.max(0, assistantIdx.current - 1)));
+          setInput(text);
+        }
       } finally {
+        abortRef.current = null;
         setBusy(false);
         requestAnimationFrame(() => threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight }));
       }
     },
     [busy, ctx, settings],
   );
+
+  const stop = () => abortRef.current?.abort();
+  const newChat = () => {
+    stop();
+    historyRef.current = [];
+    setBubbles([]);
+    setError(null);
+    setRetryText(null);
+    setInput("");
+  };
 
   // ── Setup / consent gate ───────────────────────────────────────────────────
   if (!configured || !consented) {
@@ -195,9 +225,14 @@ export function ChatPanel({
           <span className="seal sm" aria-hidden="true">語</span>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Chat with your reading</h3>
         </div>
-        <button className="btn-text" style={{ paddingRight: 0 }} onClick={() => setShowSettings((s) => !s)}>
-          {showSettings ? "Close" : "Settings"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {bubbles.length > 0 && (
+            <button className="btn-text" onClick={newChat}>New chat</button>
+          )}
+          <button className="btn-text" style={{ paddingRight: 0 }} onClick={() => setShowSettings((s) => !s)}>
+            {showSettings ? "Close" : "Settings"}
+          </button>
+        </div>
       </div>
 
       {showSettings && (
@@ -248,9 +283,7 @@ export function ChatPanel({
                 </div>
               )}
               {b.text ? (
-                b.text.split("\n").filter(Boolean).map((line, j) => (
-                  <p key={j} style={{ margin: "0 0 6px", lineHeight: 1.55 }}>{line}</p>
-                ))
+                <RichText text={b.text} />
               ) : (
                 <p style={{ margin: 0, color: "var(--muted)", fontStyle: "italic" }}>thinking…</p>
               )}
@@ -259,7 +292,16 @@ export function ChatPanel({
         )}
       </div>
 
-      {error && <div className="warn" style={{ marginTop: 10 }}><span aria-hidden="true">⚠</span> {error}</div>}
+      {error && (
+        <div className="warn" style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span><span aria-hidden="true">⚠</span> {error}</span>
+          {retryText && (
+            <button className="btn-text" style={{ padding: 0, color: "var(--warn-ink)", fontWeight: 600 }} onClick={() => send(retryText)}>
+              Retry
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="qa-input-row" style={{ marginTop: 10 }}>
         <input
@@ -272,9 +314,11 @@ export function ChatPanel({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send(input)}
         />
-        <button className="btn qa-send" disabled={busy || !input.trim()} onClick={() => send(input)}>
-          {busy ? "…" : "Send"}
-        </button>
+        {busy ? (
+          <button className="btn qa-send" onClick={stop} title="Stop generating">■ Stop</button>
+        ) : (
+          <button className="btn qa-send" disabled={!input.trim()} onClick={() => send(input)}>Send</button>
+        )}
       </div>
 
       {bubbles.length === 0 && (
@@ -290,4 +334,43 @@ export function ChatPanel({
       </div>
     </div>
   );
+}
+
+// ── minimal markdown: **bold** inline + `- ` / `• ` bullet grouping ──────────
+
+function renderInline(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : <span key={i}>{part}</span>,
+  );
+}
+
+function RichText({ text }: { text: string }) {
+  const blocks: ReactNode[] = [];
+  let bullets: string[] = [];
+  const flush = (key: string) => {
+    if (!bullets.length) return;
+    blocks.push(
+      <ul key={`u${key}`} style={{ margin: "2px 0 6px", paddingLeft: 18 }}>
+        {bullets.map((b, i) => (
+          <li key={i} style={{ marginBottom: 2, lineHeight: 1.5 }}>{renderInline(b)}</li>
+        ))}
+      </ul>,
+    );
+    bullets = [];
+  };
+  text.split("\n").forEach((raw, i) => {
+    const line = raw.trim();
+    if (!line) return flush(`b${i}`);
+    const m = line.match(/^[-*•]\s+(.*)/);
+    if (m) {
+      bullets.push(m[1]);
+      return;
+    }
+    flush(`b${i}`);
+    blocks.push(
+      <p key={`p${i}`} style={{ margin: "0 0 6px", lineHeight: 1.55 }}>{renderInline(line)}</p>,
+    );
+  });
+  flush("end");
+  return <>{blocks}</>;
 }
