@@ -248,8 +248,10 @@ export function headlineVerdict(rec: DayRecommendation, objective: Objective): s
     return `Best avoided to ${verb} — it's a ${fb.code === "four_departure" ? "四離" : "四絕"} day (a season-pivot eve), which tradition marks “大事勿用”.`;
   }
   const clash = rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
-  if (clash && rec.recommendationScore < 58) {
-    return `A risky day to ${verb} — it clashes your own chart. ${gerund} elsewhere if you can.`;
+  if (clash) {
+    return rec.almanacVerdict === "favourable"
+      ? `A poor personal fit to ${verb} — the almanac likes this day, but it clashes your own chart. ${gerund} elsewhere if you can.`
+      : `A risky day to ${verb} — it clashes your own chart. ${gerund} elsewhere if you can.`;
   }
   const band = verdictBand(rec.recommendationScore);
   switch (band.key) {
@@ -313,12 +315,14 @@ export function whyThisDay(rec: DayRecommendation): string[] {
       for (const t of rec.shenShaTags) {
         if (t.code === "triple_harmony" || t.code === "six_harmony") bullets.push(shenShaPlain(t.code).blurb);
       }
-      if (rec.bestHour) {
-        const nobleHour = rec.bestHour.reasons.some((r) => r.includes("Nobleman"));
-        bullets.push(`Best window: ${humanHourRange(rec.bestHour.rangeLabel)}${nobleHour ? " — a helpful-people hour" : ""}.`);
+      const ph = practicalBestHour(rec);
+      if (ph) {
+        const nobleHour = ph.reasons.some((r) => r.includes("Nobleman"));
+        bullets.push(`Best window: ${humanHourRange(ph.rangeLabel)}${nobleHour ? " — a helpful-people hour" : ""}.`);
       }
-    } else if (rec.bestHour) {
-      bullets.push(`If it must be this day, the least-bad window is ${humanHourRange(rec.bestHour.rangeLabel)}.`);
+    } else {
+      const ph = practicalBestHour(rec);
+      if (ph) bullets.push(`If it must be this day, the least-bad window is ${humanHourRange(ph.rangeLabel)}.`);
     }
   }
   return bullets;
@@ -355,6 +359,8 @@ export function conflictSentence(c: ConflictRecord): string {
       return "It lands on a lucky day-god, yet its day-officer is a poor fit for this activity — a mixed signal worth noting.";
     case "officer_vs_road":
       return "Its day-officer suits this activity well, but it falls on a caution day-god — a mixed signal worth noting.";
+    case "almanac_vs_personal_clash":
+      return "The calendar likes this day, but it directly clashes your own chart (沖) — a good almanac day yet a poor personal fit. We show both so the call is yours.";
     default:
       return c.reason;
   }
@@ -373,28 +379,19 @@ export interface ConfidenceComponentPlain {
   blurb: string;
 }
 
-const CONF_COMPONENT_PLAIN: Record<string, { label: string; blurb: string; invert?: boolean }> = {
-  calculationReproducibility: { label: "Reproducibility", blurb: "The same inputs always reproduce this exact result — bit-for-bit, offline." },
-  thirdPartyAgreement: { label: "Third-party agreement", blurb: "Agreement with independent sources: the lunar-javascript almanac library and HKO/JPL solar-term data. Neutral (50) until the cross-check has run." },
-  conventionStability: { label: "Convention stability", blurb: "Whether this pick survives the other school conventions (Zi-hour rollover, true solar time)." },
-  sourceCoverage: { label: "Verification coverage", blurb: "How much of this result independent sources could actually check." },
-  inputCompleteness: { label: "Your input", blurb: "How precisely the request pins the subject — an exact birth time (and a longitude for solar-time modes) beats an unknown one." },
-  boundaryRisk: { label: "Boundary safety", blurb: "Distance from solar-term boundaries and strength cut-points; near-boundary results are fragile.", invert: true },
-  heuristicSensitivity: { label: "Ranking robustness", blurb: "Whether the top day survives ±10% perturbation of the scoring weights.", invert: true },
-};
-
-const CONF_ORDER = [
-  "calculationReproducibility",
-  "thirdPartyAgreement",
-  "conventionStability",
-  "heuristicSensitivity",
-  "boundaryRisk",
-  "sourceCoverage",
-  "inputCompleteness",
+/** The four named confidence axes, in display order (recommendation headline first).
+ *  Each is a reasoning-quality axis — none is a probability that a plan succeeds. */
+const CONF_AXES: { key: "recommendationConfidence" | "calculationConfidence" | "thirdPartyAgreement" | "chartFitConfidence"; label: string; blurb: string }[] = [
+  { key: "recommendationConfidence", label: "Recommendation", blurb: "How solid the overall recommendation is — capped when the day clashes your own chart. Never a probability that your plan succeeds." },
+  { key: "calculationConfidence", label: "Calculation", blurb: "The pillars, officers and day-gods are computed by deterministic, reproducible functions — this reflects how fully you've pinned the birth." },
+  { key: "thirdPartyAgreement", label: "Third-party agreement", blurb: "How closely independent calendar sources (lunar-javascript; HKO/JPL solar terms) match this day's calendar facts. Neutral until the cross-check runs." },
+  { key: "chartFitConfidence", label: "Reading stability", blurb: "How stable the reading is under other school conventions and small weight / boundary perturbations." },
 ];
 
 export interface ConfidencePlain {
   label: string;
+  /** The headline number the label is derived from (recommendationConfidence, 0–100). */
+  headline: number;
   sentence: string;
   disclaimer: string;
   components: ConfidenceComponentPlain[];
@@ -404,21 +401,13 @@ export interface ConfidencePlain {
 }
 
 export function confidencePlain(conf: ConfidenceBreakdown, personalized: boolean): ConfidencePlain {
-  const label = confidenceLabel(conf.overall);
+  const headline = conf.recommendationConfidence;
+  const label = confidenceLabel(headline);
   const base = personalized
     ? "How solid this reading is, tailored to your chart."
     : "This is the general almanac read — add your birth details to tailor and sharpen it.";
-  const components = CONF_ORDER.map((key) => {
-    const meta = CONF_COMPONENT_PLAIN[key];
-    const raw = conf.components[key as keyof typeof conf.components];
-    return {
-      key,
-      label: meta.label,
-      value: meta.invert ? 100 - raw : raw,
-      blurb: meta.blurb,
-    };
-  });
-  return { label, sentence: base, disclaimer: CONFIDENCE_DISCLAIMER, components, notes: conf.notes, verified: conf.verified };
+  const components = CONF_AXES.map((a) => ({ key: a.key, label: a.label, value: conf[a.key], blurb: a.blurb }));
+  return { label, headline, sentence: base, disclaimer: CONFIDENCE_DISCLAIMER, components, notes: conf.notes, verified: conf.verified };
 }
 
 /** Convention-sweep severity → the stability word shown in the UI. */
@@ -542,21 +531,19 @@ export function actionGuidance(rec: DayRecommendation, objective: Objective): st
     cautioned = true;
   }
 
-  if (rec.personalized && rec.bestHour) {
-    const noble = rec.bestHour.reasons.some((r) => r.includes("Nobleman"));
+  // One canonical window everywhere — the daytime-practical best hour (the same
+  // one the hero, report and calendar event use), so no surface names a second time.
+  const ph = rec.personalized ? practicalBestHour(rec) : null;
+  if (ph) {
+    // A Nobleman (helpful-people) hour may be the practical window OR the day's
+    // highest-scoring hour (which can be overnight) — surface that one exists
+    // without naming a second time window.
+    const noble = ph.reasons.some((r) => r.includes("Nobleman")) || !!rec.bestHour?.reasons.some((r) => r.includes("Nobleman"));
     if (cautioned) {
       // Don't sell "your strongest hours" on a day we're steering away from.
-      const ph = practicalBestHour(rec) ?? rec.bestHour;
       tips.push(`If you must use this day, the least-bad window is ${humanHourRange(ph.rangeLabel)}.`);
-    } else if (isDaytimeHour(rec.bestHour.branchIndex)) {
-      tips.push(`Aim for the ${humanHourRange(rec.bestHour.rangeLabel)} window — your strongest hours that day${noble ? ", and a “helpful-people” hour to bring in an ally or advisor" : ""}.`);
     } else {
-      const day = bestDaytimeHour(rec);
-      tips.push(
-        day
-          ? `Your chart's strongest hours fall overnight (${humanHourRange(rec.bestHour.rangeLabel)})${noble ? " — a helpful-people window" : ""}; for a daytime plan, the best practical window is ${humanHourRange(day.rangeLabel)}.`
-          : `Your strongest window that day is ${humanHourRange(rec.bestHour.rangeLabel)}.`,
-      );
+      tips.push(`Aim for the ${humanHourRange(ph.rangeLabel)} window — your strongest practical hours that day${noble ? "; a “helpful-people” hour (天乙貴人) also falls that day, good for bringing in an ally or advisor" : ""}.`);
     }
   }
   if (tags.has("nobleman") && !(rec.bestHour && rec.bestHour.reasons.some((r) => r.includes("Nobleman")))) {

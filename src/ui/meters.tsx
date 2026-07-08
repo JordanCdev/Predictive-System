@@ -121,7 +121,7 @@ export function ConfidencePanel({
   return (
     <div className="conf-pop">
       <p style={{ margin: "0 0 12px", fontSize: 13.5, lineHeight: 1.5 }}>
-        {plain.sentence} Overall: <b>{Math.round(confidence.overall)}/100</b>
+        {plain.sentence} Recommendation confidence: <b>{Math.round(plain.headline)}/100</b>
         {plain.verified ? " · third-party cross-check applied." : " · third-party cross-check pending."}
       </p>
       {plain.components.map((comp) => (

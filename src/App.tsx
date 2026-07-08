@@ -133,8 +133,8 @@ function computeAlternatives(recs: DayRecommendation[], excludeIso: string): Alt
     used.add(weekend.isoDate);
   }
 
-  const certain = pool().sort((a, b) => b.confidence.overall - a.confidence.overall || b.recommendationScore - a.recommendationScore)[0];
-  if (certain && certain.confidence.overall > pick.confidence.overall) {
+  const certain = pool().sort((a, b) => b.confidence.recommendationConfidence - a.confidence.recommendationConfidence || b.recommendationScore - a.recommendationScore)[0];
+  if (certain && certain.confidence.recommendationConfidence > pick.confidence.recommendationConfidence) {
     alts.push({ kind: "Most certain", rec: certain });
     used.add(certain.isoDate);
   }

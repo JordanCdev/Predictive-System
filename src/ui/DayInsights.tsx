@@ -7,6 +7,7 @@ import {
   LifeAreaScore,
   humanHourRange,
   lifeAreaScores,
+  practicalBestHour,
 } from "../engine/index.ts";
 import { scoreColor, scoreTextColor, valenceColor, valenceOfScore } from "./format.ts";
 
@@ -88,7 +89,7 @@ export function HourGrid({ hours, bestBranch }: { hours: HourPick[]; bestBranch:
                 alignItems: "center",
                 gap: 2,
               }}
-              title={`${humanHourRange(h.rangeLabel)} · ${h.score}/100${best ? " · best window" : ""}`}
+              title={`${humanHourRange(h.rangeLabel)} · ${h.score}/100${best ? " · recommended daytime window" : ""}`}
             >
               <span style={{ fontSize: 13, fontFamily: "var(--serif-cjk)", color: "var(--ink)" }}>{h.ganzhi.hanzi}</span>
               <span style={{ fontSize: 10.5, color: "var(--muted)" }}>{humanHourRange(h.rangeLabel)}</span>
@@ -213,7 +214,20 @@ export function DayInsights({ chart, rec }: { chart: BaziChart; rec: DayRecommen
       <LifeAreaGauges chart={chart} dayGz={rec.tongshu.dayGanzhi} />
 
       <div className="section-title" style={{ marginTop: 16, marginBottom: 6 }}>Best hours (時辰)</div>
-      <HourGrid hours={rec.allHours} bestBranch={rec.bestHour?.branchIndex ?? null} />
+      {(() => {
+        const ph = practicalBestHour(rec);
+        const overnightBest = ph && rec.bestHour && ph.branchIndex !== rec.bestHour.branchIndex;
+        return (
+          <>
+            <HourGrid hours={rec.allHours} bestBranch={ph?.branchIndex ?? null} />
+            {overnightBest && (
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--faint)", lineHeight: 1.45 }}>
+                Gold marks your recommended daytime window; your highest-scoring hour that day ({humanHourRange(rec.bestHour!.rangeLabel)}) is overnight and less practical to schedule.
+              </p>
+            )}
+          </>
+        );
+      })()}
 
       <div className="section-title" style={{ marginTop: 16, marginBottom: 6 }}>Suitable &amp; unsuitable (宜 / 忌)</div>
       <YiJiChips rec={rec} />

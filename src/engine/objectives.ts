@@ -37,6 +37,10 @@ export interface Objective {
   hardCalendarTaboos: CalendarTaboo[];
   /** Does a clash with the subject's Day/zodiac branch hard-reject the day? */
   clashVeto: boolean;
+  /** Optional stricter recommendationScore ceiling for a personal-clash day (default
+   *  57 keeps clash days out of Good/Excellent; a lower value bites harder). Used by
+   *  objectives that should treat a clash as a strong penalty without a hard veto. */
+  clashScoreCeiling?: number;
   /** Ten-God group energy (relative to subject DM) that supports this goal. */
   godBias: GodGroup[];
   weights: McdaWeights;
@@ -198,10 +202,13 @@ export const OBJECTIVES: Objective[] = [
     vetoOfficers: [DESTRUCTION],
     hardCalendarTaboos: [],
     clashVeto: false,
+    // Not a hard veto, but a clash with the student's own chart is a strong
+    // headwind for an exam — cap a clash day into the Weak band (soft→strong).
+    clashScoreCeiling: 44,
     godBias: ["resource", "output"],
     weights: { officer: 0.32, personal: 0.38, road: 0.14, hour: 0.16 },
     requiresBirthTime: false,
-    doctrineNote: "入學考試 favours 成/開/定/建 officers and Resource (learning) + Output (expression) energy.",
+    doctrineNote: "入學考試 favours 成/開/定/建 officers and Resource (learning) + Output (expression) energy; a day clashing your own chart is a strong headwind (capped into the Weak band).",
   },
 ];
 

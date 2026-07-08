@@ -162,9 +162,18 @@ export interface ConfidenceInputs {
 }
 
 export interface ConfidenceBreakdown {
-  /** 0–100. How solid, verified and stable the REASONING is — never the odds an
-   *  undertaking succeeds. */
+  /** 0–100. The internal composite of the raw evidence components. The UI headline
+   *  is `recommendationConfidence`, which additionally caps for a personal clash. */
   overall: number;
+  /** Deterministic-calculation trust: reproducibility × how fully the birth is pinned. */
+  calculationConfidence: number;
+  /** Agreement of independent calendar sources with this day's facts (the external-truth axis). */
+  thirdPartyAgreement: number;
+  /** Stability of the READING under other school conventions + weight/boundary perturbation. */
+  chartFitConfidence: number;
+  /** Headline: how solid the recommendation is — CAPPED when the day clashes the
+   *  subject's own chart (沖日柱 / 沖生肖). Never a probability that the plan succeeds. */
+  recommendationConfidence: number;
   components: ConfidenceInputs;
   /** False until applyVerificationReport() has folded in a third-party check. */
   verified: boolean;
@@ -185,6 +194,38 @@ export function computeConfidence(x: ConfidenceInputs): number {
     x.conflictPenalty -
     x.tabooSeverity;
   return Math.max(0, Math.min(100, Math.round(raw)));
+}
+
+/** The recommendation-confidence ceiling implied by a personal clash. A day that
+ *  clashes the subject's own Day/Year branch can never read "Good" (65) or "High"
+ *  (80) confidence; a weaker luck-pillar clash caps below "High". null = no cap. */
+export function personalClashCap(
+  shenShaTags: { code: string }[],
+  rulesFired: { code: string }[],
+): number | null {
+  if (shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac")) return 49;
+  if (rulesFired.some((r) => r.code === "luck_clash")) return 55;
+  return null;
+}
+
+/** Assemble a ConfidenceBreakdown: the internal composite plus the four named
+ *  axes the UI shows. Splitting them lets the app say "the calendar is
+ *  well-verified" and "but this day clashes YOU" as separate, honest facts —
+ *  none of which is a probability that an undertaking succeeds. */
+export function buildConfidenceBreakdown(
+  components: ConfidenceInputs,
+  verified: boolean,
+  notes: string[],
+  recommendationCap: number | null,
+): ConfidenceBreakdown {
+  const overall = computeConfidence(components);
+  const calculationConfidence = Math.round(0.7 * components.calculationReproducibility + 0.3 * components.inputCompleteness);
+  const thirdPartyAgreement = Math.round(0.7 * components.thirdPartyAgreement + 0.3 * components.sourceCoverage);
+  const chartFitConfidence = Math.round(
+    0.4 * components.conventionStability + 0.3 * (100 - components.heuristicSensitivity) + 0.3 * (100 - components.boundaryRisk),
+  );
+  const recommendationConfidence = recommendationCap === null ? overall : Math.min(overall, recommendationCap);
+  return { overall, calculationConfidence, thirdPartyAgreement, chartFitConfidence, recommendationConfidence, components, verified, notes };
 }
 
 export interface DayRecommendation {
@@ -211,6 +252,9 @@ export interface DayRecommendation {
   /** The mainstream-almanac 宜忌 stance for this activity ("unavailable" until
    *  almanac data is injected). When available it is blended into the score. */
   almanacVerdict: AlmanacVerdict;
+  /** Non-null when the day clashes the subject's own chart: the ceiling its
+   *  recommendationScore was capped to (keeps it out of the Good/Excellent band). */
+  clashCeiling: number | null;
   confidence: ConfidenceBreakdown;
   hardReject: boolean;
   rejectReasons: string[];
@@ -281,6 +325,12 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
  *  benchmark for day-selection, so it carries real weight — documented rather
  *  than hidden (docs/CONVENTIONS.md). Sums to 1. */
 const ALMANAC_BLEND = { base: 0.6, almanac: 0.4 } as const;
+
+/** A day that clashes the subject's own chart tops out here — kept out of the
+ *  Good/Excellent bands (58/72) even when the almanac endorses it: a good calendar
+ *  day can still be a poor personal fit. Objectives may set a stricter ceiling
+ *  (study_exam uses 44, which lands a clash day in the Weak band). */
+const CLASH_SCORE_CEILING = 57;
 
 // Per-god 黄黑道 scores (0..100).
 const DAY_GOD_SCORE = [88, 80, 28, 30, 82, 90, 22, 84, 30, 26, 78, 34];
@@ -540,6 +590,14 @@ function evaluateDay(
     recommendationScore = baseScore;
   }
 
+  // Personal-clash ceiling — a day that clashes the subject's own chart (沖日柱 /
+  // 沖生肖) is capped out of the Good/Excellent band even when the almanac endorses
+  // it: a good calendar day can still be a poor personal fit. Objective-independent
+  // (applies whatever the objective), with a stricter ceiling where the objective
+  // opts in (study_exam). Applied as the LAST step of score assembly.
+  const clashCeiling = personalized && clashTags.length > 0 ? obj.clashScoreCeiling ?? CLASH_SCORE_CEILING : null;
+  if (clashCeiling !== null) recommendationScore = Math.min(recommendationScore, clashCeiling);
+
   const subScores: SubScores = {
     officer: round1(officerScore),
     road: round1(roadScore),
@@ -584,6 +642,17 @@ function evaluateDay(
   if (roadScore <= 34 && officerScore >= 62) {
     conflicts.push({ type: "officer_vs_road", schools: ["建除 officer", "Black-road god"], severity: "low", reason: "A good 建除 officer falling on a Black-road day god." });
   }
+  // A day the calendar likes but that clashes the subject's own chart is a genuine
+  // cross-signal (good almanac, poor personal fit): recorded as a conflict so it
+  // lowers confidence and is surfaced, never smoothed over.
+  if (personalized && clashTags.length > 0 && (almanacVerdict === "favourable" || officerScore >= 58)) {
+    conflicts.push({
+      type: "almanac_vs_personal_clash",
+      schools: ["Almanac / calendar", "Your BaZi chart"],
+      severity: "high",
+      reason: "The calendar favours this day, but it directly clashes your own chart (沖) — a good almanac day, a poor personal fit for you.",
+    });
+  }
 
   // --- confidence (spec §12, evidence-based) ---
   // Boundary risk visible from this day + chart. A 節 crossing inside the
@@ -626,6 +695,11 @@ function evaluateDay(
       `A calendar taboo (${softTaboos.map((t) => (t === "year_break" ? "歲破" : t === "four_departure" ? "四離" : "四絕")).join(", ")}) applies to this day but is a soft penalty for this objective — it lowers confidence rather than ruling the day out.`,
     );
   }
+  if (personalized && clashTags.length > 0) {
+    boundaryNotes.push(
+      "This day clashes your own chart (沖日柱 / 沖生肖) — the recommendation confidence is capped: a good almanac day can still be a poor personal fit.",
+    );
+  }
 
   const components: ConfidenceInputs = {
     calculationReproducibility: 100,
@@ -638,12 +712,12 @@ function evaluateDay(
     conflictPenalty,
     tabooSeverity,
   };
-  const confidence: ConfidenceBreakdown = {
-    overall: computeConfidence(components),
+  const confidence: ConfidenceBreakdown = buildConfidenceBreakdown(
     components,
-    verified: false,
-    notes: [...boundaryNotes, "Third-party cross-check not yet applied to this result."],
-  };
+    false,
+    [...boundaryNotes, "Third-party cross-check not yet applied to this result."],
+    personalClashCap(shenShaTags, rules),
+  );
 
   // --- top reasons (sorted positive contributions) ---
   const topReasons = rules
@@ -669,6 +743,7 @@ function evaluateDay(
     recommendationScore,
     verificationAgreement: null,
     almanacVerdict,
+    clashCeiling,
     confidence,
     hardReject,
     rejectReasons,
@@ -689,20 +764,16 @@ function scoreInputCompleteness(req: DecisionRequest): number {
   return clamp(v);
 }
 
-/** Replace the sweep-derived components and recompute the overall index. */
+/** Replace the sweep-derived components and recompute every axis. */
 function finalizeDayConfidence(
   c: ConfidenceBreakdown,
   conventionStability: number,
   heuristicSensitivity: number,
   extraNotes: string[],
+  recommendationCap: number | null,
 ): ConfidenceBreakdown {
   const components = { ...c.components, conventionStability, heuristicSensitivity };
-  return {
-    overall: computeConfidence(components),
-    components,
-    verified: c.verified,
-    notes: [...c.notes, ...extraNotes],
-  };
+  return buildConfidenceBreakdown(components, c.verified, [...c.notes, ...extraNotes], recommendationCap);
 }
 
 /** Main entry point: evaluate a window and return ranked recommendations. */
@@ -816,7 +887,13 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
       );
     }
     for (const day of all) {
-      day.confidence = finalizeDayConfidence(day.confidence, conventionStability, heuristicSensitivity, sweepNotes);
+      day.confidence = finalizeDayConfidence(
+        day.confidence,
+        conventionStability,
+        heuristicSensitivity,
+        sweepNotes,
+        personalClashCap(day.shenShaTags, day.rulesFired),
+      );
     }
   }
 

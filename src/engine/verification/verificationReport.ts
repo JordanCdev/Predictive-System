@@ -11,7 +11,8 @@ import {
   ConfidenceBreakdown,
   DayRecommendation,
   DecisionResult,
-  computeConfidence,
+  buildConfidenceBreakdown,
+  personalClashCap,
 } from "../decision.ts";
 import { FieldAgreement, VerificationReport, VerificationSource } from "./types.ts";
 
@@ -99,7 +100,8 @@ export function applyVerificationReport(result: DecisionResult, report: Verifica
     .filter((s) => s.id !== "internal" && comparable.has(s.id))
     .map((s) => s.sourceLabel);
 
-  const upgrade = (c: ConfidenceBreakdown): ConfidenceBreakdown => {
+  const upgrade = (d: DayRecommendation): ConfidenceBreakdown => {
+    const c = d.confidence;
     const components = { ...c.components, thirdPartyAgreement: agreement, sourceCoverage: coverage };
     // Idempotent: strip the pending placeholder AND any notes from a previous
     // application, so re-verification replaces rather than accumulates.
@@ -120,13 +122,15 @@ export function applyVerificationReport(result: DecisionResult, report: Verifica
     } else if (report.nonBlockingDisagreements.length > 0) {
       notes.push(`Non-blocking differences: ${report.nonBlockingDisagreements.join("; ")}.`);
     }
-    return { overall: computeConfidence(components), components, verified: true, notes };
+    // Re-apply the personal-clash cap so verification can never lift a clash day's
+    // recommendation confidence back into "Good"/"High".
+    return buildConfidenceBreakdown(components, true, notes, personalClashCap(d.shenShaTags, d.rulesFired));
   };
 
   const upgradeDay = (d: DayRecommendation): DayRecommendation => ({
     ...d,
     verificationAgreement: agreement,
-    confidence: upgrade(d.confidence),
+    confidence: upgrade(d),
   });
   const allDays = result.allDays.map(upgradeDay);
   const byIso = new Map(allDays.map((d) => [d.isoDate, d]));

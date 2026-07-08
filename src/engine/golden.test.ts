@@ -43,6 +43,19 @@ describe("golden charts — independent cross-checks", () => {
     expect(p.year).toBe("戊戌");
     expect(p.month).toBe("甲寅");
   });
+
+  // Jordan — 1998-03-23 19:47 London (Europe/London = UTC+0 on that date). The
+  // true-solar correction is negligible for London (longitude ~0), so the hour
+  // pillar is identical under the civil-clock and true-solar conventions.
+  it("Jordan 1998-03-23 19:47 London (UTC+0) → 戊寅 / 乙卯 / 己巳 / 甲戌, Day Master 己", () => {
+    const m = { year: 1998, month: 3, day: 23, hour: 19, minute: 47, tzOffsetMinutes: 0 };
+    const p = pillars(m);
+    expect(p.year).toBe("戊寅");
+    expect(p.month).toBe("乙卯");
+    expect(p.day).toBe("己巳");
+    expect(p.hour).toBe("甲戌");
+    expect(buildFourPillars(m, ZIPING_DEFAULT).dayMaster.hanzi).toBe("己");
+  });
 });
 
 describe("solar terms — internal consistency across a full year", () => {

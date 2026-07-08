@@ -102,7 +102,7 @@ export function buildReportHTML(p: ReportParams): string {
     <p class="verdict"><b>${esc(humanDate(rec.civil))}</b></p>
     <p class="verdict">${esc(headlineVerdict(rec, objective))}</p>
     <p><span class="score">${rec.recommendationScore}/100 · ${esc(band.label)}</span>
-       &nbsp; <span class="muted">${esc(confidenceLabel(rec.confidence.overall))} (${rec.confidence.overall}/100)</span></p>
+       &nbsp; <span class="muted">${esc(confidenceLabel(rec.confidence.recommendationConfidence))} (${rec.confidence.recommendationConfidence}/100)</span></p>
     ${ph ? `<p>◷ Best window: <b>${esc(humanHourRange(ph.rangeLabel))}</b></p>` : ""}
   </section>
 

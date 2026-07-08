@@ -32,11 +32,13 @@ const WEIGHT_KEYS: (keyof McdaWeights)[] = ["officer", "road", "personal", "hour
  *  MCDA combine in decision.ts (personalized 4-way; almanac renormalised 2-way). */
 function combined(day: DayRecommendation, w: McdaWeights): number {
   const s = day.subScores;
-  if (day.personalized && s.personal !== null && s.hour !== null) {
-    return w.officer * s.officer + w.road * s.road + w.personal * s.personal + w.hour * s.hour;
-  }
-  const denom = w.officer + w.road || 1;
-  return (w.officer * s.officer + w.road * s.road) / denom;
+  const raw =
+    day.personalized && s.personal !== null && s.hour !== null
+      ? w.officer * s.officer + w.road * s.road + w.personal * s.personal + w.hour * s.hour
+      : (w.officer * s.officer + w.road * s.road) / (w.officer + w.road || 1);
+  // Respect the personal-clash ceiling so a capped clash day can't out-rank
+  // under perturbation (mirrors the cap applied to recommendationScore).
+  return typeof day.clashCeiling === "number" ? Math.min(raw, day.clashCeiling) : raw;
 }
 
 export function runWeightSweep(days: DayRecommendation[], weights: McdaWeights): WeightSweepResult {

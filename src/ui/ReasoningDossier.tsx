@@ -5,6 +5,7 @@ import {
   Versions,
   conflictSentence,
   humanHourRange,
+  practicalBestHour,
   subScoreNarrative,
   whyThisDay,
 } from "../engine/index.ts";
@@ -106,22 +107,31 @@ export function ReasoningDossier({
           </div>
         ))}
 
-        {rec.personalized && rec.allHours.length > 0 && (
-          <>
-            <h4>All twelve double-hours</h4>
-            <div className="hours-grid">
-              {rec.allHours.map((h) => (
-                <div className={`hour-cell ${rec.bestHour && h.branchIndex === rec.bestHour.branchIndex ? "best" : ""}`} key={h.branchIndex}>
-                  <div className="hh">{humanHourRange(h.rangeLabel)}</div>
-                  <div className="hg">{h.ganzhi.hanzi}</div>
-                  <div className="hs" style={{ color: scoreTextColor(h.score) }}>
-                    {h.score}
+        {rec.personalized && rec.allHours.length > 0 && (() => {
+          const ph = practicalBestHour(rec);
+          const overnightBest = ph && rec.bestHour && ph.branchIndex !== rec.bestHour.branchIndex;
+          return (
+            <>
+              <h4>All twelve double-hours</h4>
+              <div className="hours-grid">
+                {rec.allHours.map((h) => (
+                  <div className={`hour-cell ${h.branchIndex === ph?.branchIndex ? "best" : ""}`} key={h.branchIndex}>
+                    <div className="hh">{humanHourRange(h.rangeLabel)}</div>
+                    <div className="hg">{h.ganzhi.hanzi}</div>
+                    <div className="hs" style={{ color: scoreTextColor(h.score) }}>
+                      {h.score}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+              {overnightBest && (
+                <p className="note-soft" style={{ marginTop: 6, fontSize: 11.5 }}>
+                  Highlighted = your recommended daytime window; the highest-scoring hour ({humanHourRange(rec.bestHour!.rangeLabel)}) is overnight and less practical to schedule.
+                </p>
+              )}
+            </>
+          );
+        })()}
 
         <div className="verify">
           <span className="seal-mark"><span aria-hidden="true">✓</span> Verify</span> — this exact result reproduces from the same inputs.
