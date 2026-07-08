@@ -213,7 +213,27 @@ export const OBJECTIVES: Objective[] = [
 ];
 
 export function objectiveById(id: string): Objective {
+  if (id === GENERAL_DAY_OBJECTIVE.id) return GENERAL_DAY_OBJECTIVE;
   return OBJECTIVES.find((o) => o.id === id) ?? OBJECTIVES[0];
 }
+
+/** A neutral, activity-agnostic day reading used by the planner (daily / weekly /
+ *  monthly) views. It blends the almanac and the chart with no Ten-God bias, so a
+ *  day scores on general suitability rather than for a specific undertaking. Not in
+ *  OBJECTIVES — it never appears in the date-finder tiles. */
+export const GENERAL_DAY_OBJECTIVE: Objective = {
+  id: "general_day",
+  label: "General day reading",
+  emoji: "📅",
+  description: "An overall reading of a day, not tied to a specific undertaking.",
+  primaryTag: "general",
+  vetoOfficers: [DESTRUCTION],
+  hardCalendarTaboos: [],
+  clashVeto: false,
+  godBias: [],
+  weights: { officer: 0.34, road: 0.22, personal: 0.34, hour: 0.1 },
+  requiresBirthTime: false,
+  doctrineNote: "A general reading blending the mainstream almanac and your chart without an activity bias.",
+};
 
 export { DEFAULT_WEIGHTS };
