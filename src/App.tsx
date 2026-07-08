@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { HashRouter, NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { ProfileProvider, useProfile } from "./ui/profile/ProfileContext.tsx";
+import { AuthProvider } from "./ui/profile/AuthContext.tsx";
 import { ErrorBoundary } from "./ui/ErrorBoundary.tsx";
 import { TODAY_ISO } from "./ui/shared.ts";
 import { elementPlain } from "./engine/index.ts";
@@ -86,6 +87,7 @@ function NavBar() {
 
 export function App() {
   return (
+    <AuthProvider>
     <ProfileProvider>
       <HashRouter>
         <div className="app">
@@ -110,6 +112,7 @@ export function App() {
         </div>
       </HashRouter>
     </ProfileProvider>
+    </AuthProvider>
   );
 }
 

@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useCallback, useContext, useMemo, useState } from "react";
+import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   BaziChart,
   DaYun,
@@ -11,6 +11,7 @@ import {
 } from "../../engine/index.ts";
 import { Person } from "../PersonalizeCard.tsx";
 import { DEFAULT_TZ, TODAY_CIVIL, ageOn, birthCivilOf, buildRequest, canonicalFor } from "../shared.ts";
+import { useAuth } from "./AuthContext.tsx";
 
 const PERSON_STORE = "wei_person_v1";
 
@@ -55,16 +56,55 @@ const ProfileCtx = createContext<ProfileValue | null>(null);
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const [person, setPersonState] = useState<Person | null>(() => loadPerson());
+  const { enabled, user } = useAuth();
 
-  const setPerson = useCallback((p: Person | null) => {
-    setPersonState(p);
-    try {
-      if (p) localStorage.setItem(PERSON_STORE, JSON.stringify(p));
-      else localStorage.removeItem(PERSON_STORE);
-    } catch {
-      /* private mode — the in-memory profile still works this session */
-    }
-  }, []);
+  const setPerson = useCallback(
+    (p: Person | null) => {
+      setPersonState(p);
+      try {
+        if (p) localStorage.setItem(PERSON_STORE, JSON.stringify(p));
+        else localStorage.removeItem(PERSON_STORE);
+      } catch {
+        /* private mode — the in-memory profile still works this session */
+      }
+      // Cloud write-through when signed in; the localStorage cache still holds offline.
+      if (enabled && user) {
+        import("../../firebase/client.ts")
+          .then((m) => (p ? m.saveProfile(user.uid, p) : m.clearProfile(user.uid)))
+          .catch(() => {});
+      }
+    },
+    [enabled, user],
+  );
+
+  // Hydrate from the cloud on sign-in; if the account has no profile yet but this
+  // browser does, push the local one up (first-time migration).
+  useEffect(() => {
+    if (!enabled || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const m = await import("../../firebase/client.ts");
+        const cloud = await m.loadProfile(user.uid);
+        if (cancelled) return;
+        if (cloud && isPerson(cloud)) {
+          setPersonState(cloud);
+          try {
+            localStorage.setItem(PERSON_STORE, JSON.stringify(cloud));
+          } catch {
+            /* cache best-effort */
+          }
+        } else if (!cloud && person) {
+          m.saveProfile(user.uid, person).catch(() => {});
+        }
+      } catch {
+        /* keep the local profile */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Derive the chart + luck cycle once per person, independent of any objective.
   // Defensive: a malformed persisted person must degrade to "no chart", never throw.

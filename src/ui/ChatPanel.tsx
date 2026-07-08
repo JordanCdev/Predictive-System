@@ -1,5 +1,6 @@
 import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { BaziChart, DaYun, DecisionResult } from "../engine/index.ts";
+import { useAuth } from "./profile/AuthContext.tsx";
 import type { AiToolContext } from "../ai/tools.ts";
 import type { ChatMessage, ChatSettings } from "../ai/chatClient.ts";
 
@@ -82,6 +83,7 @@ export function ChatPanel({
   const abortRef = useRef<AbortController | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
+  const auth = useAuth();
   const configured = Boolean(PROXY_URL || apiKey);
 
   const settings: ChatSettings = useMemo(() => ({ model, apiKey: apiKey || undefined, proxyUrl: PROXY_URL }), [model, apiKey]);
@@ -123,11 +125,13 @@ export function ChatPanel({
       const patch = (fn: (b: Bubble) => Bubble) =>
         setBubbles((prev) => prev.map((b, i) => (i === assistantIdx.current ? fn(b) : b)));
       try {
+        // A secured Cloud-Function proxy verifies the caller's Firebase ID token.
+        const authToken = PROXY_URL ? (await auth.getIdToken()) ?? undefined : undefined;
         const mod = await import("../ai/chatClient.ts");
         const updated = await mod.runChat(
           historyRef.current,
           text,
-          settings,
+          { ...settings, authToken },
           ctx,
           {
             onTextDelta: (t) => patch((b) => ({ ...b, text: b.text + t })),
@@ -155,7 +159,7 @@ export function ChatPanel({
         requestAnimationFrame(() => threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight }));
       }
     },
-    [busy, ctx, settings],
+    [busy, ctx, settings, auth],
   );
 
   const stop = () => abortRef.current?.abort();

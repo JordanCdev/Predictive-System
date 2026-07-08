@@ -40,6 +40,8 @@ export interface ChatSettings {
   apiKey?: string;
   /** Serverless relay URL; when set, the key lives server-side and no apiKey is needed. */
   proxyUrl?: string;
+  /** Firebase ID token sent as a Bearer to a secured proxy (the Cloud Function). */
+  authToken?: string;
   maxTokens?: number;
 }
 
@@ -119,7 +121,10 @@ interface StreamedTurn {
 async function streamOnce(body: unknown, settings: ChatSettings, events: ChatEvents, signal?: AbortSignal): Promise<StreamedTurn> {
   const url = settings.proxyUrl || ANTHROPIC_URL;
   const headers: Record<string, string> = { "content-type": "application/json" };
-  if (!settings.proxyUrl) {
+  if (settings.proxyUrl) {
+    // A secured proxy (the Cloud Function) verifies a Firebase ID token.
+    if (settings.authToken) headers["authorization"] = `Bearer ${settings.authToken}`;
+  } else {
     if (!settings.apiKey) throw new Error("No Anthropic key configured.");
     headers["x-api-key"] = settings.apiKey;
     headers["anthropic-version"] = ANTHROPIC_VERSION;

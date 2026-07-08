@@ -5,3 +5,10 @@ dist/
 .env.*
 !.env.local.example
 .DS_Store
+
+# Firebase
+functions/lib/
+functions/node_modules/
+.firebase/
+firebase-debug.log
+firestore-debug.log
