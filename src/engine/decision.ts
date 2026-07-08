@@ -607,12 +607,17 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
   const tz = req.window.tzOffsetMinutes;
   const start = Date.UTC(req.window.start.year, req.window.start.month - 1, req.window.start.day);
   const birthWarnings = fp ? fp.meta.boundaryWarnings : [];
+  // Only true boundary-PROXIMITY warnings feed boundaryRisk. The missing-longitude
+  // advisory (solar hour basis without a longitude) is an input gap, already
+  // priced into inputCompleteness — counting it here would double-penalize it
+  // and falsely claim the birth sits near a pillar boundary.
+  const birthProximityWarnings = birthWarnings.filter((w) => !/longitude/i.test(w));
   const all: DayRecommendation[] = [];
   for (let i = 0; i < req.window.days; i++) {
     const d = new Date(start + i * 86400000);
     const civil = { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
     const solarInstantUtc = Date.UTC(civil.year, civil.month - 1, civil.day, 12) - tz * 60000;
-    all.push(evaluateDay(civil, solarInstantUtc, req, chart, dayun, birthWarnings));
+    all.push(evaluateDay(civil, solarInstantUtc, req, chart, dayun, birthProximityWarnings));
   }
 
   const recommendations = all

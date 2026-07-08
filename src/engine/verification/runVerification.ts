@@ -70,16 +70,23 @@ export async function verifyDecisionResult(
     }),
   );
 
-  // 2. Natal pillars vs lunar-javascript EightChar (when personalized).
+  // 2. Natal pillars vs lunar-javascript EightChar (when personalized). The
+  //    comparator receives the engine's solar-corrected effective wall-clock so
+  //    an hour-basis convention it cannot express is not misread as an error.
   if (req.birth) {
     const fp = buildFourPillars(req.birth, req.convention);
     fields.push(
-      ...verifyNatalChart(req.birth, req.convention, {
-        year: fp.year.hanzi,
-        month: fp.month.hanzi,
-        day: fp.day.hanzi,
-        hour: fp.hour.hanzi,
-      }),
+      ...verifyNatalChart(
+        req.birth,
+        req.convention,
+        {
+          year: fp.year.hanzi,
+          month: fp.month.hanzi,
+          day: fp.day.hanzi,
+          hour: fp.hour.hanzi,
+        },
+        fp.meta.normalized.effective,
+      ),
     );
   }
 

@@ -101,12 +101,12 @@ describe("lunar-javascript cross-check — natal charts", () => {
     expect(fp.year.hanzi).toBe("己卯");
     expect(fp.month.hanzi).toBe("丙子");
     expect(fp.day.hanzi).toBe("戊午");
-    const fields = verifyNatalChart(birth, ZIPING_DEFAULT, {
-      year: fp.year.hanzi,
-      month: fp.month.hanzi,
-      day: fp.day.hanzi,
-      hour: fp.hour.hanzi,
-    });
+    const fields = verifyNatalChart(
+      birth,
+      ZIPING_DEFAULT,
+      { year: fp.year.hanzi, month: fp.month.hanzi, day: fp.day.hanzi, hour: fp.hour.hanzi },
+      fp.meta.normalized.effective,
+    );
     for (const f of fields) {
       expect(f.status, `${f.field}: expected=${String(f.expected)} actual=${String(f.actual)}`).toBe("pass");
     }
@@ -115,12 +115,12 @@ describe("lunar-javascript cross-check — natal charts", () => {
   it("confirms the baseline test chart 1990-06-15 14:30 across all four pillars", () => {
     const birth = { year: 1990, month: 6, day: 15, hour: 14, minute: 30, tzOffsetMinutes: 480 } as const;
     const fp = buildFourPillars(birth, ZIPING_DEFAULT);
-    const fields = verifyNatalChart(birth, ZIPING_DEFAULT, {
-      year: fp.year.hanzi,
-      month: fp.month.hanzi,
-      day: fp.day.hanzi,
-      hour: fp.hour.hanzi,
-    });
+    const fields = verifyNatalChart(
+      birth,
+      ZIPING_DEFAULT,
+      { year: fp.year.hanzi, month: fp.month.hanzi, day: fp.day.hanzi, hour: fp.hour.hanzi },
+      fp.meta.normalized.effective,
+    );
     for (const f of fields) {
       expect(f.status, `${f.field}: expected=${String(f.expected)} actual=${String(f.actual)}`).toBe("pass");
     }
@@ -130,12 +130,12 @@ describe("lunar-javascript cross-check — natal charts", () => {
     const birth = { year: 2026, month: 3, day: 10, hour: 23, minute: 30, tzOffsetMinutes: 480 } as const;
     const fp = buildFourPillars(birth, ZIPING_ZI_ROLLOVER);
     expect(fp.day.hanzi).toBe("甲申"); // rolled to the next day
-    const fields = verifyNatalChart(birth, ZIPING_ZI_ROLLOVER, {
-      year: fp.year.hanzi,
-      month: fp.month.hanzi,
-      day: fp.day.hanzi,
-      hour: fp.hour.hanzi,
-    });
+    const fields = verifyNatalChart(
+      birth,
+      ZIPING_ZI_ROLLOVER,
+      { year: fp.year.hanzi, month: fp.month.hanzi, day: fp.day.hanzi, hour: fp.hour.hanzi },
+      fp.meta.normalized.effective,
+    );
     expect(fields.find((f) => f.field === "dayPillar")?.status).toBe("pass");
     expect(fields.find((f) => f.field === "hourPillar")?.status).toBe("pass"); // both give 甲子
   });
@@ -144,15 +144,38 @@ describe("lunar-javascript cross-check — natal charts", () => {
     const birth = { year: 2026, month: 3, day: 10, hour: 23, minute: 30, tzOffsetMinutes: 480 } as const;
     const fp = buildFourPillars(birth, ZIPING_DEFAULT);
     expect(fp.day.hanzi).toBe("癸未"); // civil date keeps the day
-    const fields = verifyNatalChart(birth, ZIPING_DEFAULT, {
-      year: fp.year.hanzi,
-      month: fp.month.hanzi,
-      day: fp.day.hanzi,
-      hour: fp.hour.hanzi,
-    });
+    const fields = verifyNatalChart(
+      birth,
+      ZIPING_DEFAULT,
+      { year: fp.year.hanzi, month: fp.month.hanzi, day: fp.day.hanzi, hour: fp.hour.hanzi },
+      fp.meta.normalized.effective,
+    );
     expect(fields.find((f) => f.field === "dayPillar")?.status).toBe("pass"); // sect 2 matches
     const hour = fields.find((f) => f.field === "hourPillar")!;
     expect(hour.status).toBe("warn"); // 晚子時 school split — documented, non-blocking
     expect(hour.blocking).toBe(false);
+  });
+});
+
+describe("lunar-javascript cross-check — solar hour-basis conventions (review regression)", () => {
+  it("true-solar London birth near midnight: convention difference is NOT a blocking failure", () => {
+    // Solar correction ≈ −61 min rolls the engine's effective day back to Jun 14;
+    // the comparator can't express 真太陽時, so it must be fed the corrected time.
+    const birth = { year: 1995, month: 6, day: 15, hour: 0, minute: 30, tzOffsetMinutes: 60, longitudeEast: -0.1 } as const;
+    const trueSolar = { ...ZIPING_DEFAULT, id: "ziping_true_solar_v1", hourBasis: "true_solar" as const };
+    const fp = buildFourPillars(birth, trueSolar);
+    expect(fp.meta.normalized.effective.day).toBe(14); // the correction crossed midnight
+    const fields = verifyNatalChart(
+      birth,
+      trueSolar,
+      { year: fp.year.hanzi, month: fp.month.hanzi, day: fp.day.hanzi, hour: fp.hour.hanzi },
+      fp.meta.normalized.effective,
+    );
+    const day = fields.find((f) => f.field === "dayPillar")!;
+    expect(day.status, `dayPillar expected=${String(day.expected)} actual=${String(day.actual)}`).toBe("pass");
+    expect(day.notes?.join(" ")).toMatch(/solar-corrected/);
+    const hour = fields.find((f) => f.field === "hourPillar")!;
+    // Effective 23:29 under civil-midnight day boundary → 晚子時 school split at worst.
+    expect(hour.status).not.toBe("fail");
   });
 });

@@ -317,12 +317,14 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
   else strength = "balanced";
 
   // Near-threshold instability: the classification governs the entire
-  // favourable-element set, so sitting within ±0.02 of a governing cut-point
-  // is a real fragility the confidence layer must see.
+  // favourable-element set, so sitting within ±0.02 of a GOVERNING cut-point
+  // is a real fragility the confidence layer must see. Which cut governs
+  // depends on month command: with it, strong begins at 0.45 (0.52 is inert —
+  // a 0.50 chart with command cannot flip); without it, at 0.52.
   const NEAR = 0.02;
   const nearWeak = Math.abs(adjusted - 0.34) < NEAR;
   const nearCommand = hasMonthCommand && Math.abs(adjusted - 0.45) < NEAR;
-  const nearStrong = Math.abs(adjusted - 0.52) < NEAR;
+  const nearStrong = !hasMonthCommand && Math.abs(adjusted - 0.52) < NEAR;
   const nearThreshold = nearWeak || nearCommand || nearStrong;
   const nearWhich = nearWeak
     ? "weak/balanced (0.34)"

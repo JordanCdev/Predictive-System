@@ -110,12 +110,13 @@ export async function fetchSunEclipticLongitudes(
       const samples: JplSample[] = [];
       for (const line of result.slice(soe + 5, eoe).split("\n")) {
         const cells = line.split(",").map((c) => c.trim());
-        // CSV columns: date, [flags…,] ObsEcLon, ObsEcLat — longitude is the
-        // first numeric cell after the date that parses as a finite number.
+        // CSV columns: date, <empty flag cols…>, ObsEcLon, ObsEcLat — longitude
+        // is the first NON-EMPTY numeric cell after the date (Number("") is 0,
+        // so empty flag columns must be excluded explicitly).
         if (cells.length < 3 || !cells[0]) continue;
-        const lon = cells.slice(1).map(Number).find((n) => Number.isFinite(n));
-        if (lon === undefined) continue;
-        samples.push({ utcIso: parseHorizonsDate(cells[0]), eclLonDeg: lon });
+        const lonCell = cells.slice(1).find((c) => c !== "" && Number.isFinite(Number(c)));
+        if (lonCell === undefined) continue;
+        samples.push({ utcIso: parseHorizonsDate(cells[0]), eclLonDeg: Number(lonCell) });
       }
       if (samples.length === 0) throw new Error("JPL Horizons response parsed to zero samples.");
       return samples;

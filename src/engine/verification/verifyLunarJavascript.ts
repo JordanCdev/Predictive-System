@@ -229,12 +229,29 @@ export function verifyNatalChart(
   birth: MomentInput,
   convention: ConventionSet,
   internal: { year: string; month: string; day: string; hour: string },
+  /** The engine's solar-corrected effective wall-clock (fp.meta.normalized.effective).
+   *  The comparator cannot express a 真太陽時/mean-solar hour basis, so the probe
+   *  feeds it the CORRECTED time: that checks the pillar ARITHMETIC while
+   *  neutralizing a convention the comparator does not have. Under civil_clock
+   *  this equals the raw birth wall-clock. */
+  effective: { year: number; month: number; day: number; hour: number; minute: number },
 ): FieldAgreement[] {
   const fields: FieldAgreement[] = [];
+  const solarBasis = convention.hourBasis !== "civil_clock";
+  const solarNote = solarBasis
+    ? `Comparator fed the engine's solar-corrected time (${convention.hourBasis}); the correction itself is verified separately against the equation of time.`
+    : undefined;
 
-  // DATE/TIME-based probe: local birth wall-clock (day + hour pillars follow
-  // the local civil date, which the comparator treats frame-neutrally).
-  const localLunar = Solar.fromYmdHms(birth.year, birth.month, birth.day, birth.hour, birth.minute, 0).getLunar();
+  // DATE/TIME-based probe: the effective wall-clock (day + hour pillars follow
+  // the effective civil date, which the comparator treats frame-neutrally).
+  const localLunar = Solar.fromYmdHms(
+    effective.year,
+    effective.month,
+    effective.day,
+    effective.hour,
+    effective.minute,
+    0,
+  ).getLunar();
   const ec = localLunar.getEightChar();
   ec.setSect(convention.dayBoundary === "zi_23" ? 1 : 2);
 
@@ -245,13 +262,16 @@ export function verifyNatalChart(
     expected: ec.getDay(),
     actual: internal.day,
     blocking: true,
-    notes: [`Comparator sect ${convention.dayBoundary === "zi_23" ? "1 (23:00 rollover)" : "2 (civil midnight)"} matched to the engine convention.`],
+    notes: [
+      `Comparator sect ${convention.dayBoundary === "zi_23" ? "1 (23:00 rollover)" : "2 (civil midnight)"} matched to the engine convention.`,
+      ...(solarNote ? [solarNote] : []),
+    ],
   });
 
   // Hour pillar: at 23:00–23:59 the comparator ALWAYS uses the next day's stem
   // (晚子時); under civil-midnight this engine keeps the current day's stem — a
   // school split, not an arithmetic disagreement.
-  const hourSchoolSplit = birth.hour === 23 && convention.dayBoundary === "civil_midnight";
+  const hourSchoolSplit = effective.hour === 23 && convention.dayBoundary === "civil_midnight";
   const externalHour = ec.getTime();
   fields.push({
     field: "hourPillar",
@@ -262,7 +282,9 @@ export function verifyNatalChart(
     blocking: false,
     notes: hourSchoolSplit
       ? ["23:00–23:59 hour-stem school split (晚子時 next-day stem vs civil-midnight current-day stem)."]
-      : undefined,
+      : solarNote
+        ? [solarNote]
+        : undefined,
   });
 
   // INSTANT-based probe: birth UTC instant in the CST frame for year/month

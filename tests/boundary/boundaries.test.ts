@@ -127,3 +127,40 @@ describe("near-threshold Day-Master strength (0.34 / 0.45 / 0.52 cut-points)", (
     expect(top.confidence.notes.join(" ")).toMatch(/cut-point/);
   });
 });
+
+describe("review regressions — near-threshold gating and boundary-risk provenance", () => {
+  it("a strong-with-command chart near the inert 0.52 line is NOT flagged fragile", () => {
+    // 1980-02-22 02:00 +480: adjusted ≈ 0.508, month command held → 'strong' via
+    // the 0.45 branch; ±0.02 cannot flip it, so no near-threshold flag.
+    const fp = buildFourPillars({ year: 1980, month: 2, day: 22, hour: 2, minute: 0, tzOffsetMinutes: 480 }, ZIPING_DEFAULT);
+    const dm = buildBaziChart(fp).dayMaster;
+    expect(dm.strength).toBe("strong");
+    expect(dm.hasMonthCommand).toBe(true);
+    expect(dm.strengthBreakdown.adjusted).toBeGreaterThan(0.5);
+    expect(dm.strengthBreakdown.adjusted).toBeLessThan(0.52 + 0.02);
+    expect(dm.strengthBreakdown.nearThreshold).toBe(false);
+  });
+
+  it("missing-longitude advisory is priced into input completeness, never boundary risk", () => {
+    const base: DecisionRequest = {
+      birth: { year: 1990, month: 6, day: 15, hour: 10, minute: 30, tzOffsetMinutes: 480 },
+      sex: "male",
+      convention: ZIPING_DEFAULT,
+      objective: objectiveById("contract_signing"),
+      window: { start: { year: 2026, month: 9, day: 1 }, days: 14, tzOffsetMinutes: 480 },
+      options: { sweeps: false },
+    };
+    const trueSolar = evaluateDecision({
+      ...base,
+      convention: { ...base.convention, id: "ziping_true_solar_v1", hourBasis: "true_solar" },
+    });
+    const civil = evaluateDecision(base);
+    const a = trueSolar.recommendations[0].confidence;
+    const b = civil.recommendations[0].confidence;
+    // Input completeness takes the hit; boundary risk must be identical — the
+    // birth is nowhere near a pillar boundary in either convention.
+    expect(a.components.inputCompleteness).toBeLessThan(b.components.inputCompleteness);
+    expect(a.components.boundaryRisk).toBe(b.components.boundaryRisk);
+    expect(a.notes.join(" ")).not.toMatch(/sits near a pillar boundary/);
+  });
+});
