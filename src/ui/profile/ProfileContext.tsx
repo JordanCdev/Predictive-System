@@ -14,10 +14,19 @@ import { DEFAULT_TZ, TODAY_CIVIL, ageOn, birthCivilOf, buildRequest, canonicalFo
 
 const PERSON_STORE = "wei_person_v1";
 
+/** A structurally-valid Person needs at least a string birthDate + sex; anything
+ *  else (corrupt/partial/legacy localStorage) is treated as "no profile" so a bad
+ *  record can never crash the derived-chart computation. */
+function isPerson(v: unknown): v is Person {
+  const p = v as Partial<Person> | null;
+  return !!p && typeof p.birthDate === "string" && (p.sex === "male" || p.sex === "female");
+}
+
 function loadPerson(): Person | null {
   try {
     const raw = localStorage.getItem(PERSON_STORE);
-    return raw ? (JSON.parse(raw) as Person) : null;
+    const parsed = raw ? JSON.parse(raw) : null;
+    return isPerson(parsed) ? parsed : null;
   } catch {
     return null;
   }
@@ -58,17 +67,22 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Derive the chart + luck cycle once per person, independent of any objective.
+  // Defensive: a malformed persisted person must degrade to "no chart", never throw.
   const derived = useMemo(() => {
-    const canonical = canonicalFor(person);
-    if (!person || !canonical || !canonical.moment) {
-      return { chart: null as BaziChart | null, dayun: null as DaYun | null, warnings: canonical?.warnings ?? [] };
+    try {
+      const canonical = canonicalFor(person);
+      if (!person || !canonical || !canonical.moment) {
+        return { chart: null as BaziChart | null, dayun: null as DaYun | null, warnings: canonical?.warnings ?? [] };
+      }
+      const fp = buildFourPillars(canonical.moment, canonical.convention);
+      return {
+        chart: buildBaziChart(fp),
+        dayun: computeDaYun(fp, person.sex),
+        warnings: [...fp.meta.boundaryWarnings, ...canonical.warnings],
+      };
+    } catch {
+      return { chart: null as BaziChart | null, dayun: null as DaYun | null, warnings: [] as string[] };
     }
-    const fp = buildFourPillars(canonical.moment, canonical.convention);
-    return {
-      chart: buildBaziChart(fp),
-      dayun: computeDaYun(fp, person.sex),
-      warnings: [...fp.meta.boundaryWarnings, ...canonical.warnings],
-    };
   }, [person]);
 
   const evaluate = useCallback(

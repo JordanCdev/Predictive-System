@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { Objective, matchObjective, objectivePlain } from "../engine/index.ts";
+import { Objective, objectivePlain, parseActivity } from "../engine/index.ts";
+
+const metaChipStyle = { fontSize: 11.5, color: "var(--muted)", border: "1px solid var(--hairline)", borderRadius: 999, padding: "1px 9px", textTransform: "capitalize" as const };
 
 export const WINDOW_OPTIONS = [
   { days: 14, label: "2 weeks" },
@@ -29,11 +31,11 @@ export function AskStep({
   const [query, setQuery] = useState("");
   const chosen = objectiveId ? objectives.find((o) => o.id === objectiveId) : null;
 
-  // Deterministic free-text → objective. Updates as the user types.
-  const match = useMemo(() => (query.trim().length >= 2 ? matchObjective(query) : null), [query]);
+  // Deterministic free-text → structured activity profile. Updates as you type.
+  const activity = useMemo(() => (query.trim().length >= 2 ? parseActivity(query) : null), [query]);
 
   const applyMatch = () => {
-    if (match) onObjective(match.objective.id);
+    if (activity) onObjective(activity.objective.id);
   };
 
   return (
@@ -47,44 +49,57 @@ export function AskStep({
           className="obj-search"
           type="text"
           value={query}
-          placeholder="e.g. “sign a contract”, “buy a house”, “launch my shop”…"
+          placeholder="e.g. “ask for a raise”, “move to China”, “launch my website”, “book surgery”…"
           aria-label="Describe what you're trying to time"
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && match) {
+            if (e.key === "Enter" && activity) {
               applyMatch();
             }
           }}
         />
         {query.trim().length >= 2 && (
           <div className="search-hint" aria-live="polite">
-            {match ? (
+            {activity ? (
               <>
-                <button className={`match-chip ${match.objective.id === objectiveId ? "on" : ""}`} onClick={applyMatch}>
-                  <span className="emoji" aria-hidden="true">{match.objective.emoji}</span>
+                <button className={`match-chip ${activity.objective.id === objectiveId ? "on" : ""}`} onClick={applyMatch}>
+                  <span className="emoji" aria-hidden="true">{activity.objective.emoji}</span>
                   <span>
-                    Interpreted as <b>{objectivePlain(match.objective.id).gerund}</b>
-                    {match.objective.id === objectiveId ? " ✓" : " — tap to use"}
+                    Interpreted as <b>{objectivePlain(activity.objective.id).gerund}</b>
+                    {activity.objective.id === objectiveId ? " ✓" : " — tap to use"}
                   </span>
                 </button>
-                {/* Alternatives make a misread one tap to fix instead of silently wrong. */}
-                {match.alternatives.length > 0 && (
-                  <span className="alt-matches" style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                    <span className="no-match" style={{ opacity: 0.75 }}>
-                      {match.ambiguous ? "or did you mean" : "or"}
+                {/* The structured read: which domain, how risky, how binding. */}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                  <span style={metaChipStyle}>{activity.domain}</span>
+                  <span style={metaChipStyle}>{activity.risk === "high" ? "high-stakes" : activity.risk === "medium" ? "moderate stakes" : "low-stakes"}</span>
+                  <span style={metaChipStyle}>{activity.binding ? "binding commitment" : "non-binding"}</span>
+                </div>
+                {/* One clarifying question when the read is ambiguous. */}
+                {activity.clarification ? (
+                  <div style={{ marginTop: 8 }}>
+                    <span className="no-match" style={{ opacity: 0.8 }}>{activity.clarification.question} </span>
+                    <span className="alt-matches" style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                      {activity.clarification.options.map((o) => (
+                        <button key={o.id} className={`match-chip ${o.id === objectiveId ? "on" : ""}`} style={{ opacity: 0.9 }} onClick={() => onObjective(o.id)}>
+                          <span className="emoji" aria-hidden="true">{o.emoji}</span>
+                          <span>{objectivePlain(o.id).gerund}</span>
+                        </button>
+                      ))}
                     </span>
-                    {match.alternatives.map((alt) => (
-                      <button
-                        key={alt.objective.id}
-                        className="match-chip"
-                        style={{ opacity: 0.85 }}
-                        onClick={() => onObjective(alt.objective.id)}
-                      >
-                        <span className="emoji" aria-hidden="true">{alt.objective.emoji}</span>
-                        <span>{objectivePlain(alt.objective.id).gerund}</span>
-                      </button>
-                    ))}
-                  </span>
+                  </div>
+                ) : (
+                  activity.alternatives.length > 0 && (
+                    <span className="alt-matches" style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+                      <span className="no-match" style={{ opacity: 0.75 }}>or</span>
+                      {activity.alternatives.map((o) => (
+                        <button key={o.id} className="match-chip" style={{ opacity: 0.85 }} onClick={() => onObjective(o.id)}>
+                          <span className="emoji" aria-hidden="true">{o.emoji}</span>
+                          <span>{objectivePlain(o.id).gerund}</span>
+                        </button>
+                      ))}
+                    </span>
+                  )
                 )}
               </>
             ) : (

@@ -19,6 +19,7 @@
 import { BaziChart, DaYun } from "./bazi.ts";
 import { DayRecommendation, DecisionResult } from "./decision.ts";
 import { OBJECTIVES, Objective, objectiveById } from "./objectives.ts";
+import { ActivityTag } from "./tongshu.ts";
 import { FivePhase, GodGroup } from "./symbols.ts";
 import {
   elementPlain,
@@ -50,7 +51,8 @@ const OBJECTIVE_KEYWORDS: Record<string, Keyword[]> = {
     kw("lease", 2), kw("settlement", 2), kw("close", 1), kw("commit", 1),
   ],
   open_business: [
-    kw("open a business", 5), kw("start a business", 5), kw("grand opening", 5), kw("go live", 4), kw("opening day", 4),
+    kw("open a business", 5), kw("start a business", 5), kw("grand opening", 5), kw("launch a website", 5),
+    kw("launch website", 5), kw("launch my", 4), kw("go live", 4), kw("opening day", 4), kw("website", 3),
     kw("launch", 3), kw("startup", 3), kw("business", 3), kw("open shop", 3), kw("store", 2), kw("shop", 2),
     kw("company", 2), kw("trading", 2), kw("opening", 2), kw("found", 1),
   ],
@@ -61,8 +63,10 @@ const OBJECTIVE_KEYWORDS: Record<string, Keyword[]> = {
   ],
   negotiation_meeting: [
     kw("important meeting", 5), kw("negotiation", 5), kw("board meeting", 5), kw("job interview", 5),
+    kw("ask for a raise", 5), kw("pay rise", 5), kw("first date", 5),
     kw("negotiate", 4), kw("pitch", 3), kw("meeting", 3), kw("interview", 3), kw("mediation", 3),
-    kw("presentation", 3), kw("talks", 2), kw("talk", 1), kw("discuss", 1),
+    kw("presentation", 3), kw("raise", 3), kw("date", 3), kw("ask out", 3), kw("email", 2),
+    kw("talks", 2), kw("talk", 1), kw("discuss", 1),
   ],
   wedding_marriage: [
     kw("get married", 5), kw("tie the knot", 5), kw("marriage registration", 5), kw("wedding", 4),
@@ -70,9 +74,9 @@ const OBJECTIVE_KEYWORDS: Record<string, Keyword[]> = {
     kw("register marriage", 4), kw("nuptials", 3), kw("bride", 2), kw("groom", 2),
   ],
   moving_house: [
-    kw("move house", 5), kw("move home", 5), kw("move in", 4), kw("new home", 4), kw("relocate", 4),
-    kw("relocation", 4), kw("moving", 3), kw("move", 2), kw("apartment", 2), kw("house move", 4),
-    kw("change address", 4),
+    kw("move house", 5), kw("move home", 5), kw("move abroad", 5), kw("move overseas", 5), kw("move to", 4),
+    kw("move in", 4), kw("new home", 4), kw("relocate", 4), kw("relocation", 4), kw("moving", 3),
+    kw("emigrate", 4), kw("move", 2), kw("apartment", 2), kw("house move", 4), kw("change address", 4),
   ],
   travel: [
     kw("go on a trip", 5), kw("start a journey", 5), kw("travel abroad", 5), kw("set off", 4),
@@ -96,7 +100,8 @@ const OBJECTIVE_KEYWORDS: Record<string, Keyword[]> = {
   ],
   study_exam: [
     kw("sit an exam", 5), kw("start studies", 5), kw("submit my thesis", 5), kw("take a test", 5),
-    kw("exam", 4), kw("study", 3), kw("studies", 3), kw("university", 3), kw("enroll", 3), kw("enrol", 3),
+    kw("apply for a scholarship", 5), kw("scholarship", 4), kw("exam", 4), kw("study", 3), kw("studies", 3),
+    kw("university", 3), kw("enroll", 3), kw("enrol", 3), kw("application", 2), kw("apply", 2),
     kw("course", 2), kw("test", 2), kw("school", 2), kw("thesis", 3), kw("dissertation", 3), kw("learn", 1),
   ],
 };
@@ -160,6 +165,66 @@ export function matchObjective(query: string): ObjectiveMatch | null {
     .map((s) => ({ objective: objectiveById(s.id), score: s.score }));
   const ambiguous = runnerUp > 0 && margin < 0.34;
   return { objective: objectiveById(top.id), confidence, matched, alternatives, ambiguous };
+}
+
+// ── 1b. Free-text → structured activity profile ─────────────────────────────
+// Enriches the objective match with the metadata a planner needs: how risky and
+// binding the move is, which life domain it sits in, and — when the read is
+// ambiguous — a single clarifying choice (ROADMAP Phase 5).
+
+export type ActivityDomain = "movement" | "study" | "wealth" | "relationship" | "career" | "health" | "general";
+export type RiskLevel = "low" | "medium" | "high";
+
+const ACTIVITY_META: Record<string, { risk: RiskLevel; binding: boolean; domain: ActivityDomain }> = {
+  contract_signing: { risk: "high", binding: true, domain: "wealth" },
+  open_business: { risk: "high", binding: true, domain: "career" },
+  career_move: { risk: "high", binding: true, domain: "career" },
+  negotiation_meeting: { risk: "medium", binding: false, domain: "career" },
+  wedding_marriage: { risk: "high", binding: true, domain: "relationship" },
+  moving_house: { risk: "high", binding: true, domain: "movement" },
+  travel: { risk: "medium", binding: false, domain: "movement" },
+  renovation: { risk: "high", binding: true, domain: "general" },
+  medical_procedure: { risk: "high", binding: true, domain: "health" },
+  investment_purchase: { risk: "high", binding: true, domain: "wealth" },
+  study_exam: { risk: "medium", binding: false, domain: "study" },
+};
+
+export interface ActivityProfile {
+  objective: Objective;
+  primaryTag: ActivityTag;
+  risk: RiskLevel;
+  binding: boolean;
+  domain: ActivityDomain;
+  matched: string[];
+  confidence: number;
+  /** Runner-up objectives, for one-tap correction. */
+  alternatives: Objective[];
+  /** When the read is ambiguous, a single clarifying question + choices. */
+  clarification: { question: string; options: Objective[] } | null;
+}
+
+/** Free text → a structured activity profile (objective + risk / binding /
+ *  domain + a clarification when ambiguous). Deterministic; null when nothing
+ *  matches. The suitable Tong Shu tag is `objective.primaryTag`, and the personal
+ *  BaZi weighting is `objective.godBias` / `objective.weights`. */
+export function parseActivity(query: string): ActivityProfile | null {
+  const m = matchObjective(query);
+  if (!m) return null;
+  const meta = ACTIVITY_META[m.objective.id] ?? { risk: "medium" as RiskLevel, binding: false, domain: "general" as ActivityDomain };
+  const alternatives = m.alternatives.map((a) => a.objective);
+  const clarification =
+    m.ambiguous && alternatives.length > 0 ? { question: "Which of these did you mean?", options: [m.objective, ...alternatives] } : null;
+  return {
+    objective: m.objective,
+    primaryTag: m.objective.primaryTag,
+    risk: meta.risk,
+    binding: meta.binding,
+    domain: meta.domain,
+    matched: m.matched,
+    confidence: m.confidence,
+    alternatives,
+    clarification,
+  };
 }
 
 // ── 2. Free-text → timeframe (days) ─────────────────────────────────────────

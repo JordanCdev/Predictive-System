@@ -23,7 +23,7 @@ const isClash = (d: DayRecommendation) => d.shenShaTags.some((t) => t.code === "
 function parseYm(ym: string | undefined): { year: number; month: number } {
   if (ym && /^\d{4}-\d{2}$/.test(ym)) {
     const [y, m] = ym.split("-").map(Number);
-    if (m >= 1 && m <= 12) return { year: y, month: m };
+    if (y >= 1000 && m >= 1 && m <= 12) return { year: y, month: m };
   }
   const [y, m] = TODAY_ISO.split("-").map(Number);
   return { year: y, month: m };
@@ -68,6 +68,7 @@ export function MonthlyPage() {
       career: { day: 0, score: -1 }, wealth: { day: 0, score: -1 }, relationship: { day: 0, score: -1 }, health: { day: 0, score: -1 },
     };
     for (const d of days) {
+      if (d.hardReject) continue;
       for (const a of lifeAreaScores(chart, d.tongshu.dayGanzhi).areas) {
         if (a.score > out[a.key].score) out[a.key] = { day: d.civil.day, score: a.score };
       }
@@ -103,7 +104,7 @@ export function MonthlyPage() {
             return (
               <button key={day} className={`cal-cell ${isToday ? "sel" : ""}`} onClick={() => nav(`/day/${iso}`)} title={rec ? `Score ${rec.recommendationScore}` : ""}>
                 <span className="cd">{day}</span>
-                {rec && <span className="qdot" style={{ background: isClash(rec) || isTaboo(rec) ? "var(--cinnabar)" : scoreColor(rec.recommendationScore) }} />}
+                {rec && <span className="qdot" style={{ background: rec.hardReject || isClash(rec) || isTaboo(rec) ? "var(--cinnabar)" : scoreColor(rec.recommendationScore) }} />}
                 {savedDays.has(day) && <span className="qdot" style={{ background: "var(--gold)", marginTop: 2 }} title="You saved a decision on this day" />}
               </button>
             );

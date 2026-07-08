@@ -13,7 +13,8 @@ const DETAIL_HORIZON = 5; // years of month-level detail, per spec
 export function YearlyPage() {
   const params = useParams();
   const nav = useNavigate();
-  const year = /^\d{4}$/.test(params.year ?? "") ? Number(params.year) : CURRENT_YEAR;
+  const parsedYear = /^\d{4}$/.test(params.year ?? "") ? Number(params.year) : NaN;
+  const year = parsedYear >= 1000 ? parsedYear : CURRENT_YEAR;
   const { chart, dayun, birthCivil } = useProfile();
   const [openMonth, setOpenMonth] = useState<string | null>(null);
 

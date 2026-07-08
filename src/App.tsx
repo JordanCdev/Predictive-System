@@ -1,5 +1,6 @@
 import { HashRouter, NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { ProfileProvider, useProfile } from "./ui/profile/ProfileContext.tsx";
+import { ErrorBoundary } from "./ui/ErrorBoundary.tsx";
 import { TODAY_ISO } from "./ui/shared.ts";
 import { elementPlain } from "./engine/index.ts";
 import { DailyPage } from "./pages/DailyPage.tsx";
@@ -64,6 +65,7 @@ export function App() {
         <div className="app">
           <NavBar />
           <main className="page">
+            <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Navigate to="/today" replace />} />
               <Route path="/today" element={<DailyPage />} />
@@ -76,6 +78,7 @@ export function App() {
               <Route path="/settings/profile" element={<ProfilePage />} />
               <Route path="*" element={<Navigate to="/today" replace />} />
             </Routes>
+            </ErrorBoundary>
           </main>
           <Footer />
         </div>

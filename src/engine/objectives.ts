@@ -227,7 +227,9 @@ export const GENERAL_DAY_OBJECTIVE: Objective = {
   emoji: "📅",
   description: "An overall reading of a day, not tied to a specific undertaking.",
   primaryTag: "general",
-  vetoOfficers: [DESTRUCTION],
+  // No hard vetoes for a GENERAL reading — every day gets a rating (a 破 day just
+  // scores low via its officer, rather than vanishing from planner views).
+  vetoOfficers: [],
   hardCalendarTaboos: [],
   clashVeto: false,
   godBias: [],

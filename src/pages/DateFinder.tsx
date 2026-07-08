@@ -174,7 +174,9 @@ export function DateFinderPage() {
     const next = result.allDays[selIndex + delta];
     if (next) selectDay(next.isoDate);
   };
-  const chartWarnings = [...result.meta.boundaryWarnings, ...warnings];
+  // The context `warnings` already includes fp.meta.boundaryWarnings + canonical
+  // warnings; result.meta.boundaryWarnings is the same set, so use one (no dup).
+  const chartWarnings = warnings;
 
   const widen = () => setWindowDays((d) => WINDOW_LADDER.find((w) => w > d) ?? WINDOW_LADDER[WINDOW_LADDER.length - 1]);
 

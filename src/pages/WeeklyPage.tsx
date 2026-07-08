@@ -32,9 +32,9 @@ export function WeeklyPage() {
 
   const days = useMemo(() => evaluateWindow(GENERAL_DAY_OBJECTIVE.id, civilOfIso(weekStart), 7).allDays, [evaluateWindow, weekStart]);
 
-  const ranked = [...days].sort((a, b) => b.recommendationScore - a.recommendationScore);
+  const ranked = [...days].filter((d) => !d.hardReject).sort((a, b) => b.recommendationScore - a.recommendationScore);
   const bestDays = ranked.filter((d) => d.recommendationScore >= 58 && !isClash(d) && !isTaboo(d)).slice(0, 3);
-  const cautionDays = days.filter((d) => isClash(d) || isTaboo(d) || d.recommendationScore < 45);
+  const cautionDays = days.filter((d) => d.hardReject || isClash(d) || isTaboo(d) || d.recommendationScore < 45);
   const favourable = days.filter((d) => d.recommendationScore >= 58).length;
   const theme =
     favourable >= 5 ? "A broadly supportive week — a good stretch to move things forward."
