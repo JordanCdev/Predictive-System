@@ -451,7 +451,7 @@ File: `src/engine/decision.ts`. Entry: `evaluateDecision(request) → DecisionRe
 window: { start{Y,M,D}, days, tzOffsetMinutes } }`.
 
 **Flow:** build four pillars → BaZi chart → Da Yun → for each day in the window evaluate →
-filter out hard-rejects → sort accepted by `finalScore` desc (tie-break: earlier ISO date).
+filter out hard-rejects → sort accepted by `recommendationScore` desc (tie-break: earlier ISO date).
 
 Per-day solar instant = local noon of that civil day (`Date.UTC(Y,M,D,12) − tz·60000`).
 
@@ -495,16 +495,22 @@ Result `clamp`-ed to 0..100.
 Hour ganzhi stem = `mod(dayStem*2 + branchIndex, 10)`. **Best hour** = max score, ties broken
 by earliest branch. Evaluator score = best hour's score. All 12 returned for display.
 
-### 8.2 Final score (MCDA)
+### 8.2 Recommendation score (MCDA)
 
 ```
-finalScore = w.officer·officerScore + w.road·roadScore
-           + w.personal·personalScore + w.hour·hourScore     (rounded to 1 dp)
+recommendationScore = w.officer·officerScore + w.road·roadScore
+                    + w.personal·personalScore + w.hour·hourScore   (rounded to 1 dp)
 ```
+
+A transparent heuristic ranking under this rule set — not a prediction, and separate from
+`confidence` (§9.3).
 
 ### 8.3 Hard constraints (vetoes → `hardReject = true`)
 
 - `officer.index ∈ objective.vetoOfficers` → rejected with reason.
+- A calendar taboo in `objective.hardCalendarTaboos` present on the day (歲破 `year_break`,
+  四離 `four_departure`, 四絕 `four_severance`) → rejected. Defaults: wedding / moving /
+  open_business / renovation veto all three; contract vetoes 歲破+四離; medical none.
 - `objective.clashVeto` and a `clash_day`/`clash_zodiac` tag present → rejected.
 
 Rejected days are excluded from the ranking but **kept and shown** under "vetoed days".
@@ -516,7 +522,7 @@ Rejected days are excluded from the ranking but **kept and shown** under "vetoed
 ### 9.1 Evidence per recommendation (`DayRecommendation`)
 
 `isoDate, civil, weekday, tongshu, dayStemTenGod, bestHour, allHours[12], subScores,
-finalScore, confidence, hardReject, rejectReasons[], rulesFired[], conflicts[],
+recommendationScore, confidence, hardReject, rejectReasons[], rulesFired[], conflicts[],
 shenShaTags[], topReasons[]`.
 
 **`rulesFired`** — each `{ code, layer (tongshu|bazi|shensha|hour), label, effect (signed),
@@ -544,33 +550,39 @@ citation }`. **Citations** (`CITES`) point to spec sections + classical sources:
 
 Conflicts are **shown, never silently resolved**.
 
-### 9.3 Confidence index (`computeConfidence`, spec §12)
+### 9.3 Confidence index (`computeConfidence`, spec §12 — evidence-based, 0–100)
 
-Components and fixed/derived values:
-| Component | Value |
+Inputs (all 0–100; see docs/VERIFICATION.md §6):
+| Component | Source |
 |---|---|
-| calculationReproducibility | 1.0 |
-| sourceQuality | 0.8 |
-| sourceSpecificity | 0.7 |
-| schoolAgreement | `max(0.4, 1 − 0.18 · conflictCount)` |
-| inputQuality | exact 0.95 · approximate 0.7 · hour_unknown 0.5 |
-| validationConcordance | 0.85 |
-| ruleCoverage | 0.65 |
+| calculationReproducibility | always 100 (deterministic, hash-verifiable) |
+| thirdPartyAgreement | measured `VerificationReport` agreement; neutral 50 until applied |
+| conventionStability | convention sweep: 95 / 65 / 35 by severity |
+| inputCompleteness | birth present + time certainty + longitude for solar hour-bases |
+| boundaryRisk (penalty) | 節-in-day, near-cut-point strength, birth-boundary warnings |
+| sourceCoverage | which source families ran: 40 internal → up to 95 |
+| heuristicSensitivity (penalty) | weight sweep: 10 / 45 / 80 by severity |
+| conflictPenalty | up to 25 pts, severity-weighted per conflict |
 
 ```
-overall = 0.20·calc + 0.20·sourceQuality + 0.15·sourceSpecificity
-        + 0.15·schoolAgreement + 0.10·inputQuality + 0.15·validation
-        + 0.05·ruleCoverage          (rounded to 2 dp)
+overall = 0.20·reproducibility + 0.25·thirdPartyAgreement + 0.15·conventionStability
+        + 0.10·inputCompleteness + 0.10·sourceCoverage + 0.10·(100−boundaryRisk)
+        + 0.10·(100−heuristicSensitivity) − conflictPenalty     (clamped 0–100)
 ```
 
-> Confidence reflects reproducibility / source support / school agreement — **not** an
-> empirical probability of any life outcome.
+`ConfidenceBreakdown` also carries `verified` (flips true when
+`applyVerificationReport` folds in a third-party check) and `notes[]` (the evidence trail).
+
+> Confidence is **never** an empirical probability of any life outcome — external sources
+> verify time and calendar facts only.
 
 ### 9.4 `DecisionResult`
 
 `{ meta, subjectChart, dayun, recommendations[] (ranked), rejected[], allDays[] (chronological) }`.
 `meta` = engine versions, convention id+label, objective id+label, `calculationHash`,
-determinism note, window label, favourable/unfavourable elements, boundaryWarnings.
+determinism note, window label, favourable/unfavourable elements, boundaryWarnings,
+`sensitivity` (convention + weight sweep results; null when `options.sweeps === false`) and
+`verification` (the applied `VerificationReport`, else null).
 
 ---
 
@@ -598,13 +610,14 @@ Three presets (`CONVENTION_PRESETS`):
 
 ## 11. Versioning & hashing
 
-**`version.ts` (`VERSIONS`):** engine `0.1.0`, calendarKernel `calendar-1.0.0`, solarModel
-`meeus-low-precision-1.0.0`, symbolTables `symbols-1.0.0`, baziAlgorithm `bazi-ziping-1.0.0`,
-tongshuRulePack `tongshu-jianchu-1.0.0`, decisionPolicy `mcda-1.0.0`, tzdb `host-Intl-runtime`.
+**`version.ts` (`VERSIONS`):** engine `0.2.0`, calendarKernel `calendar-1.0.0`, solarModel
+`vsop87-abridged-1.1.0`, symbolTables `symbols-1.0.0`, baziAlgorithm `bazi-ziping-1.1.0`,
+tongshuRulePack `tongshu-jianchu-1.0.0`, decisionPolicy `mcda-2.0.0`, sensitivity
+`sweeps-1.0.0`, verification `verify-1.0.0`, tzdb `host-Intl-runtime`.
 
 **`hash.ts`:** `canonicalJSON` (recursively key-sorted stringify) + `fnv1a` (32-bit, 8-hex)
 → `hashOf(value)`. `calculationHash` is `hashOf({ birth, sex, convention.id, objective.id,
-window, versions })` — identical inputs ⇒ identical hash.
+window, options, versions })` — identical inputs ⇒ identical hash.
 
 ---
 

@@ -932,12 +932,16 @@ button {
   color: var(--ink);
 }
 .conf-bar .cb-track {
+  display: block;
   height: 6px;
   border-radius: 4px;
   background: var(--hairline);
   overflow: hidden;
 }
 .conf-bar .cb-fill {
+  /* spans are inline by default — without block the width/height are ignored
+     and the bar renders empty. */
+  display: block;
   height: 100%;
   border-radius: 4px;
   background: var(--jade);

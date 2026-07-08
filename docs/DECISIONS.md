@@ -139,7 +139,7 @@ A real, common method — but one method among several. Masters legitimately dif
 | negotiation | .28 | — | — | .20 |
 | travel | — | — | — | .18 |
 
-No canonical basis. `finalScore` is a transparent composite of the author's numbers, not a traditional auspiciousness measure. **Almanac-only mode** (`decision.ts:367-375`) drops personal/hour and renormalizes to `(officer·off + road·road)/(off+road)` — an honest degradation, but then the score is driven *entirely* by two heuristic sub-scores, doubly synthetic.
+No canonical basis. `recommendationScore` is a transparent composite of the author's numbers, not a traditional auspiciousness measure. **Almanac-only mode** (`decision.ts:367-375`) drops personal/hour and renormalizes to `(officer·off + road·road)/(off+road)` — an honest degradation, but then the score is driven *entirely* by two heuristic sub-scores, doubly synthetic.
 
 ### 6.3 The DAY_GOD_SCORE lookup — the other biggest honesty point
 `decision.ts:157` — `[88,80,28,30,82,90,22,84,30,26,78,34]` indexed by day-god. Yellow gods 78–90, black gods 22–34, a made-up ~50-point gap. The yellow/black **classification** is canonical (§3); the 12 specific numbers and their internal ordering (天德=90 > 青龍=88 > 明堂=80) are invented and drive the 16% road-weighted contribution.
@@ -147,11 +147,20 @@ No canonical basis. `finalScore` is a transparent composite of the author's numb
 ### 6.4 Officer raw→score mapping
 `decision.ts:230-234` — `officerScore = clamp(50 + officerRaw·3.5, 0..100)`, where `officerRaw = base(−10..+10) + 6 if good-tag + 1 if 'general' + (−8) if bad-tag`. The good/bad activity lists reflect tradition; the base magnitudes (定=+4, 成/開=+5, 破=−10, 危=−3…), the +6/+1/−8 tag deltas, the ×3.5 gain and 50 midpoint are all invented.
 
-### 6.5 Taboo penalties (soft, not vetoes)
-- **四離四絕** −18 to officer score (`decision.ts:246-258`), skipped for medical.
-- **歲破** −20 to officer score (`decision.ts:261-270`), skipped for medical.
+### 6.5 Taboo penalties — now split hard/soft by objective (v0.2)
+- **四離四絕** −18 to officer score, skipped for medical.
+- **歲破** −20 to officer score, skipped for medical.
+- **Hard exclusions** (`objectives.ts` `hardCalendarTaboos`; enforced in `decision.ts`):
+  weddings, moving, opening a business and renovation hard-veto **all three** taboos;
+  contract signing hard-vetoes 歲破 + 四離; medical stays exempt (求醫 is the classical
+  exception); the remaining objectives keep soft penalties only.
 
-The **taboos themselves** are canonical (大事勿用 / 諸事不宜); the **magnitudes** are invented. Critically, these are *soft* penalties, not hard rejects — so a 歲破 or 四離 day with an otherwise excellent profile **can still surface as a recommendation**. Note the engine thereby treats 大事勿用 as *softer* than a bad officer (破 **is** a hard veto), a debatable calibration many practitioners would reverse.
+The **taboos themselves** are canonical (大事勿用 / 諸事不宜); the penalty **magnitudes**
+remain invented. The earlier candour point — that a 歲破/四離 day with an otherwise
+excellent profile could still surface as a recommendation, treating 大事勿用 as *softer*
+than a bad officer — is **fixed as of v0.2**: for high-stakes objectives these days are
+excluded outright and shown in "ruled out" with a plain reason. Which objectives count as
+high-stakes is itself an editorial choice, recorded here.
 
 ### 6.6 Element accounting knobs
 - **月令 ×1.6 boost** (`bazi.ts:171-185`): applied to the month stem + all its hidden stems. That 月令 dominates is doctrine; **1.6** is invented (1.4 or 2.0 equally defensible) and moves the dominant/weakest element and supportRatio.
@@ -169,13 +178,21 @@ The **taboos themselves** are canonical (大事勿用 / 諸事不宜); the **mag
 `decision.ts:348-355` — −12 when the day branch opposes the active 10-yr 大運 pillar. Magnitude invented; the active pillar depends on 大運 start-age (Class C) and a plain 365.25-day age fraction (not a 節-based age) — boundary years can select the adjacent pillar.
 
 ### 6.10 Hour score (Evaluator 4)
-`decision.ts:166-205` — base 50; Ten-God +10; hour-branch element ±8; 時沖日 clash −15; Nobleman-hour +10. All invented. **Only the single best hour feeds `finalScore`** (`decision.ts:361`), so a day with one great hour and eleven poor ones scores identically on this axis to an all-good day.
+`decision.ts:166-205` — base 50; Ten-God +10; hour-branch element ±8; 時沖日 clash −15; Nobleman-hour +10. All invented. **Only the single best hour feeds `recommendationScore`** (`decision.ts:361`), so a day with one great hour and eleven poor ones scores identically on this axis to an all-good day.
 
 ### 6.11 Cross-school conflict thresholds
 `decision.ts:398-412` — tongshu-vs-bazi: officer≥62 & personal≤40; bazi-vs-tongshu: personal≥62 & officer≤38; road-vs-officer: road≥78 & officer≤38; officer-vs-road: road≤34 & officer≥62. Knife-edges with no doctrinal meaning (61/41 raises nothing; 62/40 does); severity labels assigned by hand. These feed the confidence penalty (§7).
 
-### 6.12 Confidence-component constants
-`decision.ts:449-487` — the §12.1 weights (.20/.20/.15/.15/.10/.15/.05) and the fixed component values (calc=1.0, sourceQuality=0.8, sourceSpecificity=0.7, the 0.18-per-conflict schoolAgreement penalty, input tiers 0.55/0.95/0.7/0.5, validation 0.85/0.7, ruleCoverage 0.65/0.45) are all invented. See §7 for what this number does and does not mean.
+### 6.12 Confidence-component weights (rebuilt in v0.2 — evidence-based inputs)
+The old fixed component constants (sourceQuality=0.8, validation=0.85/0.7, ruleCoverage
+0.65/0.45…) are **gone**. `computeConfidence` (decision.ts) now consumes measured inputs:
+third-party agreement (from a `VerificationReport`, neutral 50 until one is applied),
+convention stability and heuristic sensitivity (from the sweeps in `sensitivity/`),
+boundary risk (節-in-day, near-cut-point strength, birth-boundary warnings), input
+completeness, and source coverage. **Still invented:** the combining weights
+(.20/.25/.15/.10/.10/.10/.10 − conflictPenalty) and the severity→score maps (95/65/35 and
+10/45/80) are calibration choices, recorded in docs/VERIFICATION.md §6. What changed is
+that no component can read high without evidence behind it.
 
 ### 6.13 Boundary / advisor / verdict thresholds
 - **boundaryWarnMinutes = 120** (`conventions.ts:32`): ±120 min around 立春/節 triggers a warning; hour ∈ {23,0} always warns. Affects **only the warning**, never the pillars. Arbitrary magnitude.
@@ -187,21 +204,22 @@ The **taboos themselves** are canonical (大事勿用 / 諸事不宜); the **mag
 
 ---
 
-## 7. What is deliberately NOT claimed (Class F) + the confidence model
+## 7. What is deliberately NOT claimed (Class F) + the confidence model (v0.2)
 
 **The app does not claim predictive/outcome accuracy.** It does not estimate the probability that your wedding, contract, or move turns out well.
 
-The **confidence index** (`decision.ts:449-487`) is **epistemic**, not predictive. It is a self-assessed weighted sum of seven components measuring *how solid the reasoning is*:
+The **confidence index** (0–100, `computeConfidence` in `decision.ts`) is **epistemic**, not predictive — and as of v0.2 it is **evidence-based rather than constant-based**:
 
-`overall = .20·calc + .20·sourceQuality + .15·sourceSpecificity + .15·schoolAgreement + .10·inputQuality + .15·validation + .05·ruleCoverage`
+`overall = .20·reproducibility + .25·thirdPartyAgreement + .15·conventionStability + .10·inputCompleteness + .10·sourceCoverage + .10·(100−boundaryRisk) + .10·(100−heuristicSensitivity) − conflictPenalty`
 
-- `calc = 1.0` (reproducibility), `sourceQuality = 0.8`, `sourceSpecificity = 0.7`, `validation = 0.85/0.7`, `ruleCoverage = 0.65/0.45` — **fixed constants**, not per-request checks.
-- `schoolAgreement` = `max(0.4, 1−0.18·conflicts)` personalized / `max(0.4, 0.75−0.18·conflicts)` almanac.
-- `inputQuality` = 0.55 almanac / 0.95 exact / 0.7 approx / 0.5 else.
+- `thirdPartyAgreement` starts at a **neutral 50** labelled "cross-check pending" and is replaced by the **measured** agreement score when a `VerificationReport` (lunar-javascript + HKO/JPL — see docs/VERIFICATION.md) is applied; `verified` flips to true and the sources are named in the notes.
+- `conventionStability` and `heuristicSensitivity` come from the sweeps in `sensitivity/` — a pick that flips under Zi-hour rollover or a ±10% weight nudge visibly loses confidence.
+- `boundaryRisk` accumulates real fragility (節 crossing inside the day, natal strength within ±0.02 of a cut-point, birth-boundary warnings); `inputCompleteness` drops for missing birth data, uncertain times, and solar hour-bases without a longitude.
+- `conflictPenalty` deducts up to 25 points for cross-school conflicts.
 
-The disclaimer is **baked in, not optional** (`plainEnglish.ts:359-360`, surfaced by `confidencePlain` and `HOW_TO_READ[2]`): it "measures how solid the reasoning is, not the odds your plans turn out well." This is the honest, correct framing.
+The disclaimer is **baked in, not optional** (`plainEnglish.ts`, surfaced by `confidencePlain` and `HOW_TO_READ`): *"This is not a probability that the event will succeed."*
 
-**Two candour points:** (1) the **component values** and §12.1 weights are themselves invented (Class E, §6.12); (2) the accompanying blurbs — e.g. "Grounded in classical texts and astronomical calculation" (a fixed 0.8) and "Agreement with independently checked reference data" (a fixed 0.85/0.7) — can read as more per-result rigor than the constant inputs justify. A user could misread the 0–1 number as a success probability; **there is no outcome validation behind any component.**
+**Remaining candour points:** (1) the combining weights and severity→score maps are still calibration (§6.12) — what changed is that every component now has evidence behind it; (2) verification covers **time and calendar facts only** — there is still, deliberately, **no outcome validation behind any component**, and there never can be within this design.
 
 ---
 
@@ -219,7 +237,7 @@ The disclaimer is **baked in, not optional** (`plainEnglish.ts:359-360`, surface
 ## 9. Determinism & provenance
 
 **The contract (verified across `plainEnglish.ts`, `advisor.ts`, and `decision.ts`):**
-- **No LLM, no network, no wall-clock.** No `Math.random`, no `fetch`, no `new Date()`/`Date.now()` except explicitly-supplied `civil`/`todayIso` inputs. Every prose function consumes precomputed fields (`finalScore`, sub-scores, `rulesFired`, `shenShaTags`, `tongshu`, `components`) and returns strings. `verdictBand`/`finalScore` are **read, never written**.
+- **No LLM, no network, no wall-clock.** No `Math.random`, no `fetch`, no `new Date()`/`Date.now()` except explicitly-supplied `civil`/`todayIso` inputs. Every prose function consumes precomputed fields (`recommendationScore`, sub-scores, `rulesFired`, `shenShaTags`, `tongshu`, `components`) and returns strings. `verdictBand`/`recommendationScore` are **read, never written**.
 - **The explanation layer never alters scores.** Literally true. (Nuance: it *can* present a verdict that diverges from the raw number — see §5/§8.6 — but it never mutates the number.)
 - **Advisor functions are pure** over their string/chart inputs, with deterministic tie-breaks (`OBJECTIVES` order).
 

@@ -1,0 +1,24 @@
+# Manual, opt-in LIVE verification against JPL Horizons (workflow_dispatch only).
+# Requests are serialised with an enforced delay per JPL's fair-use terms; the
+# client validates the API signature version and fails safely on format changes.
+name: live-verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  live-jpl:
+    runs-on: ubuntu-latest
+    env:
+      VERIFY_OFFLINE: "0"
+      VERIFY_LIVE_JPL: "1"
+      JPL_REQUEST_DELAY_MS: "1500"
+      JPL_TIMEOUT_MS: "15000"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test -- tests/verification/solarTerms.live.test.ts
