@@ -29,7 +29,7 @@ import { PersonalizeCard } from "../ui/PersonalizeCard.tsx";
 import { ProfilePanel } from "../ui/ProfilePanel.tsx";
 import { ChatPanel } from "../ui/ChatPanel.tsx";
 import { Journal } from "../ui/Journal.tsx";
-import { JournalEntry, entryId, loadJournal, removeEntry, updateNote, upsertEntry } from "../ui/journalStore.ts";
+import { JournalEntry, entryId, loadJournal, recordOutcome, removeEntry, updateNote, upsertEntry } from "../ui/journalStore.ts";
 import { downloadReport } from "../ui/report.ts";
 import { YourChart } from "../ui/YourChart.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
@@ -244,7 +244,7 @@ export function DateFinderPage() {
           {result.personalized && result.subjectChart && birthCivil && (
             <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} />
           )}
-          <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} />
+          <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} onOutcome={(id, o) => setJournal(recordOutcome(id, o))} />
         </>
       ) : (
         <>
@@ -284,7 +284,7 @@ export function DateFinderPage() {
           {result.personalized && result.subjectChart && birthCivil && (
             <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} />
           )}
-          <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} />
+          <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} onOutcome={(id, o) => setJournal(recordOutcome(id, o))} />
 
           {result.personalized && result.subjectChart && (
             <YourChart chart={result.subjectChart} dayun={result.dayun} currentAge={currentAge} boundaryWarnings={chartWarnings} />
