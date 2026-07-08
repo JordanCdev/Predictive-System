@@ -26,6 +26,7 @@ import { DayList, RuledOutDrawer } from "./ui/DayList.tsx";
 import { VetoState } from "./ui/VetoState.tsx";
 import { PersonalizeCard, Person } from "./ui/PersonalizeCard.tsx";
 import { ProfilePanel } from "./ui/ProfilePanel.tsx";
+import { ChatPanel } from "./ui/ChatPanel.tsx";
 import { YourChart } from "./ui/YourChart.tsx";
 import { HowItWorks } from "./ui/HowItWorks.tsx";
 
@@ -65,10 +66,11 @@ function buildRequest(
   windowDays: number,
   person: Person | null,
   options?: DecisionRequest["options"],
+  start: { year: number; month: number; day: number } = TODAY_CIVIL,
 ): DecisionRequest {
   const objective = objectiveById(objectiveId);
   const tz = person ? person.tzOffset : DEFAULT_TZ;
-  const window = { start: TODAY_CIVIL, days: windowDays, tzOffsetMinutes: tz };
+  const window = { start, days: windowDays, tzOffsetMinutes: tz };
   const canonical = canonicalFor(person);
   if (!person || !canonical || !canonical.moment) {
     return { convention: ZIPING_DEFAULT, objective, window, options };
@@ -217,6 +219,15 @@ export function App() {
     (id: string, win: number) => evaluateDecision(buildRequest(id, win, person, { sweeps: false })),
     [person],
   );
+  // Evaluate one named calendar day (a window of 1) — used by the AI chat's
+  // evaluate_specific_day tool so it can read any date, not just the window.
+  const evaluateDay = useCallback(
+    (id: string, iso: string) => {
+      const [y, m, d] = iso.split("-").map(Number);
+      return evaluateDecision(buildRequest(id, 1, person, { sweeps: false }, { year: y, month: m, day: d }));
+    },
+    [person],
+  );
   // Jump from a recommendation / Q&A answer straight into the full reading.
   const openReading = (id: string, win: number) => {
     setObjectiveId(id);
@@ -317,6 +328,16 @@ export function App() {
               onOpenReading={openReading}
             />
           )}
+          {result.personalized && result.subjectChart && birthCivil && (
+            <ChatPanel
+              chart={result.subjectChart}
+              dayun={result.dayun}
+              birth={birthCivil}
+              todayIso={TODAY_ISO}
+              evaluate={evaluate}
+              evaluateDay={evaluateDay}
+            />
+          )}
         </>
       ) : (
         <>
@@ -405,6 +426,17 @@ export function App() {
               dayun={result.dayun}
               birth={birthCivil}
               todayIso={TODAY_ISO}
+            />
+          )}
+
+          {result.personalized && result.subjectChart && birthCivil && (
+            <ChatPanel
+              chart={result.subjectChart}
+              dayun={result.dayun}
+              birth={birthCivil}
+              todayIso={TODAY_ISO}
+              evaluate={evaluate}
+              evaluateDay={evaluateDay}
             />
           )}
 

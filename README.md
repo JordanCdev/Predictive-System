@@ -10,7 +10,10 @@ confidence means.
 
 > **LLMs never calculate.** Every chart, solar term, day-officer and score is computed by
 > pure, reproducible functions. *Same inputs → same answer.* No network and no AI in the
-> calculation path; nothing you enter leaves your browser.
+> calculation path; nothing you enter leaves your browser. The optional AI **chat** is a
+> strict explanation shell — opt-in, clearly labelled, and it still never calculates (it calls
+> the deterministic tools and cites them); only when you use it does your question + derived
+> chart summary leave the device ([docs/AI_CHAT.md](docs/AI_CHAT.md)).
 
 This is **not** a black-box fortune teller. It is a transparent decision-support tool that
 ranks days, explains the call, surfaces where schools of thought disagree, and is clear that
@@ -43,6 +46,14 @@ VERIFY_LIVE_JPL=1 npm test -- tests/verification/solarTerms.live.test.ts
 5. **Show the work** — a lazy evidence dossier: weighted sub-scores, the confidence breakdown,
    every rule that fired with its classical citation, all twelve double-hours, and a Verify
    trustmark (result hash + engine versions).
+6. **Navigate time** — a live **Today** snapshot (pillar, day-officer, day-god, life-area
+   gauges), a ±1-day stepper, an unbounded year stepper, and a life-spanning **大運 luck
+   scrubber** — one shared "supportive / mixed / demanding" colour scale at every zoom.
+7. **Read the day, area by area** — deterministic **career / wealth / relationship / wellbeing**
+   tendency gauges, an **auspicious-hour grid**, and tap-to-explain **宜 / 忌 chips**.
+8. **Chat** (optional, opt-in) — ask open-ended questions and get a conversational answer from
+   an AI that **never calculates**: it calls the same deterministic tools and cites what they
+   return ([docs/AI_CHAT.md](docs/AI_CHAT.md)).
 
 ## What's under the hood
 
@@ -56,7 +67,9 @@ The deterministic engine lives in `src/engine/` (framework-agnostic; the React U
 | Decision engine | `objectives.ts`, `decision.ts` | Candidate generation, a transparent MCDA **recommendation score**, hard vetoes (forbidden officers, personal clashes, and **歲破/四離/四絕 exclusions** for high-stakes objectives), cross-school conflict detection |
 | Sensitivity | `sensitivity/` | **Convention sweep** (does the pick survive Zi-hour rollover / true-solar?) and a deterministic **±10% weight sweep** — instability lowers confidence automatically |
 | Verification | `verification/` | Third-party cross-checks: **lunar-javascript** (independent almanac library), **HKO** solar-term tables, **JPL Horizons** samples. Confidence uses the *measured* agreement, not a constant |
-| Periods | `periods.ts` | **大運 / 流年 / 流月** tendency summaries — the active luck decade, a selected year, and its twelve solar months, plus the natal ↔ luck ↔ year interaction. Explanatory, never a forecast ([docs/PERIODS.md](docs/PERIODS.md)) |
+| Periods | `periods.ts`, `interactions.ts` | **大運 / 流年 / 流月** tendency summaries — luck decade, year and its twelve solar months, with Ten-God themes × 用神/忌神 × branch **合/沖/刑/害** interactions routed to life-area palaces, plus **太歲**. Explanatory, never a forecast ([docs/PERIODS.md](docs/PERIODS.md)) |
+| Life areas | `lifeAreas.ts` | Per-day **career / wealth / relationship / wellbeing** tendency gauges (0–100 + reason), re-projecting the period influence onto the four domains, tempered by Day-Master strength |
+| AI bridge | `ai/` | A strict **explanation shell** over the engine: six tools that each wrap a deterministic call, a client-orchestrated streaming tool loop, and guardrails so the model narrates but **never calculates** ([docs/AI_CHAT.md](docs/AI_CHAT.md)) |
 | Request | `request.ts` | Canonical birth-input model: preserves the original, records missing fields, and **downgrades** solar time to civil-clock (with a warning) when the birthplace longitude is missing |
 | Explanation | `plainEnglish.ts` + `ui/` | A pure, deterministic layer that turns the computed facts into human sentences — and the only place user copy is authored |
 

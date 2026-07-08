@@ -200,6 +200,11 @@ Many are partly built already; this is the prioritized backlog.
 
 ## 6. Suggested sequence
 
+> **Status:** Phases 1–4 shipped. Phase 1 (forecasting engine) landed in `98c8270`.
+> Phases 2 (time navigation) & 3 (life-area / hour / 宜忌) landed together in `c4f0281`.
+> Phase 4 (AI chat — BYOK default + Vercel-proxy option, guardrailed explanation shell) is
+> this commit. Phase 5 (multi-profile, journal, PDF) remains.
+
 1. **Phase 1 — Forecasting engine (B):** `interactions.ts` + Ten-God themes + upgraded `periods.ts` (大運/流年/流月, 太歲, life-area routing) + tests. Pure deterministic, no external decision. Biggest metaphysics upgrade; unblocks A and C.
 2. **Phase 2 — Time navigation (A):** luck scrubber, unbounded year stepper, live-today card, shared colour scale, day-stepper. Consumes B's valences.
 3. **Phase 3 — Daily life-area scores + auspicious-hour grid + 宜忌 chips** (feature-menu 4/8/9) — quick deterministic wins that make the UI feel like the planner.
