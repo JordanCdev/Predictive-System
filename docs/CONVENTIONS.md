@@ -25,6 +25,22 @@ site — see [DECISIONS.md](DECISIONS.md) §4 for the full accounting.
 | `ziping_zi23_v1` | 23:00 Zi-hour day rollover | `dayBoundary: zi_23` |
 | `ziping_true_solar_v1` | True solar time (真太陽時) | `hourBasis: true_solar` |
 
+## Aligning with the mainstream almanac (宜忌)
+
+Beyond the school axes above, the engine blends the day's actual **通勝/almanac 宜忌
+verdict** into the recommendation score when it is available (injected from
+lunar-javascript via the lazy chunk, so the core engine stays library-free):
+
+`recommendationScore = 0.6 · structural-MCDA + 0.4 · almanacScore`
+
+where `almanacScore` is 82 (the activity is 宜/endorsed that day), 22 (忌/avoided,
+or 诸事不宜), or 52 (neutral). This makes "good day for X" line up with what a
+standard almanac says, rather than resting only on the engine's own officer/day-god
+weights. `meta.almanacAgreement` separately reports — *before* the blend — how often
+the classical 建除 officer verdict already agreed with the almanac, so agreement is a
+measured number, not an assertion. The blend weight is documented calibration
+(DECISIONS.md §6.4b); the almanac stance per day is shown in the UI.
+
 ## How the engine handles convention sensitivity
 
 - **Convention sweep** (`src/engine/sensitivity/conventionSweep.ts`): every reading

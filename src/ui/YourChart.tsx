@@ -31,6 +31,18 @@ export function YourChart({
     <div className="card" style={{ padding: 20, marginTop: 18 }}>
       <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600 }}>Your chart</h3>
       <p style={{ margin: "0 0 8px", fontSize: 14.5, color: "var(--muted)", lineHeight: 1.55 }}>{dayMasterPlain(dm)}</p>
+      {dm.structure !== "normal" && (
+        <p style={{ margin: "0 0 8px", fontSize: 13.5, color: "var(--warn-ink)", lineHeight: 1.55 }}>
+          <b>
+            {dm.structure === "follow"
+              ? "Special structure: 從格 (a “following” chart)."
+              : "Special structure: 專旺 (a “dominant” chart)."}
+          </b>{" "}
+          {dm.structure === "follow"
+            ? "Your Day Master is too unsupported to prop up, so the useful elements are inverted — it flows with the dominant force rather than resisting it."
+            : "Your Day Master is overwhelming, so it flows with its own element; the elements that fight it are the ones to avoid."}
+        </p>
+      )}
       {luck && <p style={{ margin: "0 0 14px", fontSize: 14, color: "var(--muted)", lineHeight: 1.55 }}>{luckPhasePlain(luck)}</p>}
 
       <div className="element-chips">
@@ -66,7 +78,7 @@ export function YourChart({
       {dm.climatic && (
         <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--muted)", lineHeight: 1.55 }}>
           {dm.climatic.reason}
-          {!dm.favorableElements.includes(dm.climatic.needed[0]) && (
+          {dm.climaticReconciliation === "conflict" && (
             <>
               {" "}
               <b style={{ color: "var(--warn-ink)", fontWeight: 600 }}>

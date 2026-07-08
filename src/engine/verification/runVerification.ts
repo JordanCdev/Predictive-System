@@ -26,6 +26,7 @@ import { lunarJavascriptSource, verifyCandidateDay, verifyNatalChart } from "./v
 import { hkoSource, verifyTermsAround } from "./verifySolarTerms.ts";
 
 export { applyVerificationReport } from "./verificationReport.ts";
+export { buildAlmanacData } from "./lunarAlmanac.ts";
 
 export async function verifyDecisionResult(
   req: DecisionRequest,

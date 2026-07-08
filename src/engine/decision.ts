@@ -91,6 +91,48 @@ export interface SubScores {
   personal: number | null;
   /** null when not personalized — best-hour selection needs the subject's chart. */
   hour: number | null;
+  /** The mainstream-almanac 宜忌 verdict for this activity as a 0–100 sub-score.
+   *  null when no almanac data was supplied for the day. */
+  almanac: number | null;
+}
+
+/** The day's 宜/忌 lists (通勝/almanac), keyed by ISO date. Injected as pure data
+ *  so the engine stays library-free; supplied by a lazy lunar-javascript adapter. */
+export interface AlmanacDay {
+  yi: string[];
+  ji: string[];
+}
+export type AlmanacData = Record<string, AlmanacDay>;
+
+export type AlmanacVerdict = "favourable" | "unfavourable" | "neutral" | "unavailable";
+
+/** Simplified-Chinese 宜忌 activity terms per objective activity tag — matched
+ *  against the injected almanac lists. Pure data (no library dependency). */
+const ACTIVITY_YIJI_TERMS: Record<string, string[]> = {
+  open: ["开市", "开业", "挂匾", "立券", "交易", "纳财"],
+  marry: ["嫁娶", "结婚", "纳采", "订盟", "文定"],
+  move: ["移徙", "入宅", "搬家"],
+  travel: ["出行"],
+  contract: ["立券", "交易", "纳财", "签约", "会亲友"],
+  ground: ["动土", "破土", "修造", "起基"],
+  medical: ["治病", "求医", "针灸", "疗目"],
+  study: ["入学", "上册", "习艺", "赴任"],
+  litigation: ["词讼"],
+  burial: ["安葬", "破土", "成服"],
+  general: [],
+};
+
+const ALL_FORBIDDEN = "诸事不宜"; // simplified; also 諸事不宜 handled at the adapter
+
+/** Classify the almanac's stance on an activity for a day. */
+export function almanacVerdictFor(tag: string, day: AlmanacDay | undefined): AlmanacVerdict {
+  if (!day) return "unavailable";
+  const terms = ACTIVITY_YIJI_TERMS[tag] ?? [];
+  const forbidsAll = day.yi.includes(ALL_FORBIDDEN) || day.ji.includes(ALL_FORBIDDEN);
+  if (forbidsAll) return "unfavourable";
+  if (terms.some((t) => day.ji.includes(t))) return "unfavourable";
+  if (terms.some((t) => day.yi.includes(t))) return "favourable";
+  return "neutral";
 }
 
 /** Evidence-based confidence inputs, all 0–100 (spec §12, revised).
@@ -166,6 +208,9 @@ export interface DayRecommendation {
    *  three separated outputs: score (suitability), agreement (external truth),
    *  confidence (stability). */
   verificationAgreement: number | null;
+  /** The mainstream-almanac 宜忌 stance for this activity ("unavailable" until
+   *  almanac data is injected). When available it is blended into the score. */
+  almanacVerdict: AlmanacVerdict;
   confidence: ConfidenceBreakdown;
   hardReject: boolean;
   rejectReasons: string[];
@@ -182,6 +227,11 @@ export interface DecisionRequest {
   convention: ConventionSet;
   objective: Objective;
   window: { start: { year: number; month: number; day: number }; days: number; tzOffsetMinutes: number };
+  /** Optional mainstream-almanac 宜忌 per ISO date. When supplied, it is blended
+   *  into the recommendation score (the "align with the almanac" signal) and an
+   *  agreement % is reported. Injected by a lazy lunar-javascript adapter so the
+   *  engine itself stays library-free and deterministic. */
+  almanac?: AlmanacData;
   options?: {
     /** Run the convention/weight sensitivity sweeps (default true). Callers doing
      *  bulk re-evaluation (profile panel, the sweeps themselves) disable this. */
@@ -202,6 +252,11 @@ export interface DecisionResult {
     favorableElements: FivePhase[];
     unfavorableElements: FivePhase[];
     boundaryWarnings: string[];
+    /** How often the STRUCTURAL engine's favour/disfavour verdict matched the
+     *  mainstream almanac's 宜忌 over comparable days (0–100), or null when no
+     *  almanac data was supplied / no day was comparable. Measured pre-blend, so
+     *  it reflects the engine's genuine agreement, not the blended output. */
+    almanacAgreement: number | null;
     /** Sensitivity sweeps behind the confidence index; null when options.sweeps === false. */
     sensitivity: { convention: ConventionSweepResult; weights: WeightSweepResult } | null;
     /** Third-party cross-check, once applyVerificationReport() has run; else null. */
@@ -220,6 +275,12 @@ export interface DecisionResult {
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const clamp = (n: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));
 const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/** Blend weight between the structural MCDA score and the almanac 宜忌 signal
+ *  when the latter is available. The almanac is the closest shared external
+ *  benchmark for day-selection, so it carries real weight — documented rather
+ *  than hidden (docs/CONVENTIONS.md). Sums to 1. */
+const ALMANAC_BLEND = { base: 0.6, almanac: 0.4 } as const;
 
 // Per-god 黄黑道 scores (0..100).
 const DAY_GOD_SCORE = [88, 80, 28, 30, 82, 90, 22, 84, 30, 26, 78, 34];
@@ -451,20 +512,40 @@ function evaluateDay(
 
   // --- weighted MCDA final (renormalized to officer+road when not personalized) ---
   const w = obj.weights;
-  let recommendationScore: number;
+  let baseScore: number;
   if (personalized && personalScore !== null && hourScore !== null) {
-    recommendationScore = round1(
+    baseScore = round1(
       w.officer * officerScore + w.road * roadScore + w.personal * personalScore + w.hour * hourScore,
     );
   } else {
     const denom = w.officer + w.road || 1;
-    recommendationScore = round1((w.officer * officerScore + w.road * roadScore) / denom);
+    baseScore = round1((w.officer * officerScore + w.road * roadScore) / denom);
   }
+
+  // --- mainstream-almanac 宜忌 signal (the "align with the almanac" lever) ---
+  // When the day's 宜忌 is supplied, treat it as a co-equal signal: the almanac
+  // is the closest thing to a shared external benchmark for day-selection, so a
+  // day it explicitly forbids for this activity should fall, and one it endorses
+  // should rise, even if the structural sub-scores alone wouldn't say so.
+  const almanacDay = req.almanac?.[
+    `${civil.year}-${String(civil.month).padStart(2, "0")}-${String(civil.day).padStart(2, "0")}`
+  ];
+  const almanacVerdict = almanacVerdictFor(obj.primaryTag, almanacDay);
+  let almanacScore: number | null = null;
+  let recommendationScore: number;
+  if (almanacVerdict !== "unavailable") {
+    almanacScore = almanacVerdict === "favourable" ? 82 : almanacVerdict === "unfavourable" ? 22 : 52;
+    recommendationScore = round1(ALMANAC_BLEND.base * baseScore + ALMANAC_BLEND.almanac * almanacScore);
+  } else {
+    recommendationScore = baseScore;
+  }
+
   const subScores: SubScores = {
     officer: round1(officerScore),
     road: round1(roadScore),
     personal: personalScore === null ? null : round1(personalScore),
     hour: hourScore === null ? null : round1(hourScore),
+    almanac: almanacScore === null ? null : round1(almanacScore),
   };
 
   // --- hard constraints (vetoes) ---
@@ -587,6 +668,7 @@ function evaluateDay(
     subScores,
     recommendationScore,
     verificationAgreement: null,
+    almanacVerdict,
     confidence,
     hardReject,
     rejectReasons,
@@ -657,9 +739,31 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
     convention: req.convention.id,
     objective: req.objective.id,
     window: req.window,
+    almanac: req.almanac ?? null,
     options: req.options ?? {},
     versions: VERSIONS,
   });
+
+  // Almanac agreement: how often the classical day-officer's activity fit agrees
+  // with the almanac's 宜忌 — two independent calendar-level verdicts. Measured
+  // over comparable (both non-neutral) days, pre-blend, so it reflects the
+  // engine's genuine agreement with the mainstream almanac, not the blend.
+  const tag = req.objective.primaryTag;
+  let almanacMatches = 0;
+  let almanacComparable = 0;
+  for (const day of all) {
+    if (day.almanacVerdict !== "favourable" && day.almanacVerdict !== "unfavourable") continue;
+    const off = day.tongshu.officer;
+    const officerVerdict = off.good.includes(tag)
+      ? "favourable"
+      : off.bad.includes(tag)
+        ? "unfavourable"
+        : "neutral";
+    if (officerVerdict === "neutral") continue;
+    almanacComparable++;
+    if (officerVerdict === day.almanacVerdict) almanacMatches++;
+  }
+  const almanacAgreement = almanacComparable > 0 ? Math.round((almanacMatches / almanacComparable) * 100) : null;
 
   const windowLabel = `${req.window.start.year}-${String(req.window.start.month).padStart(2, "0")}-${String(req.window.start.day).padStart(2, "0")} + ${req.window.days} days`;
 
@@ -676,6 +780,7 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
       favorableElements: chart ? chart.dayMaster.favorableElements : [],
       unfavorableElements: chart ? chart.dayMaster.unfavorableElements : [],
       boundaryWarnings: birthWarnings,
+      almanacAgreement,
       sensitivity: null,
       verification: null,
     },

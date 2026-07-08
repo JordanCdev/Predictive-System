@@ -66,6 +66,20 @@ export type Strength = "strong" | "balanced" | "weak";
 /** 旺相休囚死 — the Day Master's vitality in its birth season. */
 export type SeasonalState = "prosperous" | "strong" | "resting" | "trapped" | "dead";
 
+/**
+ * Special-structure classification (格局). Most charts are `normal` (扶抑用神).
+ * The two extremes invert the favourable-element logic:
+ *  - `follow` (從格): a rootless, unsupported Day Master follows the dominant
+ *    force — propping it up (印/比劫) now HARMS, so those become unfavourable.
+ *  - `dominant` (專旺/從旺): an overwhelming Day Master should flow with its own
+ *    element, so 官殺/財 (which fight it) become unfavourable.
+ * Getting these wrong is the classic mis-advice for extreme charts (docs/DECISIONS.md §5).
+ */
+export type ChartStructure = "normal" | "follow" | "dominant";
+
+/** How the climate school (調候) relates to the balance school's useful element. */
+export type ClimaticReconciliation = "aligned" | "conflict" | "not_applicable";
+
 /** Transparent strength arithmetic + near-threshold instability flags. The
  *  cut-points are engine calibration, not doctrine (docs/DECISIONS.md §6.7),
  *  so a chart within ±0.02 of one is flagged: a tiny input or convention change
@@ -83,6 +97,8 @@ export interface StrengthBreakdown {
 export interface DayMasterAnalysis {
   dayMaster: Stem;
   strength: Strength;
+  /** 格局 — normal vs a follow/dominant special structure (inverts 用神). */
+  structure: ChartStructure;
   supportRatio: number; // 0..1
   hasMonthCommand: boolean;
   /** 旺相休囚死 from the month command. */
@@ -92,6 +108,9 @@ export interface DayMasterAnalysis {
   /** 調候 — climatic (warmth/moisture) need for temperature-extreme births. An
    *  alternative-school view (窮通寶鑑); null in mild seasons. */
   climatic: { needed: FivePhase[]; reason: string } | null;
+  /** Whether the climate school's needed element aligns with, or conflicts with,
+   *  the balance school's favourable set — surfaced, never silently merged. */
+  climaticReconciliation: ClimaticReconciliation;
   favorableElements: FivePhase[];
   unfavorableElements: FivePhase[];
   /** How `strength` was reached, with near-cut-point instability flags. */
@@ -316,6 +335,17 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
   else if (adjusted <= 0.34) strength = "weak";
   else strength = "balanced";
 
+  // 格局 — special structures at the extremes, keyed to the RAW support ratio
+  // (印+比劫 fraction) plus the structural gates, not the adjusted score. The
+  // month command (得令) is the classical discriminator: a DM that holds it is
+  // rooted in the season's qi and cannot "follow", so an ordinary rootless-weak
+  // chart that still holds command stays `normal` rather than misfiring as 從格.
+  //  - 從格 (follow): rootless AND 失令 AND negligible support (≤ 15%).
+  //  - 專旺/從旺 (dominant): strongly rooted AND 得令 AND overwhelming support (≥ 72%).
+  let structure: ChartStructure = "normal";
+  if (!rooting.hasRoot && !hasMonthCommand && supportRatio <= 0.15) structure = "follow";
+  else if (rooting.mainQiRoot && hasMonthCommand && supportRatio >= 0.72) structure = "dominant";
+
   // Near-threshold instability: the classification governs the entire
   // favourable-element set, so sitting within ±0.02 of a GOVERNING cut-point
   // is a real fragility the confidence layer must see. Which cut governs
@@ -345,7 +375,15 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
 
   let favorableElements: FivePhase[];
   let unfavorableElements: FivePhase[];
-  if (strength === "strong") {
+  if (structure === "follow") {
+    // 從格 — go WITH the dominant force; reviving the DM (印/比劫) breaks it.
+    favorableElements = [functional.output, functional.wealth, functional.officer];
+    unfavorableElements = [functional.companion, functional.resource];
+  } else if (structure === "dominant") {
+    // 專旺/從旺 — flow with the overwhelming DM; 官殺/財 provoke it.
+    favorableElements = [functional.companion, functional.resource, functional.output];
+    unfavorableElements = [functional.wealth, functional.officer];
+  } else if (strength === "strong") {
     favorableElements = [functional.output, functional.wealth, functional.officer];
     unfavorableElements = [functional.companion, functional.resource];
   } else if (strength === "weak") {
@@ -358,25 +396,44 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
     unfavorableElements = [];
   }
 
+  // 調候 reconciliation — surface (not silently merge) how the climate school
+  // relates to the balance school's useful element.
+  const climatic = climaticNeed(monthBranch.index);
+  const climaticReconciliation: ClimaticReconciliation = !climatic
+    ? "not_applicable"
+    : climatic.needed.some((e) => favorableElements.includes(e))
+      ? "aligned"
+      : climatic.needed.some((e) => unfavorableElements.includes(e))
+        ? "conflict"
+        : "conflict";
+
   const rootDesc = rooting.mainQiRoot
     ? `rooted (得地, strong root in ${rooting.rootBranches.join("")})`
     : rooting.hasRoot
       ? `lightly rooted (${rooting.rootBranches.join("")})`
       : "rootless (無根)";
+  const structureNote =
+    structure === "follow"
+      ? " Special structure 從格 (follow): the rootless Day Master follows the dominant force, so the useful elements are inverted (reviving it would harm)."
+      : structure === "dominant"
+        ? " Special structure 專旺/從旺 (dominant): flow with the overwhelming Day Master; elements that fight it are avoided."
+        : "";
   const rationale =
     `Day Master ${dm.hanzi} (${dm.phase}); support (印+比劫) vs drain (食傷+財+官殺) ratio ` +
     `${(supportRatio * 100).toFixed(0)}%. ${hasMonthCommand ? "Holds month command (得令)" : "Lacks month command (失令)"}, ` +
     `${SEASONAL_STATE_ZH[seasonalState]} (${seasonalState}) in season, ${rootDesc}. ` +
-    `Classified ${strength}. Strength + useful-element reading is MEDIUM confidence (school-dependent).`;
+    `Classified ${strength}.${structureNote} Strength + useful-element reading is MEDIUM confidence (school-dependent).`;
 
   return {
     dayMaster: dm,
     strength,
+    structure,
     supportRatio,
     hasMonthCommand,
     seasonalState,
     rooting,
-    climatic: climaticNeed(monthBranch.index),
+    climatic,
+    climaticReconciliation,
     favorableElements: dedupe(favorableElements),
     unfavorableElements: dedupe(unfavorableElements),
     strengthBreakdown,

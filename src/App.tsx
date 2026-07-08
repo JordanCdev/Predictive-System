@@ -7,10 +7,8 @@ import {
   DecisionResult,
   MAX_WINDOW_DAYS,
   OBJECTIVES,
-  VerificationReport,
   WINDOW_DAYS,
   ZIPING_DEFAULT,
-  applyVerificationReport,
   canonicalizeBirth,
   evaluateDecision,
   objectiveById,
@@ -152,22 +150,30 @@ export function App() {
     return { req, result: evaluateDecision(req) };
   }, [objectiveId, windowDays, person]);
 
-  // Third-party cross-check (lunar-javascript + HKO fixtures), loaded lazily so
-  // the comparator never touches the main bundle or the deterministic calc path.
-  // When it lands, confidence is recomputed with the MEASURED agreement.
-  const [verification, setVerification] = useState<{ hash: string; report: VerificationReport } | null>(null);
+  // Enrichment pass, loaded lazily so lunar-javascript never touches the main
+  // bundle or the deterministic base render. Two steps, one chunk:
+  //   1. inject the mainstream-almanac 宜忌 and re-rank (the accuracy signal);
+  //   2. cross-check the enriched result against lunar-javascript + HKO.
+  // The base result shows instantly; this refines it when it lands. Keyed by the
+  // BASE calculationHash (the enriched result carries a different hash).
+  const [enriched, setEnriched] = useState<{ baseHash: string; result: DecisionResult } | null>(null);
   const reqHash = computed?.result.meta.calculationHash;
   useEffect(() => {
     if (!computed) return;
     let cancelled = false;
-    import("./engine/verification/runVerification.ts")
-      .then((mod) => mod.verifyDecisionResult(computed.req, computed.result, new Date().toISOString()))
-      .then((report) => {
-        if (!cancelled) setVerification({ hash: computed.result.meta.calculationHash, report });
-      })
-      .catch(() => {
-        /* verification is additive — the unverified result stands on its own */
-      });
+    (async () => {
+      try {
+        const mod = await import("./engine/verification/runVerification.ts");
+        const almanac = mod.buildAlmanacData(computed.req.window);
+        const reqWithAlmanac = { ...computed.req, almanac };
+        const withAlmanac = evaluateDecision(reqWithAlmanac);
+        const report = await mod.verifyDecisionResult(reqWithAlmanac, withAlmanac, new Date().toISOString());
+        const verified = mod.applyVerificationReport(withAlmanac, report);
+        if (!cancelled) setEnriched({ baseHash: computed.result.meta.calculationHash, result: verified });
+      } catch {
+        /* enrichment is additive — the base result stands on its own */
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -175,11 +181,9 @@ export function App() {
 
   const result: DecisionResult | null = useMemo(() => {
     if (!computed) return null;
-    if (verification && verification.hash === computed.result.meta.calculationHash) {
-      return applyVerificationReport(computed.result, verification.report);
-    }
+    if (enriched && enriched.baseHash === computed.result.meta.calculationHash) return enriched.result;
     return computed.result;
-  }, [computed, verification]);
+  }, [computed, enriched]);
 
   // When the computation changes (new objective/window/birth), focus the new top pick
   // and bring the freshly computed answer back into view.

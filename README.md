@@ -79,6 +79,14 @@ The kernel is verified against independent external sources — in CI, offline, 
 - **Four pillars** cross-checked against published charts (Mao Zedong 1893-12-26 →
   癸巳/甲子/丁酉; Zhou Enlai 1898-03-05 → 戊戌/甲寅) and the 2000-01-01 anchor 己卯/丙子/戊午.
 
+**Aligned with the almanac.** The day score blends the mainstream 通勝/almanac 宜忌 verdict
+(pulled from lunar-javascript) with the structural analysis, so "good day for X" matches what a
+standard almanac says — and the app reports a measured **almanac agreement %** (how often the
+classical 建除 officer verdict already matched it). Extreme charts now get the classically
+correct reading too: 從格 (follow) and 專旺 (dominant) special structures invert the
+favourable-element logic instead of mis-advising, and 調候 (climate) vs 用神 conflicts are
+surfaced rather than silently merged.
+
 **Three separated outputs, never one blurred number.** The **recommendation score** (0–100)
 is a transparent, versioned heuristic ranking under this rule set — *not* a prediction.
 **Verification agreement** (0–100, once the cross-check runs) is how closely independent

@@ -92,6 +92,19 @@ export function BestDayHero({
             Ranking robustness: {stabilityWord(meta.sensitivity.weights.severity)}
           </span>
         )}
+        {rec.almanacVerdict !== "unavailable" && (
+          <span title="What a mainstream Chinese almanac (通勝, via lunar-javascript) says about this activity on this day — blended into the score.">
+            Almanac (通勝):{" "}
+            <b style={{ color: rec.almanacVerdict === "favourable" ? "#1d9e75" : rec.almanacVerdict === "unfavourable" ? "#c0442e" : "var(--muted)" }}>
+              {rec.almanacVerdict === "favourable" ? "宜 favourable" : rec.almanacVerdict === "unfavourable" ? "忌 avoid" : "neutral"}
+            </b>
+          </span>
+        )}
+        {meta.almanacAgreement !== null && (
+          <span title="How often the classical day-officer's activity fit agreed with the almanac's 宜忌 across this window — an independent-source agreement measure.">
+            Almanac agreement: {meta.almanacAgreement}%
+          </span>
+        )}
       </div>
 
       {rec.personalized && practicalBestHour(rec) && (

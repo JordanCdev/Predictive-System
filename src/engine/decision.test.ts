@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { evaluateDecision, DecisionRequest } from "./decision.ts";
+import { almanacVerdictFor, evaluateDecision, DecisionRequest } from "./decision.ts";
 import { ZIPING_DEFAULT } from "./conventions.ts";
 import { objectiveById } from "./objectives.ts";
 
@@ -152,6 +152,50 @@ describe("decision engine", () => {
     if (softTabooDay) {
       expect(softTabooDay.confidence.components.tabooSeverity).toBeGreaterThan(0);
     }
+  });
+
+  it("blends the injected almanac 宜忌 into the score and reports agreement", () => {
+    // contract_signing → activity tag "contract" (交易/立券/纳财/签约…).
+    const almanac = {
+      "2026-07-02": { yi: [], ji: ["交易"] }, // forbidden for this activity
+      "2026-07-03": { yi: ["交易"], ji: [] }, // endorsed
+      "2026-07-04": { yi: [], ji: ["诸事不宜"] }, // nothing advisable
+    };
+    const base = evaluateDecision(baseRequest());
+    const withA = evaluateDecision({ ...baseRequest(), almanac });
+
+    const d2 = withA.allDays.find((d) => d.isoDate === "2026-07-02")!;
+    const d3 = withA.allDays.find((d) => d.isoDate === "2026-07-03")!;
+    const d4 = withA.allDays.find((d) => d.isoDate === "2026-07-04")!;
+    expect(d2.almanacVerdict).toBe("unfavourable");
+    expect(d3.almanacVerdict).toBe("favourable");
+    expect(d4.almanacVerdict).toBe("unfavourable"); // 诸事不宜
+    expect(d2.subScores.almanac).toBeLessThan(d3.subScores.almanac!);
+
+    // The blend pulls a forbidden day down and an endorsed day up vs the no-almanac base.
+    const b2 = base.allDays.find((d) => d.isoDate === "2026-07-02")!;
+    const b3 = base.allDays.find((d) => d.isoDate === "2026-07-03")!;
+    expect(d2.recommendationScore).toBeLessThanOrEqual(b2.recommendationScore);
+    expect(d3.recommendationScore).toBeGreaterThanOrEqual(b3.recommendationScore);
+
+    // Days without injected almanac stay "unavailable" and unblended.
+    const untouched = withA.allDays.find((d) => d.isoDate === "2026-07-10")!;
+    expect(untouched.almanacVerdict).toBe("unavailable");
+    expect(untouched.subScores.almanac).toBeNull();
+
+    // Agreement is measured (or null if no comparable day).
+    const a = withA.meta.almanacAgreement;
+    expect(a === null || (a >= 0 && a <= 100)).toBe(true);
+    // Base run has no almanac at all → agreement null.
+    expect(base.meta.almanacAgreement).toBeNull();
+  });
+
+  it("almanacVerdictFor classifies 宜 / 忌 / 诸事不宜 / missing", () => {
+    expect(almanacVerdictFor("contract", { yi: ["交易"], ji: [] })).toBe("favourable");
+    expect(almanacVerdictFor("contract", { yi: [], ji: ["交易"] })).toBe("unfavourable");
+    expect(almanacVerdictFor("marry", { yi: ["诸事不宜"], ji: [] })).toBe("unfavourable");
+    expect(almanacVerdictFor("marry", { yi: ["出行"], ji: [] })).toBe("neutral"); // unrelated activity
+    expect(almanacVerdictFor("contract", undefined)).toBe("unavailable");
   });
 
   it("clean days carry tabooSeverity 0 and null verificationAgreement pre-check", () => {
