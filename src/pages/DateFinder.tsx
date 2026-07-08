@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   CONVENTION_PRESETS,
   DayRecommendation,
@@ -8,6 +9,7 @@ import {
   WINDOW_DAYS,
   buildPeriodsReport,
   evaluateDecision,
+  parseActivity,
   headlineVerdict,
   humanHourRange,
   objectiveById,
@@ -79,6 +81,19 @@ export function DateFinderPage() {
   const [journal, setJournal] = useState<JournalEntry[]>(() => loadJournal());
   const heroRef = useRef<HTMLDivElement>(null);
   const pendingScroll = useRef(false);
+
+  // Global top-bar search: /date-finder?q=… pre-selects the objective and opens
+  // the reading, so a decision typed anywhere jumps straight to its best day.
+  const [searchParams] = useSearchParams();
+  const qParam = searchParams.get("q");
+  useEffect(() => {
+    if (!qParam) return;
+    const a = parseActivity(qParam);
+    if (a) {
+      setObjectiveId(a.objective.id);
+      setPhase("answer");
+    }
+  }, [qParam]);
 
   const computed = useMemo(() => {
     if (!objectiveId) return null;

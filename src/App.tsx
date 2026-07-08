@@ -1,4 +1,5 @@
-import { HashRouter, NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { useState } from "react";
+import { HashRouter, NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { ProfileProvider, useProfile } from "./ui/profile/ProfileContext.tsx";
 import { ErrorBoundary } from "./ui/ErrorBoundary.tsx";
 import { TODAY_ISO } from "./ui/shared.ts";
@@ -23,6 +24,30 @@ const NAV = [
   { to: "/chat", label: "Advisor" },
 ];
 
+/** Persistent top command bar: type any decision to jump straight to its reading. */
+function GlobalSearch() {
+  const nav = useNavigate();
+  const [q, setQ] = useState("");
+  const submit = () => {
+    const query = q.trim();
+    if (!query) return;
+    nav(`/date-finder?q=${encodeURIComponent(query)}`);
+    setQ("");
+  };
+  return (
+    <div className="nav-search">
+      <span aria-hidden="true" className="nav-search-ic">⌕</span>
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && submit()}
+        placeholder="Find a date for… e.g. “sign a contract”"
+        aria-label="Find a date for a decision"
+      />
+    </div>
+  );
+}
+
 function NavBar() {
   const { chart, person } = useProfile();
   return (
@@ -44,6 +69,7 @@ function NavBar() {
           </NavLink>
         ))}
       </nav>
+      <GlobalSearch />
       <NavLink to="/settings/profile" className="nav-profile" title="Your profile">
         {chart ? (
           <>

@@ -1820,3 +1820,37 @@ button {
   color: var(--jade-text);
   border-color: rgba(29, 158, 117, 0.35);
 }
+
+/* ---------- global top search / command bar ---------- */
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: var(--surface-2);
+  flex: 1 1 200px;
+  min-width: 170px;
+  max-width: 340px;
+}
+.nav-search:focus-within {
+  border-color: var(--gold);
+}
+.nav-search-ic {
+  color: var(--faint);
+  font-size: 15px;
+  flex: none;
+}
+.nav-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--ink);
+  width: 100%;
+  font-family: inherit;
+}
+.nav-search input::placeholder {
+  color: var(--faint);
+}
