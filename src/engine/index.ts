@@ -15,6 +15,8 @@ export * from "./objectives.ts";
 export * from "./decision.ts";
 export * from "./plainEnglish.ts";
 export * from "./advisor.ts";
+export * from "./periods.ts";
+export * from "./request.ts";
 export * from "./sensitivity/conventionSweep.ts";
 export * from "./sensitivity/weightSweep.ts";
 // Verification: types + report aggregation are bundle-safe. The comparators

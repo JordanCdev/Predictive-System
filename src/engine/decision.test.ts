@@ -147,6 +147,21 @@ describe("decision engine", () => {
         expect(d.rejectReasons.join(" ")).not.toMatch(/歲破/);
       }
     }
+    // A soft-taboo day that survived to the ranking carries tabooSeverity > 0.
+    const softTabooDay = res.allDays.find((d) => !d.hardReject && (d.tongshu.yearBreak || d.tongshu.fourBoundary !== null));
+    if (softTabooDay) {
+      expect(softTabooDay.confidence.components.tabooSeverity).toBeGreaterThan(0);
+    }
+  });
+
+  it("clean days carry tabooSeverity 0 and null verificationAgreement pre-check", () => {
+    const res = evaluateDecision(baseRequest());
+    const top = res.recommendations[0];
+    expect(top.tongshu.yearBreak).toBe(false);
+    expect(top.tongshu.fourBoundary).toBeNull();
+    expect(top.confidence.components.tabooSeverity).toBe(0);
+    // The third separated output is null until a verification report is applied.
+    expect(top.verificationAgreement).toBeNull();
   });
 
   it("runs sensitivity sweeps by default and folds them into confidence", () => {

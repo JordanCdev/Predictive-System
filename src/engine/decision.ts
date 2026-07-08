@@ -113,6 +113,10 @@ export interface ConfidenceInputs {
   heuristicSensitivity: number;
   /** Direct deduction for cross-school conflicts on this day (0–25). */
   conflictPenalty: number;
+  /** Direct deduction for a SOFT calendar taboo carried by a recommended day —
+   *  a hard taboo would have rejected the day, so this only fires where the
+   *  objective treats 歲破/四離/四絕 as a penalty rather than a veto (0–25). */
+  tabooSeverity: number;
 }
 
 export interface ConfidenceBreakdown {
@@ -136,7 +140,8 @@ export function computeConfidence(x: ConfidenceInputs): number {
     0.1 * x.sourceCoverage +
     0.1 * (100 - x.boundaryRisk) +
     0.1 * (100 - x.heuristicSensitivity) -
-    x.conflictPenalty;
+    x.conflictPenalty -
+    x.tabooSeverity;
   return Math.max(0, Math.min(100, Math.round(raw)));
 }
 
@@ -156,6 +161,11 @@ export interface DayRecommendation {
   /** The MCDA ranking heuristic (0–100). A recommendation strength under this
    *  rule set — NOT a prediction and NOT a probability of success. */
   recommendationScore: number;
+  /** How closely independent sources agree with this day's calendar facts
+   *  (0–100). null until applyVerificationReport() has run — the third of the
+   *  three separated outputs: score (suitability), agreement (external truth),
+   *  confidence (stability). */
+  verificationAgreement: number | null;
   confidence: ConfidenceBreakdown;
   hardReject: boolean;
   rejectReasons: string[];
@@ -522,6 +532,20 @@ function evaluateDay(
     conflicts.reduce((sum, c) => sum + (c.severity === "high" ? 10 : c.severity === "medium" ? 6 : 3), 0),
   );
 
+  // Soft taboos carried by a day that survived to the ranking (its objective
+  // treats them as penalties, not vetoes). A hard taboo would have rejected the
+  // day, so hardTaboos never contributes here.
+  const softTaboos = applyTabooPenalties ? tabooCodes.filter((t) => !obj.hardCalendarTaboos.includes(t)) : [];
+  const tabooSeverity = Math.min(
+    25,
+    softTaboos.reduce((sum, t) => sum + (t === "year_break" ? 12 : 10), 0),
+  );
+  if (softTaboos.length > 0) {
+    boundaryNotes.push(
+      `A calendar taboo (${softTaboos.map((t) => (t === "year_break" ? "歲破" : t === "four_departure" ? "四離" : "四絕")).join(", ")}) applies to this day but is a soft penalty for this objective — it lowers confidence rather than ruling the day out.`,
+    );
+  }
+
   const components: ConfidenceInputs = {
     calculationReproducibility: 100,
     thirdPartyAgreement: 50, // neutral until applyVerificationReport() folds in a real check
@@ -531,6 +555,7 @@ function evaluateDay(
     sourceCoverage: 40, // internal engine only, until external sources are consulted
     heuristicSensitivity: 30, // replaced by the weight sweep in evaluateDecision
     conflictPenalty,
+    tabooSeverity,
   };
   const confidence: ConfidenceBreakdown = {
     overall: computeConfidence(components),
@@ -561,6 +586,7 @@ function evaluateDay(
     allHours,
     subScores,
     recommendationScore,
+    verificationAgreement: null,
     confidence,
     hardReject,
     rejectReasons,

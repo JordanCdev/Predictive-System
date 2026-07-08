@@ -123,7 +123,11 @@ export function applyVerificationReport(result: DecisionResult, report: Verifica
     return { overall: computeConfidence(components), components, verified: true, notes };
   };
 
-  const upgradeDay = (d: DayRecommendation): DayRecommendation => ({ ...d, confidence: upgrade(d.confidence) });
+  const upgradeDay = (d: DayRecommendation): DayRecommendation => ({
+    ...d,
+    verificationAgreement: agreement,
+    confidence: upgrade(d.confidence),
+  });
   const allDays = result.allDays.map(upgradeDay);
   const byIso = new Map(allDays.map((d) => [d.isoDate, d]));
   return {

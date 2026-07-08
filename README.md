@@ -56,6 +56,8 @@ The deterministic engine lives in `src/engine/` (framework-agnostic; the React U
 | Decision engine | `objectives.ts`, `decision.ts` | Candidate generation, a transparent MCDA **recommendation score**, hard vetoes (forbidden officers, personal clashes, and **歲破/四離/四絕 exclusions** for high-stakes objectives), cross-school conflict detection |
 | Sensitivity | `sensitivity/` | **Convention sweep** (does the pick survive Zi-hour rollover / true-solar?) and a deterministic **±10% weight sweep** — instability lowers confidence automatically |
 | Verification | `verification/` | Third-party cross-checks: **lunar-javascript** (independent almanac library), **HKO** solar-term tables, **JPL Horizons** samples. Confidence uses the *measured* agreement, not a constant |
+| Periods | `periods.ts` | **大運 / 流年 / 流月** tendency summaries — the active luck decade, a selected year, and its twelve solar months, plus the natal ↔ luck ↔ year interaction. Explanatory, never a forecast ([docs/PERIODS.md](docs/PERIODS.md)) |
+| Request | `request.ts` | Canonical birth-input model: preserves the original, records missing fields, and **downgrades** solar time to civil-clock (with a warning) when the birthplace longitude is missing |
 | Explanation | `plainEnglish.ts` + `ui/` | A pure, deterministic layer that turns the computed facts into human sentences — and the only place user copy is authored |
 
 ### Accuracy & verification
@@ -77,12 +79,19 @@ The kernel is verified against independent external sources — in CI, offline, 
 - **Four pillars** cross-checked against published charts (Mao Zedong 1893-12-26 →
   癸巳/甲子/丁酉; Zhou Enlai 1898-03-05 → 戊戌/甲寅) and the 2000-01-01 anchor 己卯/丙子/戊午.
 
-**What the two numbers mean.** The **recommendation score** (0–100) is a transparent,
-versioned heuristic ranking under this rule set — *not* a prediction. **Confidence** is
-evidence-based: reproducibility, measured third-party agreement, convention stability
-(does the pick survive Zi-hour rollover / true solar time?), ranking robustness (±10% weight
-perturbations), boundary safety and input completeness. It is **never a probability that the
-event will succeed** — external sources can verify time and calendar facts, not outcomes.
+**Three separated outputs, never one blurred number.** The **recommendation score** (0–100)
+is a transparent, versioned heuristic ranking under this rule set — *not* a prediction.
+**Verification agreement** (0–100, once the cross-check runs) is how closely independent
+sources match the day's calendar facts. **Confidence** is evidence-based: reproducibility,
+measured third-party agreement, convention stability (does the pick survive Zi-hour rollover /
+true solar time?), ranking robustness (±10% weight perturbations), boundary safety, input
+completeness, and a soft-taboo severity deduction. Confidence is **never a probability that the
+event will succeed** — external sources verify time and calendar facts, not outcomes.
+
+**Year & month outlook.** With birth details added, the app also shows deterministic
+大運 / 流年 / 流月 *tendency* summaries — the active luck decade, any chosen year, and its twelve
+solar months — projecting your chart's favourable elements onto each period. Tendencies, not
+prophecy ([docs/PERIODS.md](docs/PERIODS.md)).
 
 School-dependent doctrine (用神 selection, 調候, branch-frame weighting) is labelled
 **medium-confidence** and surfaced as an alternative view — when schools disagree, the app

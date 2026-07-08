@@ -52,6 +52,9 @@ describe("lunar-javascript cross-check — full result verification", () => {
     expect(top.confidence.components.sourceCoverage).toBeGreaterThan(40);
     // The unverified original is untouched (pure function).
     expect(result.recommendations[0].confidence.verified).toBe(false);
+    expect(result.recommendations[0].verificationAgreement).toBeNull();
+    // The third separated output is populated on the verified copy.
+    expect(top.verificationAgreement).toBe(report.overallAgreementScore);
     // With high agreement the verified confidence must not be lower.
     expect(top.confidence.overall).toBeGreaterThanOrEqual(result.recommendations[0].confidence.overall);
   });

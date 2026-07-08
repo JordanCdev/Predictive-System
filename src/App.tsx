@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  CanonicalBirth,
   CONVENTION_PRESETS,
   DayRecommendation,
   DecisionRequest,
@@ -10,12 +11,14 @@ import {
   WINDOW_DAYS,
   ZIPING_DEFAULT,
   applyVerificationReport,
+  canonicalizeBirth,
   evaluateDecision,
   objectiveById,
   objectivePlain,
   shortDate,
   windowPlain,
 } from "./engine/index.ts";
+import { PeriodsPanel } from "./ui/PeriodsPanel.tsx";
 import { AskStep } from "./ui/AskStep.tsx";
 import { Alternative, BestDayHero, RuledOutCard } from "./ui/BestDayHero.tsx";
 import { CalendarMonth } from "./ui/CalendarMonth.tsx";
@@ -36,6 +39,27 @@ const TODAY_CIVIL = { year: NOW.getFullYear(), month: NOW.getMonth() + 1, day: N
 const TODAY_ISO = `${TODAY_CIVIL.year}-${pad(TODAY_CIVIL.month)}-${pad(TODAY_CIVIL.day)}`;
 const DEFAULT_TZ = -NOW.getTimezoneOffset();
 
+/** Canonicalise a UI person into the engine's normalised birth object, applying
+ *  the location-precision policy (solar hour basis without longitude → civil
+ *  clock + warning). Returns null when there is no person or the date is bad. */
+function canonicalFor(person: Person | null): CanonicalBirth | null {
+  if (!person) return null;
+  const requested = CONVENTION_PRESETS.find((c) => c.id === person.conventionId) ?? ZIPING_DEFAULT;
+  const canonical = canonicalizeBirth(
+    {
+      dateOfBirth: person.birthDate,
+      localBirthTime: person.timeCertainty === "hour_unknown" ? undefined : person.birthTime,
+      tzOffsetMinutes: person.tzOffset,
+      birthplace: person.birthCity,
+      longitudeEast: person.longitudeEast,
+      timeAccuracy: person.timeCertainty,
+      sex: person.sex,
+    },
+    requested,
+  );
+  return canonical.valid ? canonical : null;
+}
+
 function buildRequest(
   objectiveId: string,
   windowDays: number,
@@ -45,31 +69,14 @@ function buildRequest(
   const objective = objectiveById(objectiveId);
   const tz = person ? person.tzOffset : DEFAULT_TZ;
   const window = { start: TODAY_CIVIL, days: windowDays, tzOffsetMinutes: tz };
-  if (!person) {
+  const canonical = canonicalFor(person);
+  if (!person || !canonical || !canonical.moment) {
     return { convention: ZIPING_DEFAULT, objective, window, options };
   }
-  const [by, bm, bd] = person.birthDate.split("-").map(Number);
-  const noTime = person.timeCertainty === "hour_unknown";
-  const [bh, bmin] = noTime ? [12, 0] : (person.birthTime || "12:00").split(":").map(Number);
-  // Guard against a malformed/partial date silently corrupting a "personalized" read —
-  // if anything is non-finite, fall back to the honest general almanac request.
-  if (![by, bm, bd, bh, bmin].every(Number.isFinite) || bm < 1 || bm > 12 || bd < 1 || bd > 31) {
-    return { convention: ZIPING_DEFAULT, objective, window, options };
-  }
-  const convention = CONVENTION_PRESETS.find((c) => c.id === person.conventionId) ?? ZIPING_DEFAULT;
   return {
-    birth: {
-      year: by,
-      month: bm,
-      day: bd,
-      hour: bh,
-      minute: bmin,
-      tzOffsetMinutes: person.tzOffset,
-      longitudeEast: person.longitudeEast,
-      timeCertainty: noTime ? "hour_unknown" : person.timeCertainty,
-    },
+    birth: canonical.moment,
     sex: person.sex,
-    convention,
+    convention: canonical.convention,
     objective,
     window,
     options,
@@ -81,6 +88,12 @@ function ageOn(birthDate: string): number | null {
   if (!y) return null;
   const ms = Date.UTC(TODAY_CIVIL.year, TODAY_CIVIL.month - 1, TODAY_CIVIL.day) - Date.UTC(y, m - 1, d);
   return ms / (365.25 * 86400000);
+}
+
+function birthCivilOf(birthDate: string): { year: number; month: number; day: number } | null {
+  const [y, m, d] = birthDate.split("-").map(Number);
+  if (![y, m, d].every(Number.isFinite)) return null;
+  return { year: y, month: m, day: d };
 }
 
 /** Up to 3 meaningfully-different lateral jumps, excluding the day currently viewed. */
@@ -238,6 +251,11 @@ export function App() {
   const selectedRec = result.allDays.find((d) => d.isoDate === selectedIso) ?? pick;
   const alternatives = computeAlternatives(recs, selectedRec.isoDate);
   const currentAge = person ? ageOn(person.birthDate) : null;
+  const birthCivil = person ? birthCivilOf(person.birthDate) : null;
+  // Request-layer notices (e.g. solar time downgraded to civil clock for a
+  // missing birthplace longitude) — shown alongside the chart's own warnings.
+  const canonicalWarnings = canonicalFor(person)?.warnings ?? [];
+  const chartWarnings = [...result.meta.boundaryWarnings, ...canonicalWarnings];
 
   const widen = () =>
     setWindowDays((d) => WINDOW_LADDER.find((w) => w > d) ?? WINDOW_LADDER[WINDOW_LADDER.length - 1]);
@@ -356,12 +374,21 @@ export function App() {
             />
           )}
 
+          {result.personalized && result.subjectChart && birthCivil && (
+            <PeriodsPanel
+              chart={result.subjectChart}
+              dayun={result.dayun}
+              birth={birthCivil}
+              todayIso={TODAY_ISO}
+            />
+          )}
+
           {result.personalized && result.subjectChart && (
             <YourChart
               chart={result.subjectChart}
               dayun={result.dayun}
               currentAge={currentAge}
-              boundaryWarnings={result.meta.boundaryWarnings}
+              boundaryWarnings={chartWarnings}
             />
           )}
         </>
