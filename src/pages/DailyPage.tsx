@@ -1,29 +1,56 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  DecisionResult,
   GENERAL_DAY_OBJECTIVE,
   dayGodPlain,
+  evaluateDecision,
   humanDate,
   officerPlain,
   shenShaPlain,
 } from "../engine/index.ts";
 import { DayInsights } from "../ui/DayInsights.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
-import { TODAY_ISO, addDaysIso, isValidIso } from "../ui/shared.ts";
+import { TODAY_ISO, addDaysIso, buildRequest, civilOfIso, isValidIso } from "../ui/shared.ts";
 import { NeedsProfile } from "./NeedsProfile.tsx";
 import { DayVerification } from "./PlannerBits.tsx";
 
 /** Daily planner view — one day's pillar, officer, day-god, special info,
- *  auspicious/inauspicious stars, personal fit, 12 hour slots, 宜/忌, and a
- *  verification badge. Browses past and future via /day/:date. */
+ *  auspicious/inauspicious stars, personal fit, 12 hour slots, 宜/忌, and live
+ *  verification badges. Browses past and future via /day/:date. */
 export function DailyPage() {
   const params = useParams();
   const nav = useNavigate();
   const iso = isValidIso(params.date) ? params.date : TODAY_ISO;
   const isToday = iso === TODAY_ISO;
-  const { chart, evaluateDay } = useProfile();
+  const { chart, person } = useProfile();
 
-  const res = useMemo(() => evaluateDay(GENERAL_DAY_OBJECTIVE.id, iso), [evaluateDay, iso]);
+  // Sweeps ON (for convention-sensitivity) + a lazy third-party cross-check so the
+  // verification badges reflect a real VerificationReport, not a placeholder.
+  const req = useMemo(() => buildRequest(GENERAL_DAY_OBJECTIVE.id, 1, person, { sweeps: true }, civilOfIso(iso)), [person, iso]);
+  const baseRes = useMemo(() => evaluateDecision(req), [req]);
+  const [verified, setVerified] = useState<{ hash: string; result: DecisionResult } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setVerified(null);
+    (async () => {
+      try {
+        const mod = await import("../engine/verification/runVerification.ts");
+        const almanac = mod.buildAlmanacData(req.window);
+        const withAlmanac = evaluateDecision({ ...req, almanac });
+        const report = await mod.verifyDecisionResult({ ...req, almanac }, withAlmanac, new Date().toISOString());
+        const v = mod.applyVerificationReport(withAlmanac, report);
+        if (!cancelled) setVerified({ hash: baseRes.meta.calculationHash, result: v });
+      } catch {
+        /* the base reading stands on its own */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [req]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const res = verified && verified.hash === baseRes.meta.calculationHash ? verified.result : baseRes;
   const rec = res.allDays[0];
   const officer = officerPlain(rec.tongshu.officer);
   const god = dayGodPlain(rec.tongshu.dayGod);
@@ -89,7 +116,11 @@ export function DailyPage() {
         <NeedsProfile what="see how this day tilts your career, wealth, relationships and wellbeing, plus your best hours" />
       )}
 
-      <DayVerification rec={rec} />
+      <DayVerification
+        rec={rec}
+        report={res.meta.verification}
+        conventionSeverity={res.meta.sensitivity?.convention.severity ?? null}
+      />
     </>
   );
 }
