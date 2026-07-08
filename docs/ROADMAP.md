@@ -134,7 +134,7 @@ The app is currently a **static site on GitHub Pages** (no backend), and its pro
 | **B. BYOK (bring your own key)** | User pastes their own Anthropic key (stored in `localStorage`); browser calls Claude directly with the `anthropic-dangerous-direct-browser-access` header. | Zero backend, zero cost to you, key stays on the user's device | Each user needs a Claude key (niche); key visible in their own browser |
 | **C. Cloudflare Pages Functions** | Like A, but keeps hosting + function on one platform (could replace GitHub Pages). | One platform; generous free tier | Migrate hosting off Pages |
 
-**Recommendation:** **Option A on Vercel** for a shippable product (the repo already has `vercel.json`), with **Option B (BYOK) as a fallback mode** so power users / the offline-purist path still works. Either way the **deterministic engine stays 100% client-side** — only chat text + engine tool-results transit the network.
+**Decision (resolved):** ship on **GitHub Pages** (the existing static host) with **Option B — BYOK** as the live-site path (no backend, no per-user cost, nothing to operate). A dev-only proxy in `vite.config.ts` (reading `.env.local`) covers local testing without pasting a key into the browser. Option A/C (a hosted serverless relay) is intentionally **not** used — no Vercel/Cloudflare dependency. Either way the **deterministic engine stays 100% client-side** — only chat text + engine tool-results transit the network.
 
 ### C2. Architecture — client-orchestrated tool loop
 The engine runs in the browser, so the **tool loop is orchestrated client-side**; the proxy is a stateless relay. Flow per user message:
@@ -202,10 +202,13 @@ Many are partly built already; this is the prioritized backlog.
 
 > **Status:** Phases 1–4 shipped, Phase 5 partially. Phase 1 (forecasting engine) landed in
 > `98c8270`; Phases 2 (time navigation) & 3 (life-area / hour / 宜忌) in `c4f0281`; Phase 4
-> (AI chat — BYOK default + Vercel-proxy option + local dev proxy, guardrailed explanation
-> shell) in `853e312`/`9bb4b3a`. Phase 5: the **decision journal** (item 11) and a
-> **shareable HTML report** (item 12) are done; **multi-profile / relationship-aware
-> selection** (item 10) remains the main open item.
+> (AI chat — a guardrailed explanation shell) in `853e312`/`9bb4b3a`. Phase 5: the **decision
+> journal** (item 11) and a **shareable HTML report** (item 12) are done; **multi-profile /
+> relationship-aware selection** (item 10) remains the main open item.
+>
+> **Deployment decision (§7.1):** GitHub Pages (static) → **BYOK** for the live site; the
+> **dev proxy** in `vite.config.ts` reads the key from `.env.local` for local testing only.
+> No Vercel / serverless dependency. Model default: `claude-sonnet-5`.
 
 1. **Phase 1 — Forecasting engine (B):** `interactions.ts` + Ten-God themes + upgraded `periods.ts` (大運/流年/流月, 太歲, life-area routing) + tests. Pure deterministic, no external decision. Biggest metaphysics upgrade; unblocks A and C.
 2. **Phase 2 — Time navigation (A):** luck scrubber, unbounded year stepper, live-today card, shared colour scale, day-stepper. Consumes B's valences.
@@ -219,7 +222,7 @@ Each phase ends with the standard gate: `npm run typecheck && npm test && npm ru
 
 ## 7. Open decisions (need your call before building C)
 
-1. **AI-chat deployment** (§C1): serverless proxy on Vercel (you provide one key, bear cost) vs BYOK (users bring their own key, zero backend) vs Cloudflare. **This is the blocker for Phase 4.**
+1. ~~**AI-chat deployment** (§C1): serverless proxy on Vercel vs BYOK vs Cloudflare.~~ **Resolved:** GitHub Pages (static) + BYOK; a dev-only proxy for local testing. No Vercel/Cloudflare.
 2. **AI model default:** `claude-sonnet-5` (recommended) vs `claude-haiku-4-5` (cheaper) vs `claude-opus-4-8` (most capable).
 3. **Scope of the macro year:** confirm we stay Zi Ping + Tong Shu (no Flying Stars / Qi Men / Zi Wei) — the research and current engine are Zi Ping; adding other systems is a much larger, separate effort.
 4. **Doctrine knobs** (school differences to pick a default for, all flagged in the engine): 午未 six-combine element (Fire vs Earth), 犯太歲 membership (include 破?), 太歲 reference (birth-year branch only vs also Day branch). Recommend: Fire, exclude 破, compute both Tai-Sui references and label them.

@@ -3,10 +3,11 @@ import react from "@vitejs/plugin-react";
 import { Readable } from "node:stream";
 
 /**
- * Dev-only mirror of api/chat.ts (the Vercel Edge relay), so `npm run dev` can
- * serve the AI chat locally without the browser holding a key. The key is read
- * from the environment (typically .env.local, which is gitignored) and never
- * reaches the client. Mounted only on `vite serve`; absent on build/test.
+ * Dev-only serverless-style relay for the AI chat, so `npm run dev` can serve it
+ * locally without the browser holding a key. The key is read from the environment
+ * (typically .env.local, which is gitignored) and never reaches the client.
+ * Mounted only on `vite serve`; absent on build/test — so the static GitHub Pages
+ * build ships with no proxy and the deployed app uses BYOK (each user's own key).
  */
 function aiChatDevProxy(apiKey: string | undefined): Plugin {
   return {

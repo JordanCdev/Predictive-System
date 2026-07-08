@@ -50,48 +50,42 @@ The tools ([`src/ai/tools.ts`](../src/ai/tools.ts)), each a deterministic engine
 the streaming loop is tested with a stubbed SSE transport
 ([`tests/aiChatClient.test.ts`](../tests/aiChatClient.test.ts)).
 
-## Two transports (the one deployment decision)
+## Deployment: GitHub Pages (static) → BYOK
 
-The app is a static site; a cloud LLM is the first thing that leaves the device, so
-it is opt-in and clearly labelled. Where the API key lives is the only choice:
+The app ships to **GitHub Pages**, a static host with no backend (see
+[`.github/workflows/deploy-pages.yml`](../.github/workflows/deploy-pages.yml)). A
+cloud LLM is the first thing that leaves the device, so it is opt-in and clearly
+labelled — and with no server, the live site uses **BYOK (bring your own key)**:
 
-- **BYOK (default, zero backend).** The user pastes their own Anthropic key; it is
-  stored only in their browser (`localStorage`) and the request goes straight to
+- The visitor pastes their own Anthropic key into the chat setup card; it is stored
+  only in their browser (`localStorage`) and the request goes straight to
   `api.anthropic.com` with the `anthropic-dangerous-direct-browser-access` header.
-  Nothing to host.
-- **Serverless proxy (shippable product).** [`api/chat.ts`](../api/chat.ts) is a
-  Vercel Edge relay that holds `ANTHROPIC_API_KEY` server-side and forwards the
-  Messages-API request, streaming the response straight back. Users need no key.
+  Nothing to host, no server key.
 
-  ```bash
-  vercel env add ANTHROPIC_API_KEY          # your key, server-side only
-  VITE_AI_PROXY_URL=/api/chat npm run build  # point the client at the relay
-  ```
+The deploy workflow builds without `VITE_AI_PROXY_URL` (and `.env.local` is gitignored
+/ absent from CI), so the published bundle carries no proxy and always falls back to
+BYOK. There is no Vercel or other serverless dependency.
 
-  With `VITE_AI_PROXY_URL` unset, the client falls back to BYOK automatically.
+### Local development — a dev proxy so you don't paste a key in the browser
 
-### Local development — put the key in `.env.local`
-
-`vite.config.ts` mounts a dev-only mirror of the Vercel relay at `/api/chat`, so
-`npm run dev` can serve the chat locally with the key kept out of the browser and
-out of git. There is nothing to paste into a chat and nothing to commit:
+For your own local work, `vite.config.ts` mounts a dev-only relay at `/api/chat` (it
+runs only under `vite serve`, never in the build). Put your key in `.env.local` and it
+is read server-side, never bundled:
 
 ```bash
 cp .env.local.example .env.local     # gitignored
 # edit .env.local:
-#   ANTHROPIC_API_KEY=sk-ant-...      # server-side only, never bundled
-#   VITE_AI_PROXY_URL=/api/chat       # point the app at the local proxy
+#   ANTHROPIC_API_KEY=sk-ant-...      # read only by the dev proxy, never bundled
+#   VITE_AI_PROXY_URL=/api/chat       # point the app at the local dev proxy
 npm run dev                          # restart if it was already running
 ```
 
-The dev proxy reads `ANTHROPIC_API_KEY` from the environment (Node side) and never
-exposes it to the client bundle; `VITE_AI_PROXY_URL` is the only `VITE_`-prefixed
-(client-visible) value, and it is just the relay path. Without `.env.local`, the app
-falls back to BYOK (paste your own key into the chat setup card — it lives only in
-`localStorage`). Health-check the proxy: `curl -XPOST localhost:5173/api/chat` should
-answer `500 … add it to .env.local` until the key is set.
+Health-check: `curl -XPOST localhost:5173/api/chat` answers `500 … add it to .env.local`
+until the key is set. Leave `.env.local` out entirely and local dev uses BYOK too, just
+like production. (Don't set `VITE_AI_PROXY_URL` for a production build — there is no
+proxy on Pages.)
 
-Either way the **deterministic engine stays 100% client-side** — only chat text and
+The **deterministic engine stays 100% client-side** — only chat text and
 the small engine tool-results transit the network. Privacy: only the *derived* chart
 summary (Day Master, elements) is sent, never the birth date, time or city.
 

@@ -8,9 +8,9 @@ const MODEL_STORE = "wei_ai_model";
 const CONSENT_STORE = "wei_ai_consent";
 const DEFAULT_MODEL = "claude-sonnet-5";
 
-// A serverless relay can be wired in (VITE_AI_PROXY_URL — the local dev proxy in
-// vite.config.ts, or the Vercel Edge function in production); when set, the key
-// lives server-side and users need no key of their own. Absent → BYOK.
+// VITE_AI_PROXY_URL wires the chat through a relay that holds the key server-side
+// (the local dev proxy in vite.config.ts). On the static GitHub Pages build it is
+// unset, so the deployed app uses BYOK — each user enters their own key.
 const PROXY_URL: string | undefined = import.meta.env.VITE_AI_PROXY_URL || undefined;
 
 const MODELS = [
