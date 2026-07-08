@@ -23,7 +23,7 @@ import { buildFourPillars } from "../sexagenary.ts";
 import { FieldAgreement, VerificationReport, VerificationSource } from "./types.ts";
 import { buildVerificationReport } from "./verificationReport.ts";
 import { lunarJavascriptSource, verifyCandidateDay, verifyNatalChart } from "./verifyLunarJavascript.ts";
-import { hkoSource, hkoTermsAround, verifyTermsAround } from "./verifySolarTerms.ts";
+import { hkoSource, verifyTermsAround } from "./verifySolarTerms.ts";
 
 export { applyVerificationReport } from "./verificationReport.ts";
 
@@ -40,11 +40,13 @@ export async function verifyDecisionResult(
   ];
 
   if (!target) {
+    const s = req.window.start;
+    const windowStartIso = `${s.year}-${String(s.month).padStart(2, "0")}-${String(s.day).padStart(2, "0")}`;
     return buildVerificationReport(
       {
         engineVersion: result.meta.engineVersions.engine,
         calculationHash: result.meta.calculationHash,
-        dateIso: result.meta.windowLabel,
+        dateIso: windowStartIso,
         objectiveId: result.meta.objectiveId,
         conventionId: result.meta.conventionId,
       },
@@ -90,12 +92,12 @@ export async function verifyDecisionResult(
     );
   }
 
-  // 3. Solar-term boundaries around the top day vs HKO published times.
-  const termFields = verifyTermsAround(noonUtc);
-  fields.push(...termFields);
-  if (hkoTermsAround(noonUtc).length > 0) {
-    sources.push(hkoSource());
-  }
+  // 3. Solar-term boundaries around the top day vs HKO published times. The
+  //    fixture is always CONSULTED (so it always appears in sources — every
+  //    field referencing "hko" must resolve); whether it was COMPARABLE for
+  //    this date is what its fields' unsupported status and sourceCoverage say.
+  fields.push(...verifyTermsAround(noonUtc));
+  sources.push(hkoSource());
 
   return buildVerificationReport(
     {

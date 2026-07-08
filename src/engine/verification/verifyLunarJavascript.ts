@@ -190,7 +190,9 @@ export function verifyCandidateDay(input: DayVerificationInput): FieldAgreement[
   const zhTerms = TAG_ZH_SIMPLIFIED[primaryTag] ?? [];
   const inYi = zhTerms.filter((t) => yi.includes(t));
   const inJi = zhTerms.filter((t) => ji.includes(t));
-  const allForbidden = ji.includes("诸事不宜");
+  // lunar-javascript places 诸事不宜 in EITHER list depending on the day (probed:
+  // e.g. 2026-05-02 carries it in yi, 2026-01-09 in ji) — check both.
+  const allForbidden = ji.includes("诸事不宜") || yi.includes("诸事不宜");
   if (zhTerms.length === 0) {
     fields.push({
       field: "yi",

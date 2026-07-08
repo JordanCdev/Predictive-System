@@ -40,12 +40,20 @@ export function aggregateAgreement(fields: FieldAgreement[]): {
       (f.blocking ? blockingDisagreements : nonBlockingDisagreements).push(f.field);
     } else if (f.status === "warn") {
       if (f.notes?.length) warnings.push(`${f.field}: ${f.notes[0]}`);
-      if (!f.blocking) nonBlockingDisagreements.push(f.field);
+      // Every warn is a visible (non-blocking-severity) disagreement — including
+      // warns on blocking fields, which weigh double in the score and must not
+      // be the least visible mismatches in the report.
+      nonBlockingDisagreements.push(f.field);
     }
   }
   const overallAgreementScore = weightSum === 0 ? 50 : Math.round((sum / weightSum) * 100);
   if (weightSum === 0) warnings.push("No comparable fields — agreement left at neutral 50.");
-  return { overallAgreementScore, blockingDisagreements, nonBlockingDisagreements, warnings };
+  return {
+    overallAgreementScore,
+    blockingDisagreements: [...new Set(blockingDisagreements)],
+    nonBlockingDisagreements: [...new Set(nonBlockingDisagreements)],
+    warnings,
+  };
 }
 
 export interface ReportContext {
@@ -64,13 +72,15 @@ export function buildVerificationReport(
   return { ...ctx, sources, fields, ...aggregateAgreement(fields) };
 }
 
-/** Coverage grows with each independent source family actually consulted. */
+/** Coverage grows with each independent source family that produced at least
+ *  one COMPARABLE field — a source consulted but unsupported for this date
+ *  (e.g. HKO outside fixture years) adds nothing. */
 export function sourceCoverageFromReport(report: VerificationReport): number {
   let coverage = 40; // internal engine
-  const ids = new Set(report.sources.map((s) => s.id));
-  if (ids.has("lunar-javascript")) coverage += 35;
-  if (ids.has("hko")) coverage += 10;
-  if (ids.has("jpl-horizons")) coverage += 10;
+  const comparable = new Set(report.fields.filter((f) => f.status !== "unsupported").map((f) => f.source));
+  if (comparable.has("lunar-javascript")) coverage += 35;
+  if (comparable.has("hko")) coverage += 10;
+  if (comparable.has("jpl-horizons")) coverage += 10;
   return Math.min(95, coverage);
 }
 
@@ -82,12 +92,29 @@ export function sourceCoverageFromReport(report: VerificationReport): number {
 export function applyVerificationReport(result: DecisionResult, report: VerificationReport): DecisionResult {
   const agreement = report.overallAgreementScore;
   const coverage = sourceCoverageFromReport(report);
-  const externalNames = report.sources.filter((s) => s.id !== "internal").map((s) => s.sourceLabel);
+  // Name only sources that produced comparable fields — a consulted-but-
+  // unsupported source (HKO outside fixture years) must not be claimed.
+  const comparable = new Set(report.fields.filter((f) => f.status !== "unsupported").map((f) => f.source));
+  const externalNames = report.sources
+    .filter((s) => s.id !== "internal" && comparable.has(s.id))
+    .map((s) => s.sourceLabel);
 
   const upgrade = (c: ConfidenceBreakdown): ConfidenceBreakdown => {
     const components = { ...c.components, thirdPartyAgreement: agreement, sourceCoverage: coverage };
-    const notes = c.notes.filter((n) => !n.includes("not yet applied"));
-    notes.push(`Cross-checked against ${externalNames.join(", ")} — agreement ${agreement}/100.`);
+    // Idempotent: strip the pending placeholder AND any notes from a previous
+    // application, so re-verification replaces rather than accumulates.
+    const notes = c.notes.filter(
+      (n) =>
+        !n.includes("not yet applied") &&
+        !n.startsWith("Cross-checked against") &&
+        !n.startsWith("Blocking disagreements:") &&
+        !n.startsWith("Non-blocking differences:"),
+    );
+    notes.push(
+      externalNames.length > 0
+        ? `Cross-checked against ${externalNames.join(", ")} — agreement ${agreement}/100.`
+        : "Third-party sources were consulted but none could compare this date — agreement left neutral.",
+    );
     if (report.blockingDisagreements.length > 0) {
       notes.push(`Blocking disagreements: ${report.blockingDisagreements.join("; ")}.`);
     } else if (report.nonBlockingDisagreements.length > 0) {

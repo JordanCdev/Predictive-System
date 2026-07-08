@@ -97,17 +97,19 @@ export function verifyHkoTerm(term: HkoTerm): FieldAgreement[] {
 }
 
 /** The HKO terms bracketing an instant (previous and next), if the fixture
- *  covers them. Terms sit ~15.2 days apart, so anything farther than 25 days
- *  means the instant is outside fixture coverage — not silently "bracketed"
- *  by the edge of the table. */
+ *  covers them. Adjacent terms sit 14.7–15.7 days apart, so a genuine bracket
+ *  requires BOTH sides present and no more than ~17 days apart. At the fixture
+ *  edges one side is missing (e.g. 小寒 2028 after the last 2027 entry) — that
+ *  is incomplete coverage and must report unsupported, not a term that merely
+ *  happens to sit within some distance of the instant. */
 export function hkoTermsAround(utcMillis: number): HkoTerm[] {
-  const MAX_GAP_MS = 25 * 86400000;
+  const MAX_ADJACENT_GAP_MS = 17 * 86400000;
   const sorted = [...HKO_TERMS].sort((a, b) => Date.parse(a.utcIso) - Date.parse(b.utcIso));
   const prev = [...sorted].reverse().find((t) => Date.parse(t.utcIso) <= utcMillis);
   const next = sorted.find((t) => Date.parse(t.utcIso) > utcMillis);
-  return [prev, next].filter(
-    (t): t is HkoTerm => t !== undefined && Math.abs(Date.parse(t.utcIso) - utcMillis) <= MAX_GAP_MS,
-  );
+  if (!prev || !next) return [];
+  if (Date.parse(next.utcIso) - Date.parse(prev.utcIso) > MAX_ADJACENT_GAP_MS) return [];
+  return [prev, next];
 }
 
 /** Verify the solar-term boundaries around a candidate instant against HKO. */
