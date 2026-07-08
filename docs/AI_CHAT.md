@@ -70,6 +70,27 @@ it is opt-in and clearly labelled. Where the API key lives is the only choice:
 
   With `VITE_AI_PROXY_URL` unset, the client falls back to BYOK automatically.
 
+### Local development — put the key in `.env.local`
+
+`vite.config.ts` mounts a dev-only mirror of the Vercel relay at `/api/chat`, so
+`npm run dev` can serve the chat locally with the key kept out of the browser and
+out of git. There is nothing to paste into a chat and nothing to commit:
+
+```bash
+cp .env.local.example .env.local     # gitignored
+# edit .env.local:
+#   ANTHROPIC_API_KEY=sk-ant-...      # server-side only, never bundled
+#   VITE_AI_PROXY_URL=/api/chat       # point the app at the local proxy
+npm run dev                          # restart if it was already running
+```
+
+The dev proxy reads `ANTHROPIC_API_KEY` from the environment (Node side) and never
+exposes it to the client bundle; `VITE_AI_PROXY_URL` is the only `VITE_`-prefixed
+(client-visible) value, and it is just the relay path. Without `.env.local`, the app
+falls back to BYOK (paste your own key into the chat setup card — it lives only in
+`localStorage`). Health-check the proxy: `curl -XPOST localhost:5173/api/chat` should
+answer `500 … add it to .env.local` until the key is set.
+
 Either way the **deterministic engine stays 100% client-side** — only chat text and
 the small engine tool-results transit the network. Privacy: only the *derived* chart
 summary (Day Master, elements) is sent, never the birth date, time or city.

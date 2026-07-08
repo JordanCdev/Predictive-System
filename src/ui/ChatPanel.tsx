@@ -8,9 +8,10 @@ const MODEL_STORE = "wei_ai_model";
 const CONSENT_STORE = "wei_ai_consent";
 const DEFAULT_MODEL = "claude-sonnet-5";
 
-// A serverless relay can be wired in at build time (VITE_AI_PROXY_URL); when set,
-// the key lives server-side and users need no key of their own. Absent → BYOK.
-const PROXY_URL: string | undefined = (import.meta as any).env?.VITE_AI_PROXY_URL || undefined;
+// A serverless relay can be wired in (VITE_AI_PROXY_URL — the local dev proxy in
+// vite.config.ts, or the Vercel Edge function in production); when set, the key
+// lives server-side and users need no key of their own. Absent → BYOK.
+const PROXY_URL: string | undefined = import.meta.env.VITE_AI_PROXY_URL || undefined;
 
 const MODELS = [
   { id: "claude-sonnet-5", label: "Sonnet 5 — balanced (recommended)" },
