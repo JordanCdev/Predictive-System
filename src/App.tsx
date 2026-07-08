@@ -17,6 +17,8 @@ import {
   windowPlain,
 } from "./engine/index.ts";
 import { PeriodsPanel } from "./ui/PeriodsPanel.tsx";
+import { TodayCard } from "./ui/TodayCard.tsx";
+import { DayInsights } from "./ui/DayInsights.tsx";
 import { AskStep } from "./ui/AskStep.tsx";
 import { Alternative, BestDayHero, RuledOutCard } from "./ui/BestDayHero.tsx";
 import { CalendarMonth } from "./ui/CalendarMonth.tsx";
@@ -254,6 +256,14 @@ export function App() {
   const pick = recs[0] ?? null;
   const selectedRec = result.allDays.find((d) => d.isoDate === selectedIso) ?? pick;
   const alternatives = computeAlternatives(recs, selectedRec.isoDate);
+  // Today's already-computed window day — powers the "now" snapshot card.
+  const todayRec = result.allDays.find((d) => d.isoDate === TODAY_ISO) ?? null;
+  // Day-stepper: move ±1 day within the computed window (chronological).
+  const selIndex = result.allDays.findIndex((d) => d.isoDate === selectedRec.isoDate);
+  const stepDay = (delta: number) => {
+    const next = result.allDays[selIndex + delta];
+    if (next) selectDay(next.isoDate);
+  };
   const currentAge = person ? ageOn(person.birthDate) : null;
   const birthCivil = person ? birthCivilOf(person.birthDate) : null;
   // Request-layer notices (e.g. solar time downgraded to civil clock for a
@@ -283,6 +293,8 @@ export function App() {
           Change
         </button>
       </div>
+
+      {todayRec && <TodayCard chart={result.subjectChart} today={todayRec} />}
 
       {recs.length === 0 ? (
         <>
@@ -333,6 +345,8 @@ export function App() {
             )}
           </div>
 
+          {result.subjectChart && <DayInsights chart={result.subjectChart} rec={selectedRec} />}
+
           {/* Upsell sits right under the hero when not yet personalized (the hero invites it);
               once personalized, the "tailored" summary lives lower, next to the chart. */}
           {!result.personalized && (
@@ -345,7 +359,14 @@ export function App() {
             />
           )}
 
-          <div className="section-title">Browse the window</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <div className="section-title" style={{ marginBottom: 0 }}>Browse the window</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button className="btn-ghost" style={{ width: "auto", padding: "3px 11px" }} aria-label="Previous day" disabled={selIndex <= 0} onClick={() => stepDay(-1)}>‹</button>
+              <b style={{ minWidth: 84, textAlign: "center", fontSize: 13 }}>{shortDate(selectedRec.civil)}</b>
+              <button className="btn-ghost" style={{ width: "auto", padding: "3px 11px" }} aria-label="Next day" disabled={selIndex >= result.allDays.length - 1} onClick={() => stepDay(1)}>›</button>
+            </div>
+          </div>
           <CalendarMonth
             key={pick?.isoDate ?? "none"}
             allDays={result.allDays}
