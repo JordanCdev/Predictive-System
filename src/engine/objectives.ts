@@ -16,6 +16,13 @@ export interface McdaWeights {
   hour: number; // best double-hour quality on the day
 }
 
+/** Calendar-level taboos the decision layer can hard-veto or soft-penalize.
+ *  歲破 = year_break; 四離 = four_departure; 四絕 = four_severance. */
+export type CalendarTaboo = "year_break" | "four_departure" | "four_severance";
+
+/** 大事勿用/諸事不宜 treated as exclusions for high-stakes objectives. */
+const ALL_TABOOS: CalendarTaboo[] = ["year_break", "four_departure", "four_severance"];
+
 export interface Objective {
   id: string;
   label: string;
@@ -24,6 +31,10 @@ export interface Objective {
   primaryTag: ActivityTag;
   /** Officer indices (0..11) that are forbidden → hard reject (unless medical). */
   vetoOfficers: number[];
+  /** Calendar taboos (歲破/四離/四絕) that hard-reject the day for this objective.
+   *  Taboos NOT listed here stay soft penalties (medical is exempt from both —
+   *  求醫 is the classical exception to 大事勿用). */
+  hardCalendarTaboos: CalendarTaboo[];
   /** Does a clash with the subject's Day/zodiac branch hard-reject the day? */
   clashVeto: boolean;
   /** Ten-God group energy (relative to subject DM) that supports this goal. */
@@ -45,6 +56,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Signing agreements, closing sales, formalising commitments.",
     primaryTag: "contract",
     vetoOfficers: [DESTRUCTION],
+    hardCalendarTaboos: ["year_break", "four_departure"],
     clashVeto: true,
     godBias: ["wealth", "officer"],
     weights: { officer: 0.34, personal: 0.34, road: 0.16, hour: 0.16 },
@@ -58,6 +70,7 @@ export const OBJECTIVES: Objective[] = [
     description: "First day of trading, grand opening, going live.",
     primaryTag: "open",
     vetoOfficers: [DESTRUCTION, 11],
+    hardCalendarTaboos: ALL_TABOOS,
     clashVeto: true,
     godBias: ["wealth", "output"],
     weights: { officer: 0.36, personal: 0.32, road: 0.18, hour: 0.14 },
@@ -71,6 +84,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Beginning new employment, taking office, a promotion start.",
     primaryTag: "general",
     vetoOfficers: [DESTRUCTION],
+    hardCalendarTaboos: [],
     clashVeto: false,
     godBias: ["officer", "resource"],
     weights: { officer: 0.30, personal: 0.40, road: 0.14, hour: 0.16 },
@@ -84,6 +98,7 @@ export const OBJECTIVES: Objective[] = [
     description: "High-stakes talks, pitches, board meetings, mediations.",
     primaryTag: "contract",
     vetoOfficers: [DESTRUCTION],
+    hardCalendarTaboos: [],
     clashVeto: false,
     godBias: ["officer", "wealth"],
     weights: { officer: 0.28, personal: 0.36, road: 0.16, hour: 0.20 },
@@ -97,6 +112,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Marriage ceremony or legal registration (嫁娶).",
     primaryTag: "marry",
     vetoOfficers: [DESTRUCTION, 5, 11],
+    hardCalendarTaboos: ALL_TABOOS,
     clashVeto: true,
     godBias: ["resource"],
     weights: { officer: 0.34, personal: 0.34, road: 0.18, hour: 0.14 },
@@ -110,6 +126,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Relocating, moving into a new home (移徙 / 入宅).",
     primaryTag: "move",
     vetoOfficers: [DESTRUCTION, 11, 5],
+    hardCalendarTaboos: ALL_TABOOS,
     clashVeto: true,
     godBias: ["resource"],
     weights: { officer: 0.36, personal: 0.32, road: 0.18, hour: 0.14 },
@@ -123,6 +140,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Departures, long trips, relocations abroad (出行).",
     primaryTag: "travel",
     vetoOfficers: [DESTRUCTION],
+    hardCalendarTaboos: [],
     clashVeto: false,
     godBias: ["output"],
     weights: { officer: 0.34, personal: 0.30, road: 0.18, hour: 0.18 },
@@ -136,6 +154,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Construction start, renovation, ground-breaking.",
     primaryTag: "ground",
     vetoOfficers: [DESTRUCTION, 0],
+    hardCalendarTaboos: ALL_TABOOS,
     clashVeto: true,
     godBias: ["resource"],
     weights: { officer: 0.40, personal: 0.28, road: 0.18, hour: 0.14 },
@@ -149,6 +168,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Elective surgery, treatment, starting therapy.",
     primaryTag: "medical",
     vetoOfficers: [], // 破/除 are traditionally acceptable for medical
+    hardCalendarTaboos: [], // 求醫 is the classical exception to 大事勿用 — soft only
     clashVeto: false,
     godBias: ["resource"],
     weights: { officer: 0.30, personal: 0.40, road: 0.16, hour: 0.14 },
@@ -162,6 +182,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Buying property/vehicle, committing capital (納財).",
     primaryTag: "contract",
     vetoOfficers: [DESTRUCTION],
+    hardCalendarTaboos: [],
     clashVeto: true,
     godBias: ["wealth"],
     weights: { officer: 0.32, personal: 0.38, road: 0.16, hour: 0.14 },
@@ -175,6 +196,7 @@ export const OBJECTIVES: Objective[] = [
     description: "Sitting exams, enrolling, submitting important work (入學).",
     primaryTag: "study",
     vetoOfficers: [DESTRUCTION],
+    hardCalendarTaboos: [],
     clashVeto: false,
     godBias: ["resource", "output"],
     weights: { officer: 0.32, personal: 0.38, road: 0.14, hour: 0.16 },

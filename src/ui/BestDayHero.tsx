@@ -12,6 +12,7 @@ import {
   practicalBestHour,
   relativeDay,
   shortDate,
+  stabilityWord,
   vetoExplain,
 } from "../engine/index.ts";
 import { ConfidenceChip, ConfidencePanel, GoodMeter } from "./meters.tsx";
@@ -58,7 +59,7 @@ export function BestDayHero({
       <p className="verdict">{headlineVerdict(rec, objective)}</p>
 
       <div className="meters">
-        <GoodMeter score={rec.finalScore} />
+        <GoodMeter score={rec.recommendationScore} />
         <div className="meter-divider" />
         <ConfidenceChip
           confidence={rec.confidence}
@@ -68,6 +69,30 @@ export function BestDayHero({
         />
       </div>
       {confOpen && <ConfidencePanel confidence={rec.confidence} personalized={meta.personalized} />}
+
+      {/* Verification & stability strip — what independent sources could check,
+          and whether the pick survives other school conventions. Never a claim
+          about outcomes. */}
+      <div
+        className="verify-strip"
+        style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", margin: "10px 0 2px", fontSize: 12.5, opacity: 0.85 }}
+      >
+        <span title="Agreement of independently computed calendar sources (lunar-javascript; HKO solar terms) with this engine's calendar facts. Not a success probability.">
+          {meta.verification
+            ? `✓ Third-party agreement ${meta.verification.overallAgreementScore}/100 (${meta.verification.sources.filter((s) => s.id !== "internal").length} sources)`
+            : "· Third-party cross-check pending…"}
+        </span>
+        {meta.sensitivity && (
+          <span title="Whether this pick survives the other supported school conventions (Zi-hour rollover, true solar time).">
+            Convention stability: {stabilityWord(meta.sensitivity.convention.severity)}
+          </span>
+        )}
+        {meta.sensitivity && (
+          <span title="Whether the top day survives ±10% perturbations of the scoring weights.">
+            Ranking robustness: {stabilityWord(meta.sensitivity.weights.severity)}
+          </span>
+        )}
+      </div>
 
       {rec.personalized && practicalBestHour(rec) && (
         <div className="besthour">
@@ -107,8 +132,8 @@ export function BestDayHero({
                 <span className="kind">{alt.kind}</span>
                 <span className="when">{shortDate(alt.rec.civil)}</span>
                 <span className="meta">
-                  <span className="dot" style={{ background: scoreColor(alt.rec.finalScore) }} />
-                  {relativeDay(alt.rec.isoDate, todayIso)} · {alt.rec.finalScore}
+                  <span className="dot" style={{ background: scoreColor(alt.rec.recommendationScore) }} />
+                  {relativeDay(alt.rec.isoDate, todayIso)} · {alt.rec.recommendationScore}
                 </span>
               </button>
             ))}

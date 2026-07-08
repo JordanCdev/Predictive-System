@@ -135,12 +135,12 @@ export function ProfilePanel({
               <p className="rec-reason">{fit.reason}</p>
               {best ? (
                 <button className="rec-day" onClick={() => onOpenReading(fit.objectiveId, defaultWindowDays)}>
-                  <span className="band-dot" style={{ background: scoreColor(best.finalScore) }} />
+                  <span className="band-dot" style={{ background: scoreColor(best.recommendationScore) }} />
                   <span className="rec-day-main">
                     Best day: <b>{shortDate(best.civil)}</b> <span className="muted">· {relativeDay(best.isoDate, todayIso)}</span>
                   </span>
-                  <span className="rec-day-score" style={{ color: scoreTextColor(best.finalScore) }}>
-                    {best.finalScore}
+                  <span className="rec-day-score" style={{ color: scoreTextColor(best.recommendationScore) }}>
+                    {best.recommendationScore}
                   </span>
                 </button>
               ) : (

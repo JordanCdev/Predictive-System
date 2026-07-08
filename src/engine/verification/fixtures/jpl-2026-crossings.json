@@ -1,0 +1,124 @@
+{
+  "source": "NASA/JPL Horizons API",
+  "apiVersion": "1.2",
+  "requestParamsExample": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND='10'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='2026-02-03 20:00'&STOP_TIME='2026-02-03 21:00'&STEP_SIZE='1 m'&QUANTITIES='31'&ANG_FORMAT='DEG'&EXTRA_PREC='YES'&APPARENT='AIRLESS'",
+  "retrievedAtIso": "2026-07-08",
+  "notes": "Frame verified from Horizons output footer: QUANTITIES=31 (ObsEcLon/ObsEcLat) is \"Observer-centered IAU76/80 ecliptic-of-date longitude and latitude of the target centers' apparent position, with light-time, gravitational deflection of light, and stellar aberrations\" — i.e., APPARENT GEOCENTRIC ecliptic-of-date longitude (CENTER='500@399' = geocenter), which is the correct quantity for Chinese solar terms. Method: 1 coarse 1-hour-step query (Feb 3-4) to bracket Li Chun, then five 1-minute-step queries; crossing instants linearly interpolated between bracketing minutes (Sun moves ~0.0007 deg/mi",
+  "crossings": [
+    {
+      "term": "立春 Li Chun",
+      "longitudeDeg": 315,
+      "utcIso": "2026-02-03T20:02:09Z",
+      "samples": [
+        {
+          "utcIso": "2026-02-03T20:01:00Z",
+          "eclLonDeg": 314.9991897
+        },
+        {
+          "utcIso": "2026-02-03T20:02:00Z",
+          "eclLonDeg": 314.9998938
+        },
+        {
+          "utcIso": "2026-02-03T20:03:00Z",
+          "eclLonDeg": 315.0005978
+        },
+        {
+          "utcIso": "2026-02-03T20:04:00Z",
+          "eclLonDeg": 315.0013019
+        }
+      ]
+    },
+    {
+      "term": "春分 spring equinox",
+      "longitudeDeg": 0,
+      "utcIso": "2026-03-20T14:45:59Z",
+      "samples": [
+        {
+          "utcIso": "2026-03-20T14:44:00Z",
+          "eclLonDeg": 359.9986358
+        },
+        {
+          "utcIso": "2026-03-20T14:45:00Z",
+          "eclLonDeg": 359.9993261
+        },
+        {
+          "utcIso": "2026-03-20T14:46:00Z",
+          "eclLonDeg": 1.64e-05
+        },
+        {
+          "utcIso": "2026-03-20T14:47:00Z",
+          "eclLonDeg": 0.0007066
+        }
+      ]
+    },
+    {
+      "term": "夏至 summer solstice",
+      "longitudeDeg": 90,
+      "utcIso": "2026-06-21T08:24:32Z",
+      "samples": [
+        {
+          "utcIso": "2026-06-21T08:23:00Z",
+          "eclLonDeg": 89.9989891
+        },
+        {
+          "utcIso": "2026-06-21T08:24:00Z",
+          "eclLonDeg": 89.9996519
+        },
+        {
+          "utcIso": "2026-06-21T08:25:00Z",
+          "eclLonDeg": 90.0003147
+        },
+        {
+          "utcIso": "2026-06-21T08:26:00Z",
+          "eclLonDeg": 90.0009775
+        }
+      ]
+    },
+    {
+      "term": "秋分 autumn equinox",
+      "longitudeDeg": 180,
+      "utcIso": "2026-09-23T00:05:14Z",
+      "samples": [
+        {
+          "utcIso": "2026-09-23T00:04:00Z",
+          "eclLonDeg": 179.9991587
+        },
+        {
+          "utcIso": "2026-09-23T00:05:00Z",
+          "eclLonDeg": 179.999838
+        },
+        {
+          "utcIso": "2026-09-23T00:06:00Z",
+          "eclLonDeg": 180.0005172
+        },
+        {
+          "utcIso": "2026-09-23T00:07:00Z",
+          "eclLonDeg": 180.0011965
+        }
+      ]
+    },
+    {
+      "term": "冬至 winter solstice",
+      "longitudeDeg": 270,
+      "utcIso": "2026-12-21T20:50:15Z",
+      "samples": [
+        {
+          "utcIso": "2026-12-21T20:49:00Z",
+          "eclLonDeg": 269.9991111
+        },
+        {
+          "utcIso": "2026-12-21T20:50:00Z",
+          "eclLonDeg": 269.9998181
+        },
+        {
+          "utcIso": "2026-12-21T20:51:00Z",
+          "eclLonDeg": 270.000525
+        },
+        {
+          "utcIso": "2026-12-21T20:52:00Z",
+          "eclLonDeg": 270.001232
+        }
+      ]
+    }
+  ]
+}

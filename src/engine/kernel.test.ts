@@ -4,8 +4,11 @@ import { buildFourPillars, dayGanzhiIndexFromCivilDate } from "./sexagenary.ts";
 import { ZIPING_DEFAULT } from "./conventions.ts";
 import { ganZhiFromIndex, naYinOf, tenGodOf, STEMS } from "./symbols.ts";
 
-const minutesOf = (ms: number) => ms / 60000;
-const within = (a: number, b: number, tolMin: number) => Math.abs(minutesOf(a - b)) <= tolMin;
+// ≤120 s against published instants (was ±30 min — far looser than both the
+// engine's actual accuracy (~25 s) and the documentation's precision claim).
+// Sources publish to the minute, so the tolerance absorbs ≤30 s of rounding.
+const withinSeconds = (a: number, b: number, tolSec: number) => Math.abs(a - b) / 1000 <= tolSec;
+const TERM_TOLERANCE_SECONDS = 120;
 
 describe("Julian Day Number", () => {
   it("2000-01-01 noon civil = JDN 2451545", () => {
@@ -13,23 +16,33 @@ describe("Julian Day Number", () => {
   });
 });
 
-describe("solar-term crossings (astronomical validation)", () => {
+describe("solar-term crossings (astronomical validation, ≤120 s)", () => {
   // Reference instants from published almanac/observatory data (UTC).
-  it("2023 Winter Solstice (λ=270°) ≈ 2023-12-22 03:27 UTC", () => {
+  it("2023 Winter Solstice (λ=270°) = 2023-12-22 03:27 UTC", () => {
     const t = findSolarLongitudeCrossing(270, Date.UTC(2023, 11, 22, 0));
-    expect(within(t, Date.UTC(2023, 11, 22, 3, 27), 30)).toBe(true);
+    expect(withinSeconds(t, Date.UTC(2023, 11, 22, 3, 27), TERM_TOLERANCE_SECONDS)).toBe(true);
   });
-  it("2024 Spring Equinox (λ=0°) ≈ 2024-03-20 03:06 UTC", () => {
+  it("2024 Spring Equinox (λ=0°) = 2024-03-20 03:06:24 UTC", () => {
     const t = findSolarLongitudeCrossing(0, Date.UTC(2024, 2, 20, 0));
-    expect(within(t, Date.UTC(2024, 2, 20, 3, 6), 30)).toBe(true);
+    expect(withinSeconds(t, Date.UTC(2024, 2, 20, 3, 6, 24), TERM_TOLERANCE_SECONDS)).toBe(true);
   });
-  it("2024 Summer Solstice (λ=90°) ≈ 2024-06-20 20:51 UTC", () => {
+  it("2024 Summer Solstice (λ=90°) = 2024-06-20 20:51 UTC", () => {
     const t = findSolarLongitudeCrossing(90, Date.UTC(2024, 5, 20, 18));
-    expect(within(t, Date.UTC(2024, 5, 20, 20, 51), 30)).toBe(true);
+    expect(withinSeconds(t, Date.UTC(2024, 5, 20, 20, 51), TERM_TOLERANCE_SECONDS)).toBe(true);
   });
-  it("2024 立春 (λ=315°) ≈ 2024-02-04 08:27 UTC", () => {
+  it("2024 立春 (λ=315°) = 2024-02-04 08:27:08 UTC", () => {
     const t = lichunMillis(2024);
-    expect(within(t, Date.UTC(2024, 1, 4, 8, 27), 30)).toBe(true);
+    expect(withinSeconds(t, Date.UTC(2024, 1, 4, 8, 27, 8), TERM_TOLERANCE_SECONDS)).toBe(true);
+  });
+  // HKO-published 2026 instants (cross-checked against JPL Horizons — see
+  // src/engine/verification/fixtures/ for the full 72-term fixture suite).
+  it("2026 立春 (λ=315°) = 2026-02-03 20:02 UTC (HKO)", () => {
+    const t = lichunMillis(2026);
+    expect(withinSeconds(t, Date.UTC(2026, 1, 3, 20, 2), TERM_TOLERANCE_SECONDS)).toBe(true);
+  });
+  it("2026 Winter Solstice (λ=270°) = 2026-12-21 20:50 UTC (HKO/JPL)", () => {
+    const t = findSolarLongitudeCrossing(270, Date.UTC(2026, 11, 21, 12));
+    expect(withinSeconds(t, Date.UTC(2026, 11, 21, 20, 50), TERM_TOLERANCE_SECONDS)).toBe(true);
   });
 });
 

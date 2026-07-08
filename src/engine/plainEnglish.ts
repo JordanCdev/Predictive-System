@@ -35,9 +35,9 @@ export function verdictBand(score: number): Band {
 }
 
 export function confidenceLabel(c: number): string {
-  if (c >= 0.8) return "High confidence";
-  if (c >= 0.65) return "Good confidence";
-  if (c >= 0.5) return "Moderate confidence";
+  if (c >= 80) return "High confidence";
+  if (c >= 65) return "Good confidence";
+  if (c >= 50) return "Moderate confidence";
   return "Low confidence";
 }
 
@@ -248,10 +248,10 @@ export function headlineVerdict(rec: DayRecommendation, objective: Objective): s
     return `Best avoided to ${verb} — it's a ${fb.code === "four_departure" ? "四離" : "四絕"} day (a season-pivot eve), which tradition marks “大事勿用”.`;
   }
   const clash = rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
-  if (clash && rec.finalScore < 58) {
+  if (clash && rec.recommendationScore < 58) {
     return `A risky day to ${verb} — it clashes your own chart. ${gerund} elsewhere if you can.`;
   }
-  const band = verdictBand(rec.finalScore);
+  const band = verdictBand(rec.recommendationScore);
   switch (band.key) {
     case "excellent":
       return `An excellent day to ${verb}.`;
@@ -275,7 +275,7 @@ export function whyThisDay(rec: DayRecommendation): string[] {
   const taboo =
     rec.rulesFired.some((r) => r.code === "year_break" || r.code === "four_departure" || r.code === "four_severance") ||
     rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
-  const cautious = rec.finalScore < 45 || taboo;
+  const cautious = rec.recommendationScore < 45 || taboo;
 
   // Strong calendar taboos — lead with them.
   if (rec.rulesFired.some((r) => r.code === "year_break")) {
@@ -331,6 +331,12 @@ export function vetoExplain(rec: DayRecommendation, objective: Objective): strin
   if (rec.tongshu.officer.index === 6) {
     return `We'd skip this one to ${verb}: it's a ${officer.label} (破), the one day-type tradition strongly warns against for new commitments.`;
   }
+  if (rec.rejectReasons.some((r) => r.includes("歲破"))) {
+    return `We'd skip this one to ${verb}: it clashes the year's 太歲 (a 歲破 day) — tradition rules such days out entirely for anything that matters.`;
+  }
+  if (rec.rejectReasons.some((r) => r.includes("四離") || r.includes("四絕"))) {
+    return `We'd skip this one to ${verb}: it's the eve of a season pivot (四離/四絕), which tradition marks “大事勿用” — excluded for major undertakings.`;
+  }
   if (rec.rejectReasons.some((r) => r.includes("clash"))) {
     return `We'd skip this one to ${verb}: it clashes your own chart, a day tradition treats as off-limits for this.`;
   }
@@ -357,33 +363,34 @@ export function conflictSentence(c: ConflictRecord): string {
 // ── Confidence, in plain words (always carries the epistemic disclaimer) ────
 
 const CONFIDENCE_DISCLAIMER =
-  "This measures how solid the reasoning is — not the odds that your plans turn out well.";
+  "This is not a probability that the event will succeed. It measures how reproducible, externally verified and perturbation-stable the reasoning is.";
 
 export interface ConfidenceComponentPlain {
   key: string;
   label: string;
+  /** 0–100, always oriented so higher = better (penalty inputs are inverted). */
   value: number;
   blurb: string;
 }
 
-const CONF_COMPONENT_PLAIN: Record<string, { label: string; blurb: string }> = {
-  calculationReproducibility: { label: "Reproducibility", blurb: "The same inputs always reproduce this exact result." },
-  sourceQuality: { label: "Source quality", blurb: "Grounded in classical texts and astronomical calculation." },
-  sourceSpecificity: { label: "Source precision", blurb: "How specific the cited rules are." },
-  schoolAgreement: { label: "School agreement", blurb: "How much the consulted traditions agree here." },
-  inputQuality: { label: "Your input", blurb: "How precisely we could pin the chart — exact time beats an unknown one." },
-  validationConcordance: { label: "Validation", blurb: "Agreement with independently checked reference data (solar terms, golden charts)." },
-  ruleCoverage: { label: "Breadth", blurb: "How many traditions were consulted." },
+const CONF_COMPONENT_PLAIN: Record<string, { label: string; blurb: string; invert?: boolean }> = {
+  calculationReproducibility: { label: "Reproducibility", blurb: "The same inputs always reproduce this exact result — bit-for-bit, offline." },
+  thirdPartyAgreement: { label: "Third-party agreement", blurb: "Agreement with independent sources: the lunar-javascript almanac library and HKO/JPL solar-term data. Neutral (50) until the cross-check has run." },
+  conventionStability: { label: "Convention stability", blurb: "Whether this pick survives the other school conventions (Zi-hour rollover, true solar time)." },
+  sourceCoverage: { label: "Verification coverage", blurb: "How much of this result independent sources could actually check." },
+  inputCompleteness: { label: "Your input", blurb: "How precisely the request pins the subject — an exact birth time (and a longitude for solar-time modes) beats an unknown one." },
+  boundaryRisk: { label: "Boundary safety", blurb: "Distance from solar-term boundaries and strength cut-points; near-boundary results are fragile.", invert: true },
+  heuristicSensitivity: { label: "Ranking robustness", blurb: "Whether the top day survives ±10% perturbation of the scoring weights.", invert: true },
 };
 
 const CONF_ORDER = [
   "calculationReproducibility",
-  "sourceQuality",
-  "validationConcordance",
-  "sourceSpecificity",
-  "schoolAgreement",
-  "ruleCoverage",
-  "inputQuality",
+  "thirdPartyAgreement",
+  "conventionStability",
+  "heuristicSensitivity",
+  "boundaryRisk",
+  "sourceCoverage",
+  "inputCompleteness",
 ];
 
 export interface ConfidencePlain {
@@ -391,20 +398,32 @@ export interface ConfidencePlain {
   sentence: string;
   disclaimer: string;
   components: ConfidenceComponentPlain[];
+  /** Caveats attached by the engine (unverified, near-boundary, sweep findings). */
+  notes: string[];
+  verified: boolean;
 }
 
 export function confidencePlain(conf: ConfidenceBreakdown, personalized: boolean): ConfidencePlain {
   const label = confidenceLabel(conf.overall);
   const base = personalized
-    ? "Classical and astronomical sources back this, tailored to your chart."
+    ? "How solid this reading is, tailored to your chart."
     : "This is the general almanac read — add your birth details to tailor and sharpen it.";
-  const components = CONF_ORDER.map((key) => ({
-    key,
-    label: CONF_COMPONENT_PLAIN[key].label,
-    value: conf.components[key as keyof typeof conf.components],
-    blurb: CONF_COMPONENT_PLAIN[key].blurb,
-  }));
-  return { label, sentence: base, disclaimer: CONFIDENCE_DISCLAIMER, components };
+  const components = CONF_ORDER.map((key) => {
+    const meta = CONF_COMPONENT_PLAIN[key];
+    const raw = conf.components[key as keyof typeof conf.components];
+    return {
+      key,
+      label: meta.label,
+      value: meta.invert ? 100 - raw : raw,
+      blurb: meta.blurb,
+    };
+  });
+  return { label, sentence: base, disclaimer: CONFIDENCE_DISCLAIMER, components, notes: conf.notes, verified: conf.verified };
+}
+
+/** Convention-sweep severity → the stability word shown in the UI. */
+export function stabilityWord(severity: "low" | "medium" | "high"): "high" | "medium" | "low" {
+  return severity === "low" ? "high" : severity === "medium" ? "medium" : "low";
 }
 
 // ── The four sub-scores, narrated ──────────────────────────────────────────
@@ -500,7 +519,7 @@ export function practicalBestHour(rec: DayRecommendation): HourPick | null {
 /** Actionable tips for a day + objective (best window, direction taboos, cautions). */
 export function actionGuidance(rec: DayRecommendation, objective: Objective): string[] {
   const tips: string[] = [];
-  const band = verdictBand(rec.finalScore).key;
+  const band = verdictBand(rec.recommendationScore).key;
   const { verb } = objectivePlain(objective.id);
   const tags = new Set(rec.rulesFired.map((r) => r.code));
   const clash = rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
@@ -596,8 +615,9 @@ const branchHz = (i: number) => BRANCHES[i].hanzi;
 
 export const HOW_TO_READ = [
   "Pick what you're timing and a window — you get one clear best day, plus the runners-up.",
-  "The score (0–100) is how well a day suits that activity: the traditional almanac, and — once you add your birth details — your own chart.",
-  "Confidence is separate: it's how solid and well-sourced the reasoning is, not the odds your plans succeed.",
+  "The recommendation score (0–100) is how well a day suits that activity under this rule set: the traditional almanac, and — once you add your birth details — your own chart. It is a transparent heuristic, not a prediction.",
+  "Confidence is separate: how reproducible, externally verified (independent calendar sources) and perturbation-stable the reasoning is. It is never a probability that your plans succeed.",
+  "Strong calendar taboos (歲破, 四離/四絕) are excluded outright for high-stakes decisions — a nice-looking score can't buy back a forbidden day.",
   "When two traditions disagree, we show both rather than average them away — the call is yours.",
 ];
 

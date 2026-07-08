@@ -15,6 +15,13 @@ export * from "./objectives.ts";
 export * from "./decision.ts";
 export * from "./plainEnglish.ts";
 export * from "./advisor.ts";
+export * from "./sensitivity/conventionSweep.ts";
+export * from "./sensitivity/weightSweep.ts";
+// Verification: types + report aggregation are bundle-safe. The comparators
+// (lunar-javascript, fixtures) live behind a dynamic import of
+// ./verification/runVerification.ts so they stay a lazily-loaded chunk.
+export * from "./verification/types.ts";
+export * from "./verification/verificationReport.ts";
 export { VERSIONS } from "./version.ts";
 export type { Versions } from "./version.ts";
 export { hashOf, canonicalJSON } from "./hash.ts";

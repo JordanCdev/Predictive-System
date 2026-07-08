@@ -101,12 +101,23 @@ const OBJECTIVE_KEYWORDS: Record<string, Keyword[]> = {
   ],
 };
 
+export interface ObjectiveAlternative {
+  objective: Objective;
+  /** Raw keyword score of the alternative (for comparison, not display). */
+  score: number;
+}
+
 export interface ObjectiveMatch {
   objective: Objective;
   /** 0..1 — how confident the match is (top hit strength + margin over runner-up). */
   confidence: number;
   /** The phrases from the query that drove the match. */
   matched: string[];
+  /** Runner-up objectives that also scored — surfaced so a misclassification is
+   *  one click to correct instead of silently wrong upstream of the ranking. */
+  alternatives: ObjectiveAlternative[];
+  /** True when the runner-up is close enough that the match could be wrong. */
+  ambiguous: boolean;
 }
 
 function normalize(s: string): string {
@@ -143,7 +154,12 @@ export function matchObjective(query: string): ObjectiveMatch | null {
   const matched = top.matched
     .filter((m) => !top.matched.some((o) => o !== m && o.includes(m)))
     .sort((a, b) => b.length - a.length);
-  return { objective: objectiveById(top.id), confidence, matched };
+  const alternatives = scores
+    .slice(1, 3)
+    .filter((s) => s.score > 0)
+    .map((s) => ({ objective: objectiveById(s.id), score: s.score }));
+  const ambiguous = runnerUp > 0 && margin < 0.34;
+  return { objective: objectiveById(top.id), confidence, matched, alternatives, ambiguous };
 }
 
 // ── 2. Free-text → timeframe (days) ─────────────────────────────────────────
@@ -342,7 +358,7 @@ export interface AdvisorAnswer {
 
 /** The soonest day at or above the "Good" band (≥58), for a "do it sooner" nudge. */
 function soonestGood(recs: DayRecommendation[]): DayRecommendation | null {
-  return [...recs].filter((r) => r.finalScore >= 58).sort((a, b) => a.isoDate.localeCompare(b.isoDate))[0] ?? null;
+  return [...recs].filter((r) => r.recommendationScore >= 58).sort((a, b) => a.isoDate.localeCompare(b.isoDate))[0] ?? null;
 }
 
 /** Answer a recognised timing question using an already-computed window result. */
@@ -367,7 +383,7 @@ export function composeTimingAnswer(
   const paragraphs: string[] = [];
 
   paragraphs.push(
-    `Your best day to ${verb} in ${windowPlain(windowDays)} is ${humanDate(best.civil)} (${relativeDay(best.isoDate, todayIso)}) — scoring ${best.finalScore}/100. ${headlineVerdict(best, objective)}`,
+    `Your best day to ${verb} in ${windowPlain(windowDays)} is ${humanDate(best.civil)} (${relativeDay(best.isoDate, todayIso)}) — scoring ${best.recommendationScore}/100. ${headlineVerdict(best, objective)}`,
   );
 
   if (best.personalized) {
@@ -380,7 +396,7 @@ export function composeTimingAnswer(
     const farOff = (Date.parse(best.isoDate) - Date.parse(todayIso)) / 86400000 > 92;
     if (farOff) {
       paragraphs.push(
-        `If you'd rather not wait, ${humanDate(sooner.civil)} (${relativeDay(sooner.isoDate, todayIso)}) is the soonest day that still rates ${verdictBand(sooner.finalScore).label.toLowerCase()} at ${sooner.finalScore}/100.`,
+        `If you'd rather not wait, ${humanDate(sooner.civil)} (${relativeDay(sooner.isoDate, todayIso)}) is the soonest day that still rates ${verdictBand(sooner.recommendationScore).label.toLowerCase()} at ${sooner.recommendationScore}/100.`,
       );
     }
   }

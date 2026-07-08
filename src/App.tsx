@@ -6,8 +6,10 @@ import {
   DecisionResult,
   MAX_WINDOW_DAYS,
   OBJECTIVES,
+  VerificationReport,
   WINDOW_DAYS,
   ZIPING_DEFAULT,
+  applyVerificationReport,
   evaluateDecision,
   objectiveById,
   objectivePlain,
@@ -34,12 +36,17 @@ const TODAY_CIVIL = { year: NOW.getFullYear(), month: NOW.getMonth() + 1, day: N
 const TODAY_ISO = `${TODAY_CIVIL.year}-${pad(TODAY_CIVIL.month)}-${pad(TODAY_CIVIL.day)}`;
 const DEFAULT_TZ = -NOW.getTimezoneOffset();
 
-function buildRequest(objectiveId: string, windowDays: number, person: Person | null): DecisionRequest {
+function buildRequest(
+  objectiveId: string,
+  windowDays: number,
+  person: Person | null,
+  options?: DecisionRequest["options"],
+): DecisionRequest {
   const objective = objectiveById(objectiveId);
   const tz = person ? person.tzOffset : DEFAULT_TZ;
   const window = { start: TODAY_CIVIL, days: windowDays, tzOffsetMinutes: tz };
   if (!person) {
-    return { convention: ZIPING_DEFAULT, objective, window };
+    return { convention: ZIPING_DEFAULT, objective, window, options };
   }
   const [by, bm, bd] = person.birthDate.split("-").map(Number);
   const noTime = person.timeCertainty === "hour_unknown";
@@ -47,7 +54,7 @@ function buildRequest(objectiveId: string, windowDays: number, person: Person | 
   // Guard against a malformed/partial date silently corrupting a "personalized" read —
   // if anything is non-finite, fall back to the honest general almanac request.
   if (![by, bm, bd, bh, bmin].every(Number.isFinite) || bm < 1 || bm > 12 || bd < 1 || bd > 31) {
-    return { convention: ZIPING_DEFAULT, objective, window };
+    return { convention: ZIPING_DEFAULT, objective, window, options };
   }
   const convention = CONVENTION_PRESETS.find((c) => c.id === person.conventionId) ?? ZIPING_DEFAULT;
   return {
@@ -65,6 +72,7 @@ function buildRequest(objectiveId: string, windowDays: number, person: Person | 
     convention,
     objective,
     window,
+    options,
   };
 }
 
@@ -86,7 +94,7 @@ function computeAlternatives(recs: DayRecommendation[], excludeIso: string): Alt
   // Soonest good day (>=58); if the window is mediocre, fall back to the soonest overall.
   const soonest =
     pool()
-      .filter((r) => r.finalScore >= 58)
+      .filter((r) => r.recommendationScore >= 58)
       .sort((a, b) => a.isoDate.localeCompare(b.isoDate))[0] ??
     pool().sort((a, b) => a.isoDate.localeCompare(b.isoDate))[0];
   if (soonest) {
@@ -96,13 +104,13 @@ function computeAlternatives(recs: DayRecommendation[], excludeIso: string): Alt
 
   const weekend = pool()
     .filter((r) => r.weekday === "Sat" || r.weekday === "Sun")
-    .sort((a, b) => b.finalScore - a.finalScore)[0];
+    .sort((a, b) => b.recommendationScore - a.recommendationScore)[0];
   if (weekend) {
     alts.push({ kind: "Best weekend", rec: weekend });
     used.add(weekend.isoDate);
   }
 
-  const certain = pool().sort((a, b) => b.confidence.overall - a.confidence.overall || b.finalScore - a.finalScore)[0];
+  const certain = pool().sort((a, b) => b.confidence.overall - a.confidence.overall || b.recommendationScore - a.recommendationScore)[0];
   if (certain && certain.confidence.overall > pick.confidence.overall) {
     alts.push({ kind: "Most certain", rec: certain });
     used.add(certain.isoDate);
@@ -110,7 +118,7 @@ function computeAlternatives(recs: DayRecommendation[], excludeIso: string): Alt
 
   // Always offer at least one lateral jump when more days exist.
   if (alts.length === 0) {
-    const next = pool().sort((a, b) => b.finalScore - a.finalScore)[0];
+    const next = pool().sort((a, b) => b.recommendationScore - a.recommendationScore)[0];
     if (next) alts.push({ kind: "Next best", rec: next });
   }
   return alts.slice(0, 3);
@@ -125,14 +133,44 @@ export function App() {
   const heroRef = useRef<HTMLDivElement>(null);
   const pendingScroll = useRef(false);
 
-  const result: DecisionResult | null = useMemo(
-    () => (objectiveId ? evaluateDecision(buildRequest(objectiveId, windowDays, person)) : null),
-    [objectiveId, windowDays, person],
-  );
+  const computed = useMemo(() => {
+    if (!objectiveId) return null;
+    const req = buildRequest(objectiveId, windowDays, person);
+    return { req, result: evaluateDecision(req) };
+  }, [objectiveId, windowDays, person]);
+
+  // Third-party cross-check (lunar-javascript + HKO fixtures), loaded lazily so
+  // the comparator never touches the main bundle or the deterministic calc path.
+  // When it lands, confidence is recomputed with the MEASURED agreement.
+  const [verification, setVerification] = useState<{ hash: string; report: VerificationReport } | null>(null);
+  const reqHash = computed?.result.meta.calculationHash;
+  useEffect(() => {
+    if (!computed) return;
+    let cancelled = false;
+    import("./engine/verification/runVerification.ts")
+      .then((mod) => mod.verifyDecisionResult(computed.req, computed.result, new Date().toISOString()))
+      .then((report) => {
+        if (!cancelled) setVerification({ hash: computed.result.meta.calculationHash, report });
+      })
+      .catch(() => {
+        /* verification is additive — the unverified result stands on its own */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reqHash]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const result: DecisionResult | null = useMemo(() => {
+    if (!computed) return null;
+    if (verification && verification.hash === computed.result.meta.calculationHash) {
+      return applyVerificationReport(computed.result, verification.report);
+    }
+    return computed.result;
+  }, [computed, verification]);
 
   // When the computation changes (new objective/window/birth), focus the new top pick
   // and bring the freshly computed answer back into view.
-  const hash = result?.meta.calculationHash;
+  const hash = reqHash;
   useEffect(() => {
     if (!result) return;
     setSelectedIso(result.recommendations[0]?.isoDate ?? null);
@@ -153,9 +191,11 @@ export function App() {
     if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start" });
   }, [selectedIso]);
   // Stable per-person evaluator the profile panel uses to score other objectives
-  // and answer typed questions — same engine, same determinism.
+  // and answer typed questions — same engine, same determinism. Sweeps are
+  // skipped in this bulk path (the panel runs many evaluations; the headline
+  // reading keeps them on).
   const evaluate = useCallback(
-    (id: string, win: number) => evaluateDecision(buildRequest(id, win, person)),
+    (id: string, win: number) => evaluateDecision(buildRequest(id, win, person, { sweeps: false })),
     [person],
   );
   // Jump from a recommendation / Q&A answer straight into the full reading.
@@ -213,7 +253,7 @@ export function App() {
           {pick && (
             <span className="ctx-sub">
               {" "}
-              · best <b style={{ fontWeight: 600 }}>{shortDate(pick.civil)}</b> ({pick.finalScore})
+              · best <b style={{ fontWeight: 600 }}>{shortDate(pick.civil)}</b> ({pick.recommendationScore})
             </span>
           )}
         </div>

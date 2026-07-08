@@ -59,13 +59,34 @@ export function AskStep({
         {query.trim().length >= 2 && (
           <div className="search-hint" aria-live="polite">
             {match ? (
-              <button className={`match-chip ${match.objective.id === objectiveId ? "on" : ""}`} onClick={applyMatch}>
-                <span className="emoji" aria-hidden="true">{match.objective.emoji}</span>
-                <span>
-                  Interpreted as <b>{objectivePlain(match.objective.id).gerund}</b>
-                  {match.objective.id === objectiveId ? " ✓" : " — tap to use"}
-                </span>
-              </button>
+              <>
+                <button className={`match-chip ${match.objective.id === objectiveId ? "on" : ""}`} onClick={applyMatch}>
+                  <span className="emoji" aria-hidden="true">{match.objective.emoji}</span>
+                  <span>
+                    Interpreted as <b>{objectivePlain(match.objective.id).gerund}</b>
+                    {match.objective.id === objectiveId ? " ✓" : " — tap to use"}
+                  </span>
+                </button>
+                {/* Alternatives make a misread one tap to fix instead of silently wrong. */}
+                {match.alternatives.length > 0 && (
+                  <span className="alt-matches" style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                    <span className="no-match" style={{ opacity: 0.75 }}>
+                      {match.ambiguous ? "or did you mean" : "or"}
+                    </span>
+                    {match.alternatives.map((alt) => (
+                      <button
+                        key={alt.objective.id}
+                        className="match-chip"
+                        style={{ opacity: 0.85 }}
+                        onClick={() => onObjective(alt.objective.id)}
+                      >
+                        <span className="emoji" aria-hidden="true">{alt.objective.emoji}</span>
+                        <span>{objectivePlain(alt.objective.id).gerund}</span>
+                      </button>
+                    ))}
+                  </span>
+                )}
+              </>
             ) : (
               <span className="no-match">No close match — pick the nearest decision below.</span>
             )}

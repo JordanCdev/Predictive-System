@@ -1,0 +1,517 @@
+{
+  "source": "Hong Kong Observatory — Date and Time of the 24 Solar Terms",
+  "sourceUrls": [
+    "https://www.hko.gov.hk/en/gts/astronomy/Solar_Term.htm",
+    "https://www.hko.gov.hk/en/gts/astronomy/data/files/24SolarTerms_2025.xml",
+    "https://www.hko.gov.hk/en/gts/astronomy/data/files/24SolarTerms_2026.xml",
+    "https://www.hko.gov.hk/en/gts/astronomy/data/files/24SolarTerms_2027.xml"
+  ],
+  "retrievedAtIso": "2026-07-08",
+  "notes": "HKO publishes HKT (UTC+8) to the minute, rounded to nearest minute, based on HM Nautical Almanac Office data. utcIso = HKT - 8h. Cross-checked against USNO/JPL-based Wikipedia tables during retrieval; max discrepancy 1 minute.",
+  "terms": [
+    {
+      "year": 2025,
+      "nameZh": "小寒",
+      "longitude": 285,
+      "utcIso": "2025-01-05T02:33:00Z",
+      "hktText": "5 Jan 2025 10:33 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "大寒",
+      "longitude": 300,
+      "utcIso": "2025-01-19T20:00:00Z",
+      "hktText": "20 Jan 2025 04:00 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "立春",
+      "longitude": 315,
+      "utcIso": "2025-02-03T14:10:00Z",
+      "hktText": "3 Feb 2025 22:10 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "雨水",
+      "longitude": 330,
+      "utcIso": "2025-02-18T10:07:00Z",
+      "hktText": "18 Feb 2025 18:07 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "驚蟄",
+      "longitude": 345,
+      "utcIso": "2025-03-05T08:07:00Z",
+      "hktText": "5 Mar 2025 16:07 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "春分",
+      "longitude": 0,
+      "utcIso": "2025-03-20T09:01:00Z",
+      "hktText": "20 Mar 2025 17:01 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "清明",
+      "longitude": 15,
+      "utcIso": "2025-04-04T12:49:00Z",
+      "hktText": "4 Apr 2025 20:49 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "穀雨",
+      "longitude": 30,
+      "utcIso": "2025-04-19T19:56:00Z",
+      "hktText": "20 Apr 2025 03:56 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "立夏",
+      "longitude": 45,
+      "utcIso": "2025-05-05T05:57:00Z",
+      "hktText": "5 May 2025 13:57 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "小滿",
+      "longitude": 60,
+      "utcIso": "2025-05-20T18:55:00Z",
+      "hktText": "21 May 2025 02:55 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "芒種",
+      "longitude": 75,
+      "utcIso": "2025-06-05T09:57:00Z",
+      "hktText": "5 Jun 2025 17:57 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "夏至",
+      "longitude": 90,
+      "utcIso": "2025-06-21T02:42:00Z",
+      "hktText": "21 Jun 2025 10:42 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "小暑",
+      "longitude": 105,
+      "utcIso": "2025-07-06T20:05:00Z",
+      "hktText": "7 Jul 2025 04:05 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "大暑",
+      "longitude": 120,
+      "utcIso": "2025-07-22T13:29:00Z",
+      "hktText": "22 Jul 2025 21:29 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "立秋",
+      "longitude": 135,
+      "utcIso": "2025-08-07T05:52:00Z",
+      "hktText": "7 Aug 2025 13:52 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "處暑",
+      "longitude": 150,
+      "utcIso": "2025-08-22T20:34:00Z",
+      "hktText": "23 Aug 2025 04:34 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "白露",
+      "longitude": 165,
+      "utcIso": "2025-09-07T08:52:00Z",
+      "hktText": "7 Sep 2025 16:52 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "秋分",
+      "longitude": 180,
+      "utcIso": "2025-09-22T18:19:00Z",
+      "hktText": "23 Sep 2025 02:19 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "寒露",
+      "longitude": 195,
+      "utcIso": "2025-10-08T00:41:00Z",
+      "hktText": "8 Oct 2025 08:41 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "霜降",
+      "longitude": 210,
+      "utcIso": "2025-10-23T03:51:00Z",
+      "hktText": "23 Oct 2025 11:51 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "立冬",
+      "longitude": 225,
+      "utcIso": "2025-11-07T04:04:00Z",
+      "hktText": "7 Nov 2025 12:04 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "小雪",
+      "longitude": 240,
+      "utcIso": "2025-11-22T01:36:00Z",
+      "hktText": "22 Nov 2025 09:36 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "大雪",
+      "longitude": 255,
+      "utcIso": "2025-12-06T21:05:00Z",
+      "hktText": "7 Dec 2025 05:05 HKT"
+    },
+    {
+      "year": 2025,
+      "nameZh": "冬至",
+      "longitude": 270,
+      "utcIso": "2025-12-21T15:03:00Z",
+      "hktText": "21 Dec 2025 23:03 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "小寒",
+      "longitude": 285,
+      "utcIso": "2026-01-05T08:23:00Z",
+      "hktText": "5 Jan 2026 16:23 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "大寒",
+      "longitude": 300,
+      "utcIso": "2026-01-20T01:45:00Z",
+      "hktText": "20 Jan 2026 09:45 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "立春",
+      "longitude": 315,
+      "utcIso": "2026-02-03T20:02:00Z",
+      "hktText": "4 Feb 2026 04:02 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "雨水",
+      "longitude": 330,
+      "utcIso": "2026-02-18T15:52:00Z",
+      "hktText": "18 Feb 2026 23:52 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "驚蟄",
+      "longitude": 345,
+      "utcIso": "2026-03-05T13:59:00Z",
+      "hktText": "5 Mar 2026 21:59 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "春分",
+      "longitude": 0,
+      "utcIso": "2026-03-20T14:46:00Z",
+      "hktText": "20 Mar 2026 22:46 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "清明",
+      "longitude": 15,
+      "utcIso": "2026-04-04T18:40:00Z",
+      "hktText": "5 Apr 2026 02:40 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "穀雨",
+      "longitude": 30,
+      "utcIso": "2026-04-20T01:39:00Z",
+      "hktText": "20 Apr 2026 09:39 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "立夏",
+      "longitude": 45,
+      "utcIso": "2026-05-05T11:49:00Z",
+      "hktText": "5 May 2026 19:49 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "小滿",
+      "longitude": 60,
+      "utcIso": "2026-05-21T00:37:00Z",
+      "hktText": "21 May 2026 08:37 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "芒種",
+      "longitude": 75,
+      "utcIso": "2026-06-05T15:48:00Z",
+      "hktText": "5 Jun 2026 23:48 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "夏至",
+      "longitude": 90,
+      "utcIso": "2026-06-21T08:25:00Z",
+      "hktText": "21 Jun 2026 16:25 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "小暑",
+      "longitude": 105,
+      "utcIso": "2026-07-07T01:57:00Z",
+      "hktText": "7 Jul 2026 09:57 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "大暑",
+      "longitude": 120,
+      "utcIso": "2026-07-22T19:13:00Z",
+      "hktText": "23 Jul 2026 03:13 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "立秋",
+      "longitude": 135,
+      "utcIso": "2026-08-07T11:43:00Z",
+      "hktText": "7 Aug 2026 19:43 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "處暑",
+      "longitude": 150,
+      "utcIso": "2026-08-23T02:19:00Z",
+      "hktText": "23 Aug 2026 10:19 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "白露",
+      "longitude": 165,
+      "utcIso": "2026-09-07T14:41:00Z",
+      "hktText": "7 Sep 2026 22:41 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "秋分",
+      "longitude": 180,
+      "utcIso": "2026-09-23T00:05:00Z",
+      "hktText": "23 Sep 2026 08:05 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "寒露",
+      "longitude": 195,
+      "utcIso": "2026-10-08T06:29:00Z",
+      "hktText": "8 Oct 2026 14:29 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "霜降",
+      "longitude": 210,
+      "utcIso": "2026-10-23T09:38:00Z",
+      "hktText": "23 Oct 2026 17:38 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "立冬",
+      "longitude": 225,
+      "utcIso": "2026-11-07T09:52:00Z",
+      "hktText": "7 Nov 2026 17:52 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "小雪",
+      "longitude": 240,
+      "utcIso": "2026-11-22T07:23:00Z",
+      "hktText": "22 Nov 2026 15:23 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "大雪",
+      "longitude": 255,
+      "utcIso": "2026-12-07T02:53:00Z",
+      "hktText": "7 Dec 2026 10:53 HKT"
+    },
+    {
+      "year": 2026,
+      "nameZh": "冬至",
+      "longitude": 270,
+      "utcIso": "2026-12-21T20:50:00Z",
+      "hktText": "22 Dec 2026 04:50 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "小寒",
+      "longitude": 285,
+      "utcIso": "2027-01-05T14:10:00Z",
+      "hktText": "5 Jan 2027 22:10 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "大寒",
+      "longitude": 300,
+      "utcIso": "2027-01-20T07:30:00Z",
+      "hktText": "20 Jan 2027 15:30 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "立春",
+      "longitude": 315,
+      "utcIso": "2027-02-04T01:46:00Z",
+      "hktText": "4 Feb 2027 09:46 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "雨水",
+      "longitude": 330,
+      "utcIso": "2027-02-18T21:33:00Z",
+      "hktText": "19 Feb 2027 05:33 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "驚蟄",
+      "longitude": 345,
+      "utcIso": "2027-03-05T19:40:00Z",
+      "hktText": "6 Mar 2027 03:40 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "春分",
+      "longitude": 0,
+      "utcIso": "2027-03-20T20:25:00Z",
+      "hktText": "21 Mar 2027 04:25 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "清明",
+      "longitude": 15,
+      "utcIso": "2027-04-05T00:17:00Z",
+      "hktText": "5 Apr 2027 08:17 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "穀雨",
+      "longitude": 30,
+      "utcIso": "2027-04-20T07:18:00Z",
+      "hktText": "20 Apr 2027 15:18 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "立夏",
+      "longitude": 45,
+      "utcIso": "2027-05-05T17:25:00Z",
+      "hktText": "6 May 2027 01:25 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "小滿",
+      "longitude": 60,
+      "utcIso": "2027-05-21T06:18:00Z",
+      "hktText": "21 May 2027 14:18 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "芒種",
+      "longitude": 75,
+      "utcIso": "2027-06-05T21:26:00Z",
+      "hktText": "6 Jun 2027 05:26 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "夏至",
+      "longitude": 90,
+      "utcIso": "2027-06-21T14:11:00Z",
+      "hktText": "21 Jun 2027 22:11 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "小暑",
+      "longitude": 105,
+      "utcIso": "2027-07-07T07:37:00Z",
+      "hktText": "7 Jul 2027 15:37 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "大暑",
+      "longitude": 120,
+      "utcIso": "2027-07-23T01:05:00Z",
+      "hktText": "23 Jul 2027 09:05 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "立秋",
+      "longitude": 135,
+      "utcIso": "2027-08-07T17:27:00Z",
+      "hktText": "8 Aug 2027 01:27 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "處暑",
+      "longitude": 150,
+      "utcIso": "2027-08-23T08:14:00Z",
+      "hktText": "23 Aug 2027 16:14 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "白露",
+      "longitude": 165,
+      "utcIso": "2027-09-07T20:28:00Z",
+      "hktText": "8 Sep 2027 04:28 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "秋分",
+      "longitude": 180,
+      "utcIso": "2027-09-23T06:02:00Z",
+      "hktText": "23 Sep 2027 14:02 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "寒露",
+      "longitude": 195,
+      "utcIso": "2027-10-08T12:17:00Z",
+      "hktText": "8 Oct 2027 20:17 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "霜降",
+      "longitude": 210,
+      "utcIso": "2027-10-23T15:33:00Z",
+      "hktText": "23 Oct 2027 23:33 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "立冬",
+      "longitude": 225,
+      "utcIso": "2027-11-07T15:39:00Z",
+      "hktText": "7 Nov 2027 23:39 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "小雪",
+      "longitude": 240,
+      "utcIso": "2027-11-22T13:16:00Z",
+      "hktText": "22 Nov 2027 21:16 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "大雪",
+      "longitude": 255,
+      "utcIso": "2027-12-07T08:38:00Z",
+      "hktText": "7 Dec 2027 16:38 HKT"
+    },
+    {
+      "year": 2027,
+      "nameZh": "冬至",
+      "longitude": 270,
+      "utcIso": "2027-12-22T02:42:00Z",
+      "hktText": "22 Dec 2027 10:42 HKT"
+    }
+  ]
+}

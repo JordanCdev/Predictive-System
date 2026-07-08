@@ -92,11 +92,11 @@ export function CalendarMonth({
               key={day}
               onClick={() => onSelect(rec.isoDate)}
               aria-current={rec.isoDate === selectedIso ? "date" : undefined}
-              aria-label={`${MONTHS[m.month - 1]} ${day} — ${rec.hardReject ? "ruled out" : `score ${rec.finalScore}`}${isPick ? ", our pick" : ""}`}
-              title={rec.hardReject ? "Ruled out" : `Score ${rec.finalScore}`}
+              aria-label={`${MONTHS[m.month - 1]} ${day} — ${rec.hardReject ? "ruled out" : `score ${rec.recommendationScore}`}${isPick ? ", our pick" : ""}`}
+              title={rec.hardReject ? "Ruled out" : `Score ${rec.recommendationScore}`}
             >
               <span className="cd">{day}</span>
-              {!rec.hardReject && <span className="qdot" style={{ background: scoreColor(rec.finalScore) }} />}
+              {!rec.hardReject && <span className="qdot" style={{ background: scoreColor(rec.recommendationScore) }} />}
             </button>
           );
         })}

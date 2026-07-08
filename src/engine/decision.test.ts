@@ -17,9 +17,9 @@ describe("decision engine", () => {
   it("produces ranked recommendations over the window", () => {
     const res = evaluateDecision(baseRequest());
     expect(res.recommendations.length + res.rejected.length).toBe(31);
-    // sorted descending by finalScore
+    // sorted descending by recommendationScore
     for (let i = 1; i < res.recommendations.length; i++) {
-      expect(res.recommendations[i - 1].finalScore).toBeGreaterThanOrEqual(res.recommendations[i].finalScore);
+      expect(res.recommendations[i - 1].recommendationScore).toBeGreaterThanOrEqual(res.recommendations[i].recommendationScore);
     }
   });
 
@@ -28,7 +28,7 @@ describe("decision engine", () => {
     const b = evaluateDecision(baseRequest());
     expect(a.meta.calculationHash).toBe(b.meta.calculationHash);
     expect(a.recommendations[0].isoDate).toBe(b.recommendations[0].isoDate);
-    expect(a.recommendations[0].finalScore).toBe(b.recommendations[0].finalScore);
+    expect(a.recommendations[0].recommendationScore).toBe(b.recommendations[0].recommendationScore);
   });
 
   it("hard-rejects 破 (Destruction) days for contract signing", () => {
@@ -50,7 +50,10 @@ describe("decision engine", () => {
       expect(rule.citation.length).toBeGreaterThan(0);
     }
     expect(top.confidence.overall).toBeGreaterThan(0);
-    expect(top.confidence.overall).toBeLessThanOrEqual(1);
+    expect(top.confidence.overall).toBeLessThanOrEqual(100);
+    // confidence must carry its evidence trail
+    expect(top.confidence.components.calculationReproducibility).toBe(100);
+    expect(top.confidence.verified).toBe(false); // no third-party report applied yet
     expect(top.bestHour).not.toBeNull();
     expect(top.bestHour!.rangeLabel).toMatch(/\d\d:00/);
   });
@@ -70,7 +73,7 @@ describe("decision engine", () => {
     expect(top.bestHour).toBeNull();
     // officer + road still produce real evidence + citations
     expect(top.rulesFired.length).toBeGreaterThan(0);
-    expect(top.finalScore).toBeGreaterThan(0);
+    expect(top.recommendationScore).toBeGreaterThan(0);
   });
 
   it("almanac mode is deterministic", () => {
@@ -113,5 +116,71 @@ describe("decision engine", () => {
     const med = evaluateDecision({ ...baseRequest(), objective: objectiveById("medical_procedure") });
     // medical should reject far fewer (only clash vetoes are off too) — expect 0 rejects
     expect(med.rejected.length).toBe(0);
+  });
+
+  it("hard-vetoes 歲破/四離/四絕 days for high-stakes objectives (wedding)", () => {
+    // A full year guarantees 歲破 (≈monthly) and 四離/四絕 (8/year) days occur.
+    const req = { ...baseRequest(), objective: objectiveById("wedding_marriage") };
+    req.window = { ...req.window, days: 365 };
+    const res = evaluateDecision(req);
+    // No accepted wedding day may carry a hard calendar taboo.
+    for (const r of res.recommendations) {
+      expect(r.tongshu.yearBreak, `${r.isoDate} is 歲破 but was recommended`).toBe(false);
+      expect(r.tongshu.fourBoundary, `${r.isoDate} is 四離/四絕 but was recommended`).toBeNull();
+    }
+    // And such days DO exist in the window, rejected with a plain reason.
+    const tabooRejected = res.rejected.filter((r) => r.tongshu.yearBreak || r.tongshu.fourBoundary !== null);
+    expect(tabooRejected.length).toBeGreaterThan(0);
+  });
+
+  it("keeps 歲破 as a soft penalty for low-stakes objectives (career move)", () => {
+    const req = { ...baseRequest(), objective: objectiveById("career_move") };
+    req.window = { ...req.window, days: 365 };
+    const res = evaluateDecision(req);
+    // career_move has no hard calendar taboos — 歲破 days may appear, penalized.
+    const yearBreakDays = res.allDays.filter((d) => d.tongshu.yearBreak);
+    expect(yearBreakDays.length).toBeGreaterThan(0);
+    for (const d of yearBreakDays) {
+      expect(d.rulesFired.some((r) => r.code === "year_break" && r.effect < 0)).toBe(true);
+      // rejected only if some OTHER veto applies (破 officer), never for 歲破 itself
+      if (d.hardReject) {
+        expect(d.rejectReasons.join(" ")).not.toMatch(/歲破/);
+      }
+    }
+  });
+
+  it("runs sensitivity sweeps by default and folds them into confidence", () => {
+    const res = evaluateDecision(baseRequest());
+    expect(res.meta.sensitivity).not.toBeNull();
+    const s = res.meta.sensitivity!;
+    expect(s.convention.comparedConventions.length).toBeGreaterThan(0);
+    expect(s.weights.perturbations).toBe(8); // 4 weights × ±10%
+    const top = res.recommendations[0];
+    // Sweep-derived components must be the mapped scores, not the neutral defaults.
+    expect([35, 65, 95]).toContain(top.confidence.components.conventionStability);
+    expect([10, 45, 80]).toContain(top.confidence.components.heuristicSensitivity);
+  });
+
+  it("options.sweeps=false skips sweeps (bulk mode) and says so", () => {
+    const res = evaluateDecision({ ...baseRequest(), options: { sweeps: false } });
+    expect(res.meta.sensitivity).toBeNull();
+    // Neutral defaults remain — and confidence is still bounded and present.
+    const top = res.recommendations[0];
+    expect(top.confidence.components.conventionStability).toBe(70);
+    expect(top.confidence.overall).toBeGreaterThan(0);
+  });
+
+  it("solar hour-basis without longitude lowers input completeness and warns", () => {
+    const base = baseRequest();
+    const trueSolar = {
+      ...base,
+      convention: { ...base.convention, id: "ziping_true_solar_v1", hourBasis: "true_solar" as const },
+    };
+    const res = evaluateDecision(trueSolar);
+    expect(res.meta.boundaryWarnings.join(" ")).toMatch(/longitude/i);
+    const withCivil = evaluateDecision(base);
+    expect(res.recommendations[0].confidence.components.inputCompleteness).toBeLessThan(
+      withCivil.recommendations[0].confidence.components.inputCompleteness,
+    );
   });
 });

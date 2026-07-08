@@ -66,6 +66,20 @@ export type Strength = "strong" | "balanced" | "weak";
 /** 旺相休囚死 — the Day Master's vitality in its birth season. */
 export type SeasonalState = "prosperous" | "strong" | "resting" | "trapped" | "dead";
 
+/** Transparent strength arithmetic + near-threshold instability flags. The
+ *  cut-points are engine calibration, not doctrine (docs/DECISIONS.md §6.7),
+ *  so a chart within ±0.02 of one is flagged: a tiny input or convention change
+ *  could flip the classification and invert the favourable-element set. */
+export interface StrengthBreakdown {
+  supportRatio: number;
+  seasonalAdjustment: number;
+  rootingAdjustment: number;
+  adjusted: number;
+  thresholds: { weakMax: number; strongWithCommandMin: number; strongMin: number };
+  nearThreshold: boolean;
+  nearThresholdNote: string | null;
+}
+
 export interface DayMasterAnalysis {
   dayMaster: Stem;
   strength: Strength;
@@ -80,6 +94,8 @@ export interface DayMasterAnalysis {
   climatic: { needed: FivePhase[]; reason: string } | null;
   favorableElements: FivePhase[];
   unfavorableElements: FivePhase[];
+  /** How `strength` was reached, with near-cut-point instability flags. */
+  strengthBreakdown: StrengthBreakdown;
   rationale: string;
   /** Functional element map relative to the Day Master. */
   functional: {
@@ -300,6 +316,31 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
   else if (adjusted <= 0.34) strength = "weak";
   else strength = "balanced";
 
+  // Near-threshold instability: the classification governs the entire
+  // favourable-element set, so sitting within ±0.02 of a governing cut-point
+  // is a real fragility the confidence layer must see.
+  const NEAR = 0.02;
+  const nearWeak = Math.abs(adjusted - 0.34) < NEAR;
+  const nearCommand = hasMonthCommand && Math.abs(adjusted - 0.45) < NEAR;
+  const nearStrong = Math.abs(adjusted - 0.52) < NEAR;
+  const nearThreshold = nearWeak || nearCommand || nearStrong;
+  const nearWhich = nearWeak
+    ? "weak/balanced (0.34)"
+    : nearCommand
+      ? "balanced/strong-with-month-command (0.45)"
+      : "balanced/strong (0.52)";
+  const strengthBreakdown: StrengthBreakdown = {
+    supportRatio: Math.round(supportRatio * 1000) / 1000,
+    seasonalAdjustment: SEASON_ADJ[seasonalState],
+    rootingAdjustment: rootAdj,
+    adjusted: Math.round(adjusted * 1000) / 1000,
+    thresholds: { weakMax: 0.34, strongWithCommandMin: 0.45, strongMin: 0.52 },
+    nearThreshold,
+    nearThresholdNote: nearThreshold
+      ? `Adjusted strength ${adjusted.toFixed(3)} sits within 0.02 of the ${nearWhich} cut-point — the classification (and the favourable elements built on it) could flip under a slightly different school or input.`
+      : null,
+  };
+
   let favorableElements: FivePhase[];
   let unfavorableElements: FivePhase[];
   if (strength === "strong") {
@@ -336,6 +377,7 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
     climatic: climaticNeed(monthBranch.index),
     favorableElements: dedupe(favorableElements),
     unfavorableElements: dedupe(unfavorableElements),
+    strengthBreakdown,
     rationale,
     functional,
   };

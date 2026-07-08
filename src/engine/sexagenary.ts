@@ -137,6 +137,17 @@ export function buildFourPillars(m: MomentInput, conv: ConventionSet): FourPilla
   const n = normalizeMoment(m, conv);
   const warnings: string[] = [];
 
+  // A solar hour-basis is location-dependent. Without a longitude the engine can
+  // only apply the date-only equation of time (true-solar) or nothing at all
+  // (mean-solar) — say so instead of implying a precision the inputs can't support.
+  if (conv.hourBasis !== "civil_clock" && m.longitudeEast === undefined) {
+    warnings.push(
+      conv.hourBasis === "true_solar"
+        ? "True solar time was requested without a birth longitude — only the equation of time (±16 min) was applied. Add a birth place/longitude for the full 真太陽時 correction."
+        : "Local-mean-solar time was requested without a birth longitude — no correction could be applied; the hour was read as zone time.",
+    );
+  }
+
   // --- Year pillar (立春 boundary) ---
   const gregYear = n.effective.year;
   const lichun = lichunMillis(gregYear);

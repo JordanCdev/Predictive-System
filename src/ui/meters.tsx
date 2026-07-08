@@ -120,16 +120,26 @@ export function ConfidencePanel({
   const plain = confidencePlain(confidence, personalized);
   return (
     <div className="conf-pop">
-      <p style={{ margin: "0 0 12px", fontSize: 13.5, lineHeight: 1.5 }}>{plain.sentence}</p>
+      <p style={{ margin: "0 0 12px", fontSize: 13.5, lineHeight: 1.5 }}>
+        {plain.sentence} Overall: <b>{Math.round(confidence.overall)}/100</b>
+        {plain.verified ? " · third-party cross-check applied." : " · third-party cross-check pending."}
+      </p>
       {plain.components.map((comp) => (
         <div className="conf-bar" key={comp.key} title={comp.blurb}>
           <span className="cb-name">{comp.label}</span>
           <span className="cb-track">
-            <span className="cb-fill" style={{ width: `${Math.round(comp.value * 100)}%` }} />
+            <span className="cb-fill" style={{ width: `${Math.round(comp.value)}%` }} />
           </span>
-          <span className="cb-val">{Math.round(comp.value * 100)}%</span>
+          <span className="cb-val">{Math.round(comp.value)}%</span>
         </div>
       ))}
+      {plain.notes.length > 0 && (
+        <ul className="conf-notes" style={{ margin: "10px 0 0", paddingLeft: 18, fontSize: 12.5, lineHeight: 1.45, opacity: 0.85 }}>
+          {plain.notes.map((n, i) => (
+            <li key={i}>{n}</li>
+          ))}
+        </ul>
+      )}
       <div className="disclaimer">{plain.disclaimer}</div>
     </div>
   );

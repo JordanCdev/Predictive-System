@@ -1,10 +1,15 @@
 /**
  * Layer 4 — Deterministic decision engine (spec §10) + Layer 5 explanation
  * payload (spec §11). Generates candidate days over a window, scores each with
- * transparent multi-criteria analysis (MCDA), applies hard-constraint vetoes,
- * detects cross-school conflicts, computes a decision-support confidence index
- * (spec §12), and ranks. Every recommendation carries its facts, the rules it
- * fired with citations, conflicts, and version/calculation hashes.
+ * transparent multi-criteria analysis (MCDA), applies hard-constraint vetoes
+ * (forbidden officers, personal clashes, and 歲破/四離/四絕 calendar taboos for
+ * high-stakes objectives), detects cross-school conflicts, and ranks.
+ *
+ * Scoring and confidence are SEPARATE outputs: `recommendationScore` is a
+ * transparent heuristic ranking; `confidence` measures how reproducible,
+ * externally verified, and perturbation-stable the reasoning is — never an
+ * outcome probability. Confidence is driven by evidence (sensitivity sweeps
+ * now; a third-party VerificationReport when one is applied), not constants.
  *
  * No randomness, no network, no LLM in this path.
  */
@@ -24,14 +29,22 @@ import {
 } from "./symbols.ts";
 import { MomentInput, buildFourPillars, combineStemBranch } from "./sexagenary.ts";
 import { BaziChart, DaYun, buildBaziChart, computeDaYun } from "./bazi.ts";
-import { ConventionSet } from "./conventions.ts";
+import { monthBranchIndexFromLongitude, solarLongitudeAtMillis } from "./astronomy.ts";
+import { CONVENTION_PRESETS, ConventionSet } from "./conventions.ts";
 import {
   TongShuDay,
   computeTongShuDay,
   isNoblemanDay,
   personalShenSha,
 } from "./tongshu.ts";
-import { Objective } from "./objectives.ts";
+import { CalendarTaboo, Objective } from "./objectives.ts";
+import {
+  ConventionSweepResult,
+  conventionSweepToScore,
+  runConventionSweep,
+} from "./sensitivity/conventionSweep.ts";
+import { WeightSweepResult, runWeightSweep, weightSweepToPenalty } from "./sensitivity/weightSweep.ts";
+import type { VerificationReport } from "./verification/types.ts";
 import { VERSIONS } from "./version.ts";
 import { hashOf } from "./hash.ts";
 
@@ -80,17 +93,51 @@ export interface SubScores {
   hour: number | null;
 }
 
+/** Evidence-based confidence inputs, all 0–100 (spec §12, revised).
+ *  `boundaryRisk` and `heuristicSensitivity` are penalties (higher = worse);
+ *  `conflictPenalty` is subtracted directly (0–25 points). */
+export interface ConfidenceInputs {
+  /** Deterministic engine, hash-verifiable → always 100. */
+  calculationReproducibility: number;
+  /** Agreement with independent sources; 50 = neutral until a report is applied. */
+  thirdPartyAgreement: number;
+  /** From the convention sweep: does the pick survive other school conventions? */
+  conventionStability: number;
+  /** How fully the request pins the subject (birth, time certainty, longitude). */
+  inputCompleteness: number;
+  /** Proximity to solar-term boundaries and strength cut-points (penalty). */
+  boundaryRisk: number;
+  /** How much of this result external sources could check; 40 = internal only. */
+  sourceCoverage: number;
+  /** From the weight sweep: ranking fragility under ±10% weights (penalty). */
+  heuristicSensitivity: number;
+  /** Direct deduction for cross-school conflicts on this day (0–25). */
+  conflictPenalty: number;
+}
+
 export interface ConfidenceBreakdown {
+  /** 0–100. How solid, verified and stable the REASONING is — never the odds an
+   *  undertaking succeeds. */
   overall: number;
-  components: {
-    calculationReproducibility: number;
-    sourceQuality: number;
-    sourceSpecificity: number;
-    schoolAgreement: number;
-    inputQuality: number;
-    validationConcordance: number;
-    ruleCoverage: number;
-  };
+  components: ConfidenceInputs;
+  /** False until applyVerificationReport() has folded in a third-party check. */
+  verified: boolean;
+  notes: string[];
+}
+
+/** The revised §12.1 weights: verification and stability dominate; nothing is a
+ *  fixed source-quality constant any more. */
+export function computeConfidence(x: ConfidenceInputs): number {
+  const raw =
+    0.2 * x.calculationReproducibility +
+    0.25 * x.thirdPartyAgreement +
+    0.15 * x.conventionStability +
+    0.1 * x.inputCompleteness +
+    0.1 * x.sourceCoverage +
+    0.1 * (100 - x.boundaryRisk) +
+    0.1 * (100 - x.heuristicSensitivity) -
+    x.conflictPenalty;
+  return Math.max(0, Math.min(100, Math.round(raw)));
 }
 
 export interface DayRecommendation {
@@ -106,7 +153,9 @@ export interface DayRecommendation {
   bestHour: HourPick | null;
   allHours: HourPick[];
   subScores: SubScores;
-  finalScore: number;
+  /** The MCDA ranking heuristic (0–100). A recommendation strength under this
+   *  rule set — NOT a prediction and NOT a probability of success. */
+  recommendationScore: number;
   confidence: ConfidenceBreakdown;
   hardReject: boolean;
   rejectReasons: string[];
@@ -123,6 +172,11 @@ export interface DecisionRequest {
   convention: ConventionSet;
   objective: Objective;
   window: { start: { year: number; month: number; day: number }; days: number; tzOffsetMinutes: number };
+  options?: {
+    /** Run the convention/weight sensitivity sweeps (default true). Callers doing
+     *  bulk re-evaluation (profile panel, the sweeps themselves) disable this. */
+    sweeps?: boolean;
+  };
 }
 
 export interface DecisionResult {
@@ -138,6 +192,10 @@ export interface DecisionResult {
     favorableElements: FivePhase[];
     unfavorableElements: FivePhase[];
     boundaryWarnings: string[];
+    /** Sensitivity sweeps behind the confidence index; null when options.sweeps === false. */
+    sensitivity: { convention: ConventionSweepResult; weights: WeightSweepResult } | null;
+    /** Third-party cross-check, once applyVerificationReport() has run; else null. */
+    verification: VerificationReport | null;
   };
   /** true when a birth chart personalized the scoring; false = general almanac. */
   personalized: boolean;
@@ -210,12 +268,20 @@ function ageAtDate(birth: MomentInput, civil: { year: number; month: number; day
   return ms / (365.25 * 86400000);
 }
 
+/** Plain reject lines for hard calendar taboos (surfaced by vetoExplain). */
+const TABOO_REJECT_REASON: Record<CalendarTaboo, string> = {
+  year_break: "歲破 day — it clashes this year's 太歲 (諸事不宜); a hard taboo for this objective.",
+  four_departure: "四離 day — the eve of a solstice/equinox (大事勿用); a hard taboo for this objective.",
+  four_severance: "四絕 day — the eve of a season-start 立 term (大事勿用); a hard taboo for this objective.",
+};
+
 function evaluateDay(
   civil: { year: number; month: number; day: number },
   solarInstantUtc: number,
   req: DecisionRequest,
   chart: BaziChart | null,
   dayun: DaYun | null,
+  birthBoundaryWarnings: string[],
 ): DayRecommendation {
   const obj = req.objective;
   const personalized = chart !== null;
@@ -225,6 +291,16 @@ function evaluateDay(
   const dayGz = ts.dayGanzhi;
   const rules: RuleFired[] = [];
   const rejectReasons: string[] = [];
+
+  // Calendar taboos present on this day. For high-stakes objectives these are
+  // EXCLUSIONS (obj.hardCalendarTaboos) — 大事勿用 means don't use the day, not
+  // "use it if the other numbers are nice". Elsewhere they stay penalties;
+  // medical (求醫) is the classical exception and is exempt from both forms.
+  const tabooCodes: CalendarTaboo[] = [];
+  if (ts.fourBoundary) tabooCodes.push(ts.fourBoundary === "si_li" ? "four_departure" : "four_severance");
+  if (ts.yearBreak) tabooCodes.push("year_break");
+  const hardTaboos = tabooCodes.filter((t) => obj.hardCalendarTaboos.includes(t));
+  const applyTabooPenalties = obj.id !== "medical_procedure";
 
   // --- Evaluator 1: officer (建除 fit) — almanac, no chart needed ---
   let officerRaw = ts.officer.base;
@@ -243,7 +319,8 @@ function evaluateDay(
   // 四離/四絕 — "大事勿用". A strong calendar taboo the almanac applies to major
   // undertakings (medical/求醫 is the traditional exception). Applies in both
   // almanac-only and personalized modes since it is a pure calendar property.
-  if (ts.fourBoundary && obj.id !== "medical_procedure") {
+  // When the objective lists it as a hard taboo, the day is also VETOED below.
+  if (ts.fourBoundary && applyTabooPenalties) {
     const isLi = ts.fourBoundary === "si_li";
     officerScore = clamp(officerScore - 18);
     rules.push({
@@ -258,7 +335,7 @@ function evaluateDay(
   }
 
   // 歲破 — clashing the year's 太歲 is one of the strongest day-level taboos.
-  if (ts.yearBreak && obj.id !== "medical_procedure") {
+  if (ts.yearBreak && applyTabooPenalties) {
     officerScore = clamp(officerScore - 20);
     rules.push({
       code: "year_break",
@@ -364,14 +441,14 @@ function evaluateDay(
 
   // --- weighted MCDA final (renormalized to officer+road when not personalized) ---
   const w = obj.weights;
-  let finalScore: number;
+  let recommendationScore: number;
   if (personalized && personalScore !== null && hourScore !== null) {
-    finalScore = round1(
+    recommendationScore = round1(
       w.officer * officerScore + w.road * roadScore + w.personal * personalScore + w.hour * hourScore,
     );
   } else {
     const denom = w.officer + w.road || 1;
-    finalScore = round1((w.officer * officerScore + w.road * roadScore) / denom);
+    recommendationScore = round1((w.officer * officerScore + w.road * roadScore) / denom);
   }
   const subScores: SubScores = {
     officer: round1(officerScore),
@@ -385,6 +462,12 @@ function evaluateDay(
   if (obj.vetoOfficers.includes(ts.officer.index)) {
     hardReject = true;
     rejectReasons.push(`Officer ${ts.officer.nameZh} (${ts.officer.nameEn}) is forbidden for ${obj.label.toLowerCase()}.`);
+  }
+  // 歲破/四離/四絕 exclusions for high-stakes objectives — a strong positive fit
+  // must NOT be able to lift a forbidden day back into the ranking.
+  for (const t of hardTaboos) {
+    hardReject = true;
+    rejectReasons.push(TABOO_REJECT_REASON[t]);
   }
   if (personalized && obj.clashVeto) {
     const hasClash = clashTags[0];
@@ -411,8 +494,50 @@ function evaluateDay(
     conflicts.push({ type: "officer_vs_road", schools: ["建除 officer", "Black-road god"], severity: "low", reason: "A good 建除 officer falling on a Black-road day god." });
   }
 
-  // --- confidence (spec §12) ---
-  const confidence = computeConfidence(req, conflicts.length, personalized);
+  // --- confidence (spec §12, evidence-based) ---
+  // Boundary risk visible from this day + chart. A 節 crossing inside the
+  // candidate day means its month facts (officer, day god) flip at the crossing
+  // instant — local noon decides which side this evaluation sits on.
+  const boundaryNotes: string[] = [];
+  let boundaryRisk = 0;
+  const monthAtStart = monthBranchIndexFromLongitude(solarLongitudeAtMillis(solarInstantUtc - 12 * 3600000));
+  const monthAtEnd = monthBranchIndexFromLongitude(solarLongitudeAtMillis(solarInstantUtc + 12 * 3600000));
+  if (monthAtStart !== monthAtEnd) {
+    boundaryRisk += 30;
+    boundaryNotes.push(
+      "A solar-term (節) boundary falls within this day — the officer and month facts flip at the crossing instant.",
+    );
+  }
+  if (chart?.dayMaster.strengthBreakdown.nearThreshold) {
+    boundaryRisk += 30;
+    boundaryNotes.push(chart.dayMaster.strengthBreakdown.nearThresholdNote!);
+  }
+  if (birthBoundaryWarnings.length > 0) {
+    boundaryRisk += Math.min(30, birthBoundaryWarnings.length * 15);
+    boundaryNotes.push("The birth moment sits near a pillar boundary (see chart warnings).");
+  }
+
+  const conflictPenalty = Math.min(
+    25,
+    conflicts.reduce((sum, c) => sum + (c.severity === "high" ? 10 : c.severity === "medium" ? 6 : 3), 0),
+  );
+
+  const components: ConfidenceInputs = {
+    calculationReproducibility: 100,
+    thirdPartyAgreement: 50, // neutral until applyVerificationReport() folds in a real check
+    conventionStability: 70, // replaced by the convention sweep in evaluateDecision
+    inputCompleteness: scoreInputCompleteness(req),
+    boundaryRisk: clamp(boundaryRisk),
+    sourceCoverage: 40, // internal engine only, until external sources are consulted
+    heuristicSensitivity: 30, // replaced by the weight sweep in evaluateDecision
+    conflictPenalty,
+  };
+  const confidence: ConfidenceBreakdown = {
+    overall: computeConfidence(components),
+    components,
+    verified: false,
+    notes: [...boundaryNotes, "Third-party cross-check not yet applied to this result."],
+  };
 
   // --- top reasons (sorted positive contributions) ---
   const topReasons = rules
@@ -435,7 +560,7 @@ function evaluateDay(
     bestHour,
     allHours,
     subScores,
-    finalScore,
+    recommendationScore,
     confidence,
     hardReject,
     rejectReasons,
@@ -446,44 +571,30 @@ function evaluateDay(
   };
 }
 
-function computeConfidence(req: DecisionRequest, conflictCount: number, personalized: boolean): ConfidenceBreakdown {
-  const calc = 1.0; // fully deterministic
-  const sourceQuality = 0.8; // classical + astronomical citations
-  const sourceSpecificity = 0.7;
-  // Conflicts ALWAYS pull school-agreement down so this never contradicts the conflict
-  // banner. Almanac-only consults a single school, so its ceiling is lower than a
-  // cross-checked personalized read.
-  const conflictPenalty = 0.18 * conflictCount;
-  const schoolAgreement = personalized
-    ? Math.max(0.4, 1 - conflictPenalty)
-    : Math.max(0.4, 0.75 - conflictPenalty);
-  // inputQuality reflects how well the request pins the subject. No birth = general almanac.
-  const certainty = req.birth?.timeCertainty ?? "exact";
-  const inputQuality = !personalized
-    ? 0.55
-    : certainty === "exact"
-      ? 0.95
-      : certainty === "approximate"
-        ? 0.7
-        : 0.5;
-  // Solar-term/calendar validation runs in both modes; the natal-chart check only runs
-  // when a birth chart exists — so an almanac-only read honestly claims less.
-  const validation = personalized ? 0.85 : 0.7;
-  // Almanac-only consults one school (Tong Shu); personalizing adds BaZi.
-  const ruleCoverage = personalized ? 0.65 : 0.45;
-  const components = {
-    calculationReproducibility: calc,
-    sourceQuality,
-    sourceSpecificity,
-    schoolAgreement,
-    inputQuality,
-    validationConcordance: validation,
-    ruleCoverage,
+/** How fully the request pins its subject. Almanac-only honestly claims less;
+ *  a solar hour-basis without a longitude loses the precision it implies. */
+function scoreInputCompleteness(req: DecisionRequest): number {
+  if (!req.birth) return 50;
+  const certainty = req.birth.timeCertainty ?? "exact";
+  let v = certainty === "exact" ? 95 : certainty === "approximate" ? 70 : 45;
+  if (req.convention.hourBasis !== "civil_clock" && req.birth.longitudeEast === undefined) v -= 25;
+  return clamp(v);
+}
+
+/** Replace the sweep-derived components and recompute the overall index. */
+function finalizeDayConfidence(
+  c: ConfidenceBreakdown,
+  conventionStability: number,
+  heuristicSensitivity: number,
+  extraNotes: string[],
+): ConfidenceBreakdown {
+  const components = { ...c.components, conventionStability, heuristicSensitivity };
+  return {
+    overall: computeConfidence(components),
+    components,
+    verified: c.verified,
+    notes: [...c.notes, ...extraNotes],
   };
-  // spec §12.1 weights
-  const overall =
-    0.2 * calc + 0.2 * sourceQuality + 0.15 * sourceSpecificity + 0.15 * schoolAgreement + 0.1 * inputQuality + 0.15 * validation + 0.05 * ruleCoverage;
-  return { overall: Math.round(overall * 100) / 100, components };
 }
 
 /** Main entry point: evaluate a window and return ranked recommendations. */
@@ -495,17 +606,18 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
 
   const tz = req.window.tzOffsetMinutes;
   const start = Date.UTC(req.window.start.year, req.window.start.month - 1, req.window.start.day);
+  const birthWarnings = fp ? fp.meta.boundaryWarnings : [];
   const all: DayRecommendation[] = [];
   for (let i = 0; i < req.window.days; i++) {
     const d = new Date(start + i * 86400000);
     const civil = { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
     const solarInstantUtc = Date.UTC(civil.year, civil.month - 1, civil.day, 12) - tz * 60000;
-    all.push(evaluateDay(civil, solarInstantUtc, req, chart, dayun));
+    all.push(evaluateDay(civil, solarInstantUtc, req, chart, dayun, birthWarnings));
   }
 
   const recommendations = all
     .filter((r) => !r.hardReject)
-    .sort((a, b) => b.finalScore - a.finalScore || a.isoDate.localeCompare(b.isoDate));
+    .sort((a, b) => b.recommendationScore - a.recommendationScore || a.isoDate.localeCompare(b.isoDate));
   const rejected = all.filter((r) => r.hardReject);
 
   const calculationHash = hashOf({
@@ -514,12 +626,13 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
     convention: req.convention.id,
     objective: req.objective.id,
     window: req.window,
+    options: req.options ?? {},
     versions: VERSIONS,
   });
 
   const windowLabel = `${req.window.start.year}-${String(req.window.start.month).padStart(2, "0")}-${String(req.window.start.day).padStart(2, "0")} + ${req.window.days} days`;
 
-  return {
+  const result: DecisionResult = {
     meta: {
       engineVersions: VERSIONS,
       conventionId: req.convention.id,
@@ -531,7 +644,9 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
       windowLabel,
       favorableElements: chart ? chart.dayMaster.favorableElements : [],
       unfavorableElements: chart ? chart.dayMaster.unfavorableElements : [],
-      boundaryWarnings: fp ? fp.meta.boundaryWarnings : [],
+      boundaryWarnings: birthWarnings,
+      sensitivity: null,
+      verification: null,
     },
     personalized,
     subjectChart: chart,
@@ -540,4 +655,34 @@ export function evaluateDecision(req: DecisionRequest): DecisionResult {
     rejected,
     allDays: all,
   };
+
+  // --- sensitivity sweeps → confidence (skipped for bulk/recursive evaluation) ---
+  if (req.options?.sweeps !== false) {
+    const weights = runWeightSweep(all, req.objective.weights);
+    const convention = runConventionSweep(req, result, CONVENTION_PRESETS, evaluateDecision);
+    result.meta.sensitivity = { convention, weights };
+
+    const conventionStability = conventionSweepToScore(convention);
+    const heuristicSensitivity = weightSweepToPenalty(weights);
+    const sweepNotes: string[] = [];
+    if (convention.severity !== "low") {
+      sweepNotes.push(
+        `Convention sensitivity ${convention.severity}: ` +
+          [...convention.pillarDifferences, ...convention.bestHourDifferences].join("; ") +
+          (convention.topDayStable ? "" : " — the top day changes under some school conventions."),
+      );
+    }
+    if (weights.severity !== "low") {
+      sweepNotes.push(
+        `Ranking sensitivity ${weights.severity}: the top day stays first in ${Math.round(
+          weights.topDayStableRatio * 100,
+        )}% of ±10% weight perturbations (gap to #2: ${weights.scoreGapTop2} pts).`,
+      );
+    }
+    for (const day of all) {
+      day.confidence = finalizeDayConfidence(day.confidence, conventionStability, heuristicSensitivity, sweepNotes);
+    }
+  }
+
+  return result;
 }

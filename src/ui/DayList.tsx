@@ -27,7 +27,7 @@ export function DayList({
           aria-current={rec.isoDate === selectedIso ? "true" : undefined}
           onClick={() => onSelect(rec.isoDate)}
         >
-          <span className="band-dot" style={{ background: scoreColor(rec.finalScore) }} />
+          <span className="band-dot" style={{ background: scoreColor(rec.recommendationScore) }} />
           <span className="gz" aria-hidden="true">
             {rec.tongshu.dayGanzhi.stem.hanzi}
             {rec.tongshu.dayGanzhi.branch.hanzi}
@@ -37,11 +37,11 @@ export function DayList({
               {shortDate(rec.civil)} · <span className="muted">{relativeDay(rec.isoDate, todayIso)}</span>
             </span>
             <span className="dr-sub">
-              {verdictBand(rec.finalScore).label} · almanac: {officerPlain(rec.tongshu.officer).label}
+              {verdictBand(rec.recommendationScore).label} · almanac: {officerPlain(rec.tongshu.officer).label}
             </span>
           </span>
-          <span className="dr-score" style={{ color: scoreTextColor(rec.finalScore) }}>
-            {rec.finalScore}
+          <span className="dr-score" style={{ color: scoreTextColor(rec.recommendationScore) }}>
+            {rec.recommendationScore}
           </span>
         </button>
       ))}
