@@ -2636,3 +2636,14 @@ button {
   font-size: 10px;
   opacity: 0.9;
 }
+
+/* The resolved birth time-zone. Stated plainly because it moves the hour pillar —
+   a correction the user can't see is a correction they can't disagree with. */
+.tz-note {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.tz-note b {
+  color: var(--ink);
+}

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConventionSet } from "../engine/index.ts";
+import { labelFor, resolveOffset } from "../engine/timezone.ts";
 import { CITIES, CITY_REGIONS, cityByName } from "./cities.ts";
 
 export interface Person {
@@ -13,6 +14,13 @@ export interface Person {
   longitudeEast?: number;
   /** Birth city name — sets the timezone + longitude, and shown in the summary. */
   birthCity?: string;
+  /** IANA zone of the birth city, so the offset in force on the birth DATE
+   *  (summer time, historical zone changes) can be resolved rather than assumed. */
+  birthZone?: string;
+  /** True once the user has hand-edited the offset — after which we stop
+   *  auto-correcting it, because they may know something we don't (a record kept
+   *  in local rather than official time, a border town, a misremembered city). */
+  tzManual?: boolean;
 }
 
 // Default doctrine: true solar time (真太陽時), matching most online BaZi tools —
@@ -76,11 +84,38 @@ export function PersonalizeCard({
   const set = <K extends keyof Person>(k: K, v: Person[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const noTime = draft.timeCertainty === "hour_unknown";
 
-  // Selecting a city sets both timezone and longitude in one move.
+  // Selecting a city sets zone, longitude and timezone in one move.
   const pickCity = (name: string) => {
     const c = cityByName(name);
-    setDraft((d) => (c ? { ...d, birthCity: c.name, tzOffset: c.tz, longitudeEast: c.lon } : { ...d, birthCity: undefined }));
+    setDraft((d) =>
+      c
+        ? { ...d, birthCity: c.name, birthZone: c.zone, longitudeEast: c.lon, tzOffset: c.tz, tzManual: false }
+        : { ...d, birthCity: undefined, birthZone: undefined },
+    );
   };
+
+  /**
+   * The offset actually in force at this birth — resolved from the city's IANA
+   * zone and the birth DATE, so a summer birth gets summer time automatically
+   * instead of relying on the user to know their clocks had gone forward.
+   *
+   * Recomputed as the date/time/city change, and applied unless the user has
+   * taken manual control of the offset.
+   */
+  const resolvedZone = (() => {
+    if (!draft.birthZone || !/^\d{4}-\d{2}-\d{2}$/.test(draft.birthDate)) return null;
+    const [y, mo, dd] = draft.birthDate.split("-").map(Number);
+    const [hh, mi] = noTime ? [12, 0] : (draft.birthTime || "12:00").split(":").map(Number);
+    if (![y, mo, dd, hh, mi].every(Number.isFinite)) return null;
+    return resolveOffset(draft.birthZone, { year: y, month: mo, day: dd, hour: hh, minute: mi });
+  })();
+
+  useEffect(() => {
+    if (!resolvedZone || draft.tzManual) return;
+    if (resolvedZone.certainty === "unavailable") return;
+    if (resolvedZone.offsetMinutes === draft.tzOffset) return;
+    setDraft((d) => ({ ...d, tzOffset: resolvedZone.offsetMinutes }));
+  }, [resolvedZone?.offsetMinutes, resolvedZone?.certainty, draft.tzManual]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A real, fully-specified date — refuse partial/garbage rather than personalize on NaN.
   const validDate = (() => {
@@ -225,23 +260,56 @@ export function PersonalizeCard({
             </select>
           </label>
         </div>
+        {/* The resolved offset is stated out loud rather than applied silently:
+            it changes the hour pillar, so the user should be able to see it and
+            disagree with it. */}
+        {resolvedZone && resolvedZone.certainty !== "unavailable" && (
+          <div className={resolvedZone.certainty === "exact" ? "note-soft tz-note" : "warn tz-note"}>
+            {resolvedZone.certainty !== "exact" && <span aria-hidden="true">⚠ </span>}
+            <b>Clocks read {labelFor(draft.tzOffset)}</b>
+            {draft.tzManual ? " (set by you)." : ` in ${draft.birthCity} on that date.`}
+            {resolvedZone.note ? ` ${resolvedZone.note}` : ""}
+            {draft.tzManual && resolvedZone.offsetMinutes !== draft.tzOffset && (
+              <>
+                {" "}We'd have used {labelFor(resolvedZone.offsetMinutes)}.{" "}
+                <button
+                  type="button"
+                  className="btn-text"
+                  style={{ padding: 0, minHeight: 0 }}
+                  onClick={() => setDraft((d) => ({ ...d, tzManual: false, tzOffset: resolvedZone.offsetMinutes }))}
+                >
+                  Use that instead
+                </button>
+              </>
+            )}
+          </div>
+        )}
         <div className="note-soft">
-          Your city sets the time-zone and, via true solar time (真太陽時), places the hour pillar the way most online BaZi
-          tools do. City not listed, or a summer/DST birth? Fine-tune the time-zone under Advanced.
+          Your city sets the time-zone — including summer time in force on your birth date — and, via true solar time
+          (真太陽時), places the hour pillar the way most online BaZi tools do. City not listed? Set the time-zone under
+          Advanced.
         </div>
 
         <details className="advanced">
           <summary>Advanced · for practitioners</summary>
           <label className="field" style={{ marginTop: 10 }}>
             <span>Birth time-zone (override)</span>
-            <select value={draft.tzOffset} onChange={(e) => set("tzOffset", Number(e.target.value))}>
+            <select
+              value={draft.tzOffset}
+              // Editing this takes manual control: we stop auto-correcting, because
+              // the user may know something the zone table doesn't.
+              onChange={(e) => setDraft((d) => ({ ...d, tzOffset: Number(e.target.value), tzManual: true }))}
+            >
               {TZ_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
               ))}
             </select>
-            <div className="note-soft">Auto-set from your city — adjust for a summer/DST birth or an unlisted city.</div>
+            <div className="note-soft">
+              Resolved from your city and birth date, summer time included. Override only if your birth record used a
+              different clock — doing so stops the automatic correction.
+            </div>
           </label>
           <label className="field" style={{ marginTop: 10 }}>
             <span>Doctrine (convention set)</span>
