@@ -102,6 +102,25 @@ The kernel is verified against independent external sources — in CI, offline, 
 - **Four pillars** cross-checked against published charts (Mao Zedong 1893-12-26 →
   癸巳/甲子/丁酉; Zhou Enlai 1898-03-05 → 戊戌/甲寅) and the 2000-01-01 anchor 己卯/丙子/戊午.
 
+**Your birth time, read correctly — and shown as working.** The UTC offset in force *on the
+birth date* is resolved from the IANA database, so a British July birth gets BST rather than GMT,
+China's 1986–91 summer time is caught, and permanent zone moves are honoured. An hour is often
+enough to cross a 時辰 boundary, so this changes the hour pillar outright. The whole derivation —
+recorded time → clock in force → longitude vs zone meridian → equation of time → effective solar
+time → hour pillar — is displayed as a ledger you can check line by line, because "was true solar
+time applied?" is the first thing anyone asks when a chart feels wrong.
+
+**When the birth is ambiguous, you get both charts.** A birth near 立春, a 節, or the 23:00 子 seam
+is genuinely uncertain — the doubt is in the birth *record*, not the astronomy. Rather than silently
+picking a side, the app computes the alternative chart and shows them side by side with the differing
+pillars marked. All three day-boundary schools are supported (civil midnight, 早子時, 晚子時); under
+晚子時 the engine reproduces its own third-party comparator exactly.
+
+**The classical veto hierarchy, graded properly.** 「日時沖命大凶不用，月沖次之權用，年沖可用」 — a
+candidate day clashing your Day or Hour pillar is a hard veto, a Month clash is weighed, and a Year
+(zodiac) clash is noted but classically still usable. The Hour pillar is only consulted when the birth
+time is actually known.
+
 **Aligned with the almanac.** The day score blends the mainstream 通勝/almanac 宜忌 verdict
 (pulled from lunar-javascript) with the structural analysis, so "good day for X" matches what a
 standard almanac says — and the app reports a measured **almanac agreement %** (how often the
