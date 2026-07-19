@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { evaluateDecision, DecisionRequest } from "../../src/engine/decision.ts";
-import { ZIPING_DEFAULT, ZIPING_ZI_ROLLOVER } from "../../src/engine/conventions.ts";
+import { ZIPING_DEFAULT, ZIPING_SPLIT_ZI, ZIPING_ZI_ROLLOVER } from "../../src/engine/conventions.ts";
 import { objectiveById } from "../../src/engine/objectives.ts";
 import { buildFourPillars } from "../../src/engine/sexagenary.ts";
 import { computeTongShuDay } from "../../src/engine/tongshu.ts";
@@ -157,6 +157,27 @@ describe("lunar-javascript cross-check — natal charts", () => {
     const hour = fields.find((f) => f.field === "hourPillar")!;
     expect(hour.status).toBe("warn"); // 晚子時 school split — documented, non-blocking
     expect(hour.blocking).toBe(false);
+  });
+
+  it("achieves FULL agreement under the split_zi (晚子時) convention", () => {
+    // The comparator's sect 2 IS the 晚子時 middle position: civil-midnight day
+    // pillar, next-day hour stem. Until the engine could express that, this exact
+    // agreement was unreachable and the mismatch could only be downgraded to a
+    // warning. Now it reproduces the reference implementation outright.
+    const birth = { year: 2026, month: 3, day: 10, hour: 23, minute: 30, tzOffsetMinutes: 480 } as const;
+    const fp = buildFourPillars(birth, ZIPING_SPLIT_ZI);
+    expect(fp.day.hanzi).toBe("癸未"); // day stays on the civil date…
+    expect(fp.hour.hanzi).toBe("甲子"); // …while the hour stem takes the next day's
+
+    const fields = verifyNatalChart(
+      birth,
+      ZIPING_SPLIT_ZI,
+      { year: fp.year.hanzi, month: fp.month.hanzi, day: fp.day.hanzi, hour: fp.hour.hanzi },
+      fp.meta.normalized.effective,
+    );
+    for (const f of fields) {
+      expect(f.status, `${f.field}: expected=${String(f.expected)} actual=${String(f.actual)}`).toBe("pass");
+    }
   });
 });
 

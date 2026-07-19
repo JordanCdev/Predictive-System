@@ -52,6 +52,15 @@ export interface BoundaryAlternative {
 
 const POSITIONS: PillarPosition[] = ["year", "month", "day", "hour"];
 
+/** The three defensible answers to "where does the BaZi day begin?". */
+const ZI_SCHOOLS = ["civil_midnight", "zi_23", "split_zi"] as const;
+
+const ZI_SCENARIO: Record<(typeof ZI_SCHOOLS)[number], string> = {
+  civil_midnight: "if the day is taken to start at midnight",
+  zi_23: "if the whole day is taken to start at 23:00 (早子時)",
+  split_zi: "if only the hour stem rolls at 23:00 (晚子時)",
+};
+
 const pillarsOf = (fp: FourPillars): [string, string, string, string] => [
   fp.year.hanzi,
   fp.month.hanzi,
@@ -98,15 +107,17 @@ export function boundaryAlternatives(
     let scenario = "";
 
     if (flag.kind === "zi_hour") {
-      const other: ConventionSet = {
-        ...conv,
-        dayBoundary: conv.dayBoundary === "zi_23" ? "civil_midnight" : "zi_23",
-      };
-      alt = buildFourPillars(m, other);
-      scenario =
-        other.dayBoundary === "zi_23"
-          ? "if the day is taken to start at 23:00 (子時 rollover)"
-          : "if the day is taken to start at midnight";
+      // Three schools disagree here, not two — so offer every *other* one whose
+      // reading actually differs, rather than an arbitrary opposite.
+      for (const boundary of ZI_SCHOOLS) {
+        if (boundary === conv.dayBoundary) continue;
+        const candidate = buildFourPillars(m, { ...conv, dayBoundary: boundary } as ConventionSet);
+        const candidatePillars = pillarsOf(candidate);
+        const changed = POSITIONS.filter((_, i) => candidatePillars[i] !== base[i]);
+        if (changed.length === 0) continue;
+        out.push({ flag, scenario: ZI_SCENARIO[boundary], pillars: candidatePillars, differs: changed });
+      }
+      continue;
     } else if (flag.minutesAway !== null) {
       // Step just past the boundary — a minute beyond it, in whichever direction
       // the boundary lies. `minutesAway` is unsigned, so try both and keep the

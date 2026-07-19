@@ -56,6 +56,11 @@ export interface NormalizedMoment {
   dayCivil: { year: number; month: number; day: number };
   /** Hour (0..23) feeding the hour branch. */
   hourForBranch: number;
+  /** Civil date whose day stem seeds the hour stem via 五鼠遁. Usually identical
+   *  to `dayCivil`; they diverge only under the 晚子時 (`split_zi`) school, where
+   *  the day pillar stays on the civil day but the 23:00 hour already belongs to
+   *  tomorrow's 子. Without this lever the middle position is unrepresentable. */
+  hourStemCivil: { year: number; month: number; day: number };
 }
 
 export function normalizeMoment(m: MomentInput, conv: ConventionSet): NormalizedMoment {
@@ -87,11 +92,24 @@ export function normalizeMoment(m: MomentInput, conv: ConventionSet): Normalized
     minute: eff.getUTCMinutes(),
   };
 
-  // Day rollover policy.
-  let dayCivil = { year: effective.year, month: effective.month, day: effective.day };
-  if (conv.dayBoundary === "zi_23" && effective.hour >= 23) {
-    const next = new Date(Date.UTC(effective.year, effective.month - 1, effective.day + 1));
-    dayCivil = { year: next.getUTCFullYear(), month: next.getUTCMonth() + 1, day: next.getUTCDate() };
+  // Day rollover policy. `lateZi` is the only window where the three schools can
+  // disagree at all: 23:00-23:59, already the 子 hour but still the civil day.
+  const civil = { year: effective.year, month: effective.month, day: effective.day };
+  const nextDay = () => {
+    const d = new Date(Date.UTC(effective.year, effective.month - 1, effective.day + 1));
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
+  };
+  const lateZi = effective.hour >= 23;
+
+  let dayCivil = civil;
+  let hourStemCivil = civil;
+  if (lateZi && conv.dayBoundary === "zi_23") {
+    // 早子時: the whole day turns, so both the day pillar and the hour stem move.
+    dayCivil = nextDay();
+    hourStemCivil = dayCivil;
+  } else if (lateZi && conv.dayBoundary === "split_zi") {
+    // 晚子時: the day pillar stays; only the hour stem takes tomorrow's stem.
+    hourStemCivil = nextDay();
   }
 
   return {
@@ -101,6 +119,7 @@ export function normalizeMoment(m: MomentInput, conv: ConventionSet): Normalized
     effective,
     dayCivil,
     hourForBranch: effective.hour,
+    hourStemCivil,
   };
 }
 
@@ -205,7 +224,12 @@ export function buildFourPillars(m: MomentInput, conv: ConventionSet): FourPilla
 
   // --- Hour pillar ---
   const hourBranchIndex = hourBranchIndexFromHour(n.hourForBranch);
-  const hourStemIndex = mod(ziHourStem(day.stem.index) + hourBranchIndex, 10);
+  // 五鼠遁 seeds the hour stem from a day stem — which day is the school's call,
+  // so read it from hourStemCivil rather than assuming the day pillar's own.
+  const hourStemSeed = ganZhiFromIndex(
+    dayGanzhiIndexFromCivilDate(n.hourStemCivil.year, n.hourStemCivil.month, n.hourStemCivil.day),
+  ).stem.index;
+  const hourStemIndex = mod(ziHourStem(hourStemSeed) + hourBranchIndex, 10);
   const hour = combineStemBranch(hourStemIndex, hourBranchIndex);
 
   return {

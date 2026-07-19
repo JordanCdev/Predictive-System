@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MomentInput,
   ZIPING_DEFAULT,
+  ZIPING_SPLIT_ZI,
   ZIPING_ZI_ROLLOVER,
   boundaryAlternatives,
   buildFourPillars,
@@ -49,30 +50,42 @@ describe("Zi-hour seam", () => {
     expect(fp.meta.boundaryFlags.some((f) => f.kind === "zi_hour")).toBe(false);
   });
 
-  it("produces the other school's chart, differing in day AND hour", () => {
+  it("offers BOTH other schools, since three positions are defensible here", () => {
     const m = at(1990, 6, 15, 23, 30);
     const fp = buildFourPillars(m, ZIPING_DEFAULT);
     const alts = boundaryAlternatives(m, ZIPING_DEFAULT, fp);
-    expect(alts).toHaveLength(1);
+    expect(alts).toHaveLength(2);
 
-    const alt = alts[0];
-    expect(alt.scenario).toMatch(/23:00|子時/);
-    expect(alt.differs).toContain("day");
-    expect(alt.differs).toContain("hour"); // 五鼠遁 cascade
-    expect(alt.differs).not.toContain("year");
+    // 早子時 — the whole day rolls, so day AND hour move.
+    const early = alts.find((a) => /早子時/.test(a.scenario))!;
+    expect(early.differs).toContain("day");
+    expect(early.differs).toContain("hour"); // 五鼠遁 cascade
+    expect(early.differs).not.toContain("year");
+    const rollover = buildFourPillars(m, ZIPING_ZI_ROLLOVER);
+    expect(early.pillars).toEqual([
+      rollover.year.hanzi,
+      rollover.month.hanzi,
+      rollover.day.hanzi,
+      rollover.hour.hanzi,
+    ]);
 
-    // The alternative must equal what the other convention actually produces.
-    const other = buildFourPillars(m, ZIPING_ZI_ROLLOVER);
-    expect(alt.pillars).toEqual([other.year.hanzi, other.month.hanzi, other.day.hanzi, other.hour.hanzi]);
+    // 晚子時 — only the hour stem rolls, so the day pillar is untouched.
+    const late = alts.find((a) => /晚子時/.test(a.scenario))!;
+    expect(late.differs).toEqual(["hour"]);
+    const split = buildFourPillars(m, ZIPING_SPLIT_ZI);
+    expect(late.pillars[2]).toBe(fp.day.hanzi);
+    expect(late.pillars[3]).toBe(split.hour.hanzi);
   });
 
   it("is symmetric — starting from the Zi-rollover convention offers the midnight reading", () => {
     const m = at(1990, 6, 15, 23, 30);
     const fp = buildFourPillars(m, ZIPING_ZI_ROLLOVER);
-    const alt = boundaryAlternatives(m, ZIPING_ZI_ROLLOVER, fp)[0];
-    expect(alt.scenario).toMatch(/midnight/);
+    const alts = boundaryAlternatives(m, ZIPING_ZI_ROLLOVER, fp);
+    const midnight = alts.find((a) => /midnight/.test(a.scenario))!;
     const other = buildFourPillars(m, ZIPING_DEFAULT);
-    expect(alt.pillars[2]).toBe(other.day.hanzi);
+    expect(midnight.pillars[2]).toBe(other.day.hanzi);
+    // …and the 晚子時 middle position is offered as well.
+    expect(alts.some((a) => /晚子時/.test(a.scenario))).toBe(true);
   });
 });
 

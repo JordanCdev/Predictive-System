@@ -5,7 +5,23 @@
  */
 
 export type YearBoundary = "lichun_exact";
-export type DayBoundary = "civil_midnight" | "zi_23";
+/**
+ * Where the BaZi day begins — the 早子時/晚子時 question, and a genuinely
+ * contested one with classical support on more than one side.
+ *
+ *  - `civil_midnight` — the day pillar turns at 00:00. A 23:30 birth keeps the
+ *    current day, and (via 五鼠遁) the current day's hour stem.
+ *  - `zi_23` — the whole day turns at 23:00 (早子時 school). A 23:30 birth takes
+ *    tomorrow's day pillar and tomorrow's hour stem.
+ *  - `split_zi` — the middle position (晚子時): the DAY pillar turns at midnight,
+ *    but the 23:00–24:00 hour is already tomorrow's 子 hour, so the hour stem is
+ *    derived from the NEXT day's stem while the day pillar stays put.
+ *
+ * `split_zi` is what lunar-javascript (this engine's own third-party comparator)
+ * implements. Before it existed here, that disagreement could only be reported
+ * as a warning the engine was structurally unable to resolve.
+ */
+export type DayBoundary = "civil_midnight" | "zi_23" | "split_zi";
 export type HourBasis = "civil_clock" | "local_mean_solar" | "true_solar";
 export type DayunStartRule = "three_days_one_year";
 
@@ -48,8 +64,16 @@ export const ZIPING_TRUE_SOLAR: ConventionSet = {
   hourBasis: "true_solar",
 };
 
+export const ZIPING_SPLIT_ZI: ConventionSet = {
+  ...ZIPING_DEFAULT,
+  id: "ziping_split_zi_v1",
+  label: "Zi Ping with 晚子時 (day at midnight, hour stem rolls at 23:00)",
+  dayBoundary: "split_zi",
+};
+
 export const CONVENTION_PRESETS: ConventionSet[] = [
   ZIPING_DEFAULT,
   ZIPING_ZI_ROLLOVER,
+  ZIPING_SPLIT_ZI,
   ZIPING_TRUE_SOLAR,
 ];
