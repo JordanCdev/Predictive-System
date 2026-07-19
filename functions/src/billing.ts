@@ -20,6 +20,7 @@ const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 const PRICE_PRO_MONTH = defineString("STRIPE_PRICE_PRO_MONTH", { default: "" });
 const PRICE_PRO_YEAR = defineString("STRIPE_PRICE_PRO_YEAR", { default: "" });
+const PRICE_LIFETIME = defineString("STRIPE_PRICE_LIFETIME", { default: "" });
 
 const REGION = "us-central1";
 
@@ -44,6 +45,7 @@ async function callerUid(req: { get(name: string): string | undefined }): Promis
 }
 
 function priceFor(interval: string): string {
+  if (interval === "lifetime") return PRICE_LIFETIME.value();
   return interval === "year" ? PRICE_PRO_YEAR.value() : PRICE_PRO_MONTH.value();
 }
 
@@ -135,16 +137,21 @@ export const billing = onRequest(
           res.status(503).json({ error: { message: "No price is configured for that plan yet." } });
           return;
         }
+        // Lifetime is bought outright, so it is a one-off `payment` session with
+        // no subscription attached — which also means it arrives on a different
+        // webhook event (checkout.session.completed, handled below).
+        const lifetime = interval === "lifetime";
         const session = await stripe().checkout.sessions.create({
-          mode: "subscription",
+          mode: lifetime ? "payment" : "subscription",
           customer: await customerFor(uid),
           line_items: [{ price, quantity: 1 }],
           success_url: safeReturnUrl(successUrl, "https://example.invalid/#/settings/billing"),
           cancel_url: safeReturnUrl(cancelUrl, "https://example.invalid/#/pricing"),
           client_reference_id: uid,
+          metadata: { firebaseUid: uid, plan: lifetime ? "lifetime" : "pro" },
           // Repeated on the subscription so webhook events that don't carry the
           // session (e.g. renewals, cancellations) can still resolve the user.
-          subscription_data: { metadata: { firebaseUid: uid } },
+          ...(lifetime ? {} : { subscription_data: { metadata: { firebaseUid: uid } } }),
           allow_promotion_codes: true,
         });
         res.json({ url: session.url });
@@ -262,7 +269,39 @@ export const stripeWebhook = onRequest(
               console.warn("ignoring out-of-order stripe event", event.id, event.type);
               return;
             }
-            tx.set(ref, { ...record, eventCreated: event.created });
+            // MERGE, so a cancellation can never erase a separate one-off
+            // purchase the user made — they bought that outright.
+            tx.set(ref, { ...record, eventCreated: event.created }, { merge: true });
+          });
+          break;
+        }
+        case "checkout.session.completed": {
+          // Only one-off purchases are handled here. A subscription checkout also
+          // emits this event, but its entitlement is written from the
+          // subscription events above, which carry the authoritative status and
+          // period — writing it twice from two sources would let them disagree.
+          const session = event.data.object as Stripe.Checkout.Session;
+          if (session.mode !== "payment") break;
+          if (session.payment_status !== "paid") break; // e.g. an async method still pending
+          const uid = session.metadata?.firebaseUid || session.client_reference_id;
+          if (!uid) {
+            console.error("no uid on completed one-off checkout", session.id);
+            break;
+          }
+          const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+          const ref = getFirestore().doc(`users/${uid}/billing/subscription`);
+          await getFirestore().runTransaction(async (tx) => {
+            const snap = await tx.get(ref);
+            if (snap.exists && snap.data()?.lifetimePurchasedAt) return; // already owned; don't restamp
+            // MERGE, and touch only the purchase fields: this must not disturb a
+            // subscription the user also holds. Deliberately no eventCreated
+            // guard here — that stamp orders *subscription* events, and a
+            // purchase is a separate, additive fact that never expires.
+            tx.set(
+              ref,
+              { lifetimePurchasedAt: event.created * 1000, lifetimeCustomerId: customerId ?? null },
+              { merge: true },
+            );
           });
           break;
         }

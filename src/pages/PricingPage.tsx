@@ -10,7 +10,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   ALL_PLANS,
   FEATURE_COPY,
+  FREE_PLAN,
   Feature,
+  LIFETIME_PLAN,
   PRO_PLAN,
   Plan,
   formatPrice,
@@ -52,10 +54,10 @@ export function PricingPage() {
   const cancelled = params.get("checkout") === "cancelled";
   const saving = yearlySavingPercent(PRO_PLAN);
 
-  const upgrade = async () => {
+  const upgrade = async (chosen: BillingInterval) => {
     setError(null);
     if (!user) {
-      // An account has to exist before a subscription can attach to it.
+      // An account has to exist before a purchase can attach to it.
       await signIn();
       return;
     }
@@ -64,7 +66,7 @@ export function PricingPage() {
       const { getIdToken } = await import("../firebase/client.ts");
       const token = await getIdToken();
       if (!token) throw new Error("Sign in again to continue to checkout.");
-      await startCheckout("pro", interval, token);
+      await startCheckout(chosen === "lifetime" ? "lifetime" : "pro", chosen, token);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setBusy(false);
@@ -79,8 +81,8 @@ export function PricingPage() {
       </div>
 
       <p className="pricing-lede">
-        The engine is free, and stays free. Pro widens the horizon — years instead of weeks, everyone involved instead of
-        just you, and the full audit trail behind every score.
+        The engine is free, and stays free. The paid tiers widen the horizon — years instead of weeks, everyone involved
+        instead of just you, and the full audit trail behind every score. Subscribe, or buy it outright once.
       </p>
 
       {cancelled && (
@@ -91,7 +93,11 @@ export function PricingPage() {
 
       {entitlement.active && (
         <div className="note-soft" style={{ marginBottom: 14 }}>
-          You're on Pro. <Link className="btn-text" style={{ padding: 0 }} to="/settings/billing">Manage your subscription</Link>.
+          {entitlement.planId === "pro" ? (
+            <>You're on Pro. <Link className="btn-text" style={{ padding: 0 }} to="/settings/billing">Manage your subscription</Link>.</>
+          ) : (
+            <>You own the Lifetime unlock. <Link className="btn-text" style={{ padding: 0 }} to="/settings/billing">See your billing</Link>.</>
+          )}
         </div>
       )}
 
@@ -105,7 +111,7 @@ export function PricingPage() {
       </div>
 
       <div className="plan-grid">
-        <PlanCard plan={ALL_PLANS[0]} interval={interval} current={!entitlement.active}>
+        <PlanCard plan={ALL_PLANS[0]} interval={interval} current={entitlement.planId === "free"}>
           <ul className="plan-features">
             {FREE_INCLUDES.map((f) => (
               <li key={f}>{f}</li>
@@ -114,7 +120,7 @@ export function PricingPage() {
           <Link className="btn-ghost plan-cta" to="/today">Keep using Free</Link>
         </PlanCard>
 
-        <PlanCard plan={PRO_PLAN} interval={interval} current={entitlement.active} featured>
+        <PlanCard plan={PRO_PLAN} interval={interval} current={entitlement.planId === "pro"} featured>
           <p className="plan-everything">Everything in Free, plus:</p>
           <ul className="plan-features">
             {PRO_ORDER.map((f) => (
@@ -125,7 +131,7 @@ export function PricingPage() {
             <li>{PRO_PLAN.limits.aiMessagesPerDay} AI advisor messages a day</li>
           </ul>
 
-          {entitlement.active ? (
+          {entitlement.planId === "pro" ? (
             <Link className="btn plan-cta" to="/settings/billing">Manage subscription</Link>
           ) : !billingAvailable ? (
             <div className="plan-unavailable">
@@ -134,18 +140,56 @@ export function PricingPage() {
                 : "Accounts aren't configured on this deployment, so there's nothing to bill."}
             </div>
           ) : (
-            <button className="btn plan-cta" disabled={busy} onClick={upgrade}>
-              {busy ? "Opening checkout…" : user ? `Upgrade to Pro` : "Sign in to upgrade"}
+            <button className="btn plan-cta" disabled={busy} onClick={() => upgrade(interval)}>
+              {busy ? "Opening checkout…" : user ? "Upgrade to Pro" : "Sign in to upgrade"}
             </button>
           )}
           {error && <div className="warn" style={{ marginTop: 10 }}><span aria-hidden="true">⚠</span> {error}</div>}
         </PlanCard>
+
+      </div>
+
+
+      {/* A one-off purchase is a different KIND of offer, not a third subscription
+          tier — so it gets its own band rather than orphaning a card onto a
+          second grid row. */}
+      <div className="lifetime-band">
+        <div className="lifetime-copy">
+          <div className="upsell-tag"><span aria-hidden="true">✦</span> One-off</div>
+          <h3>{LIFETIME_PLAN.name} — {formatPrice(LIFETIME_PLAN.priceOneOff ?? 0)} once</h3>
+          <p>
+            {LIFETIME_PLAN.tagline} Every Pro feature that runs in your browser — the five-year search, any year, the
+            luck pillars, six charts, group dates, export and the full dossier — bought outright. No renewal, no expiry,
+            no card kept on file.
+          </p>
+          <p className="lifetime-caveat">
+            The AI advisor stays at the free {FREE_PLAN.limits.aiMessagesPerDay} messages a day. That's the one part with
+            a real per-use cost, so we can't honestly sell it forever for a single payment — and we'd rather say that now
+            than quietly withdraw it later.
+          </p>
+        </div>
+        <div className="lifetime-action">
+          {entitlement.lifetime ? (
+            <div className="plan-unavailable">You own this. Thank you.</div>
+          ) : !billingAvailable ? (
+            <div className="plan-unavailable">Not switched on for this deployment yet.</div>
+          ) : (
+            <button className="btn" disabled={busy} onClick={() => upgrade("lifetime")}>
+              {busy ? "Opening checkout…" : user ? "Buy it once" : "Sign in to buy"}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="pricing-notes">
         <h3>The fine print, in plain words</h3>
         <ul>
-          <li>Cancel any time from your billing settings — you keep Pro until the period you've paid for ends.</li>
+          <li>Cancel a subscription any time from your billing settings — you keep Pro until the period you've paid for ends.</li>
+          <li>
+            The Lifetime unlock is a single payment with nothing to cancel. It covers the features that run in your
+            browser, which cost us nothing to keep serving; the AI advisor stays metered because it genuinely isn't free
+            for us to run, and we'd rather say so than quietly withdraw it later.
+          </li>
           <li>Payments are handled by Stripe. We never see or store your card details.</li>
           <li>
             Downgrading never deletes anything. Extra charts and journal entries are paused, not erased, and come back if
@@ -178,12 +222,13 @@ function PlanCard({
   featured?: boolean;
   children: React.ReactNode;
 }) {
-  const free = plan.priceMonthly === 0;
-  const price = interval === "year" ? plan.priceYearly : plan.priceMonthly;
+  const oneOff = interval === "lifetime";
+  const free = !oneOff && plan.priceMonthly === 0;
+  const price = oneOff ? (plan.priceOneOff ?? 0) : interval === "year" ? plan.priceYearly : plan.priceMonthly;
   // Show "£0", not the word "Free" — the card is already titled Free, and a
-  // number sits next to the paid column so the two are directly comparable.
+  // number sits next to the paid columns so all three are directly comparable.
   const priceLabel = free ? "£0" : formatPrice(price, plan.currency);
-  const unit = free ? "forever" : interval === "year" ? "/year" : "/month";
+  const unit = oneOff ? "once" : free ? "forever" : interval === "year" ? "/year" : "/month";
   return (
     <div className={`plan-card${featured ? " featured" : ""}${current ? " current" : ""}`}>
       {current && <span className="plan-current-tag">Your plan</span>}

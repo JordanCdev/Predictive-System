@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BillingRecord,
   FREE_PLAN,
+  LIFETIME_PLAN,
   PRO_PLAN,
   ROUNDS_PER_MESSAGE,
   checkQuota,
@@ -62,6 +63,72 @@ describe("resolveEntitlement", () => {
   it("treats a record with no period end as open-ended (comped accounts)", () => {
     const ent = resolveEntitlement({ plan: "pro", status: "active" }, NOW + 9999 * DAY);
     expect(ent.active).toBe(true);
+  });
+});
+
+describe("lifetime purchase", () => {
+  const bought = (over: Partial<BillingRecord> = {}): BillingRecord => ({
+    plan: "free",
+    status: "canceled",
+    lifetimePurchasedAt: NOW - 400 * DAY,
+    ...over,
+  });
+
+  it("grants the deterministic features outright, with no expiry", () => {
+    const ent = resolveEntitlement(bought(), NOW + 10_000 * DAY);
+    expect(ent.planId).toBe("lifetime");
+    expect(ent.active).toBe(true);
+    expect(ent.lifetime).toBe(true);
+    for (const f of PRO_PLAN.features) expect(hasFeature(ent, f)).toBe(true);
+  });
+
+  it("keeps the AI at the free allowance — the one metered resource", () => {
+    // The whole reason a lifetime tier is sustainable: the engine runs in the
+    // browser and costs nothing, but AI messages cost money on every use. If this
+    // ever inherits Pro's allowance, one payment buys unbounded spend forever.
+    const ent = resolveEntitlement(bought(), NOW);
+    expect(ent.plan.limits.aiMessagesPerDay).toBe(FREE_PLAN.limits.aiMessagesPerDay);
+    expect(ent.plan.limits.aiMessagesPerDay).toBeLessThan(PRO_PLAN.limits.aiMessagesPerDay);
+  });
+
+  it("survives a subscription that was cancelled afterwards", () => {
+    // The bug this guards: a customer.subscription.deleted event overwriting the
+    // record and erasing something the user bought outright.
+    const ent = resolveEntitlement(bought({ plan: "pro", status: "canceled" }), NOW);
+    expect(ent.active).toBe(true);
+    expect(ent.planId).toBe("lifetime");
+  });
+
+  it("resolves to Pro while a subscription is also live, keeping the lifetime flag", () => {
+    // Holding both is legitimate — a lifetime owner may subscribe purely for the
+    // bigger AI allowance. They should get the superset, and still be recorded
+    // as an owner so we never re-sell them the thing they own.
+    const ent = resolveEntitlement(
+      bought({ plan: "pro", status: "active", currentPeriodEnd: NOW + 30 * DAY }),
+      NOW,
+    );
+    expect(ent.planId).toBe("pro");
+    expect(ent.plan.limits.aiMessagesPerDay).toBe(PRO_PLAN.limits.aiMessagesPerDay);
+    expect(ent.lifetime).toBe(true);
+  });
+
+  it("is unaffected by a stale subscription period", () => {
+    const ent = resolveEntitlement(bought({ plan: "pro", status: "active", currentPeriodEnd: NOW - DAY }), NOW);
+    expect(ent.planId).toBe("lifetime");
+    expect(ent.active).toBe(true);
+  });
+
+  it("ignores a malformed purchase stamp rather than granting access", () => {
+    const ent = resolveEntitlement({ plan: "free", status: "canceled", lifetimePurchasedAt: undefined }, NOW);
+    expect(ent.active).toBe(false);
+  });
+
+  it("is priced as a one-off, not a recurring charge", () => {
+    expect(LIFETIME_PLAN.priceOneOff).toBeGreaterThan(0);
+    expect(LIFETIME_PLAN.priceMonthly).toBe(0);
+    expect(LIFETIME_PLAN.priceYearly).toBe(0);
+    // Worth more than a year of Pro, or the annual plan makes no sense.
+    expect(LIFETIME_PLAN.priceOneOff!).toBeGreaterThan(PRO_PLAN.priceYearly);
   });
 });
 

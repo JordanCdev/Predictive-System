@@ -83,7 +83,7 @@ firebase deploy --only firestore:rules
 ## 3. Stripe
 
 1. Create a product ("Wéi Pro") with **two recurring prices** — monthly and
-   yearly. Note both price IDs.
+   yearly — and a **one-off price** for the Lifetime unlock. Note all three IDs.
 2. Set the function config:
 
 ```bash
@@ -92,8 +92,8 @@ firebase functions:secrets:set STRIPE_WEBHOOK_SECRET   # from step 4
 firebase functions:config:set   # (or set params in the console)
 ```
 
-   The two price IDs are plain params, not secrets:
-   `STRIPE_PRICE_PRO_MONTH`, `STRIPE_PRICE_PRO_YEAR`.
+   The price IDs are plain params, not secrets:
+   `STRIPE_PRICE_PRO_MONTH`, `STRIPE_PRICE_PRO_YEAR`, `STRIPE_PRICE_LIFETIME`.
 
 3. Deploy:
 
@@ -108,6 +108,8 @@ firebase deploy --only functions
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`
+   - `checkout.session.completed` — required for the one-off Lifetime purchase,
+     which has no subscription and therefore emits none of the above
 
    Copy the signing secret into `STRIPE_WEBHOOK_SECRET` and redeploy.
 
@@ -175,6 +177,27 @@ reasoning dossier, and 200 AI messages a day.
 `tests/plans.test.ts` asserts the free tier keeps a usable window, at least one
 profile, some journal history and some AI allowance — so a future gate can't
 quietly hollow it out.
+
+### The Lifetime tier, and why it's bounded
+
+Lifetime is a single payment for **the features that run in the user's browser**.
+That is not a marketing framing — it's the cost structure. The deterministic
+engine executes client-side, so serving it for twenty years costs exactly what
+serving it for one day costs: nothing. Selling that outright is sustainable.
+
+The AI advisor is the one genuinely metered resource, so a lifetime holder keeps
+the **free** daily message allowance. A tier bundling 200 AI messages a day
+forever for one payment would lose money on every heavy user indefinitely, and
+we'd end up clawing it back — which is worse than never offering it. The pricing
+page says this plainly rather than burying it.
+
+Implementation note: a purchase and a subscription are **independent facts** on
+the billing document. `lifetimePurchasedAt` is never written by subscription
+events and never cleared by them, so a later cancellation can't erase something
+the user bought outright — and both webhook writers use `merge`. Someone holding
+both resolves to Pro (the superset) while keeping `entitlement.lifetime` true, so
+we never try to re-sell them what they own. `tests/plans.test.ts` covers each of
+those interactions.
 
 ### Downgrades never delete
 

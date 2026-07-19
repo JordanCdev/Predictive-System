@@ -2647,3 +2647,48 @@ button {
 .tz-note b {
   color: var(--ink);
 }
+
+/* The one-off purchase band. Deliberately not a third plan card: it's a
+   different kind of offer, and giving it its own row says so. */
+.lifetime-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding: 22px 24px;
+  background: var(--surface-2);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+.lifetime-copy {
+  flex: 1 1 380px;
+}
+.lifetime-copy h3 {
+  margin: 0 0 6px;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.lifetime-copy p {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 620px;
+}
+.lifetime-caveat {
+  padding-left: 12px;
+  border-left: 2px solid var(--hairline-strong);
+}
+.lifetime-action {
+  flex: 0 0 auto;
+  min-width: 190px;
+}
+.lifetime-action .btn {
+  width: auto;
+  min-width: 190px;
+}

@@ -15,7 +15,7 @@
  *    same disclaimers as a paying one.
  */
 
-export type PlanId = "free" | "pro";
+export type PlanId = "free" | "pro" | "lifetime";
 
 /** Every gateable capability. Adding one here forces a decision for both tiers. */
 export type Feature =
@@ -47,6 +47,8 @@ export interface Plan {
   /** Price in minor units (pence/cents), per interval. 0 for Free. */
   priceMonthly: number;
   priceYearly: number;
+  /** One-off purchase price, for plans sold outright rather than by subscription. */
+  priceOneOff?: number;
   currency: "gbp";
   features: readonly Feature[];
   limits: PlanLimits;
@@ -93,9 +95,43 @@ export const PRO_PLAN: Plan = {
   },
 };
 
-export const PLANS: Record<PlanId, Plan> = { free: FREE_PLAN, pro: PRO_PLAN };
+/**
+ * A one-off purchase of the parts that cost nothing to run.
+ *
+ * The reasoning is the app's actual cost structure, not a marketing gimmick: the
+ * deterministic engine — pillars, scoring, forecasts, verification — executes
+ * **in the user's browser**. Serving it to someone for twenty years costs us
+ * exactly what serving it for one day costs: nothing. So selling it outright is
+ * sustainable in a way a blanket "lifetime everything" would not be.
+ *
+ * The AI advisor is the one genuinely metered resource (Anthropic bills per
+ * message), so it stays at the free daily allowance here. A lifetime tier that
+ * bundled 200 AI messages a day forever for one payment would lose money on
+ * every heavy user, indefinitely — and we'd have to claw it back later, which is
+ * worse than not offering it.
+ *
+ * Sold because the research is unambiguous that this audience resents
+ * subscriptions and converts well on a bounded one-off price.
+ */
+export const LIFETIME_PLAN: Plan = {
+  id: "lifetime",
+  name: "Lifetime",
+  tagline: "Buy the engine once. It runs on your device anyway.",
+  priceMonthly: 0,
+  priceYearly: 0,
+  priceOneOff: 8900,
+  currency: "gbp",
+  features: PRO_PLAN.features,
+  limits: {
+    ...PRO_PLAN.limits,
+    // The one metered resource stays at the free allowance — see above.
+    aiMessagesPerDay: FREE_PLAN.limits.aiMessagesPerDay,
+  },
+};
 
-export const ALL_PLANS: readonly Plan[] = [FREE_PLAN, PRO_PLAN];
+export const PLANS: Record<PlanId, Plan> = { free: FREE_PLAN, pro: PRO_PLAN, lifetime: LIFETIME_PLAN };
+
+export const ALL_PLANS: readonly Plan[] = [FREE_PLAN, PRO_PLAN, LIFETIME_PLAN];
 
 /** Human copy for each gate — used by the paywall prompts so the reason a user
  *  hit a wall is always specific ("5-year horizon") rather than a generic upsell. */
@@ -155,8 +191,15 @@ export type SubscriptionStatus =
 /** The billing document written by the Stripe webhook at
  *  `users/{uid}/billing/subscription`. Client-readable, server-writable only. */
 export interface BillingRecord {
+  /** The SUBSCRIPTION's plan. A lifetime purchase is tracked separately below,
+   *  because the two are independent facts: someone can hold a lifetime unlock
+   *  and separately subscribe for the larger AI allowance, and a later
+   *  subscription cancellation must not erase a purchase they already made. */
   plan: PlanId;
   status: SubscriptionStatus;
+  /** Epoch ms of a completed one-off purchase. Never cleared by subscription
+   *  events — it records something the user bought outright. */
+  lifetimePurchasedAt?: number;
   /** Epoch ms when the paid period ends; access holds until then after a cancel. */
   currentPeriodEnd?: number;
   cancelAtPeriodEnd?: boolean;
@@ -175,6 +218,9 @@ export interface Entitlement {
   /** Set when the subscription is ending — drives the "renews/ends on" line. */
   currentPeriodEnd?: number;
   cancelAtPeriodEnd: boolean;
+  /** True when the user owns the one-off purchase, whatever their subscription
+   *  state — so the UI can say "you own this" rather than offering it again. */
+  lifetime?: boolean;
 }
 
 export const FREE_ENTITLEMENT: Entitlement = {
@@ -194,19 +240,43 @@ export const FREE_ENTITLEMENT: Entitlement = {
  * can't leave someone entitled forever.
  */
 export function resolveEntitlement(record: BillingRecord | null | undefined, nowMs: number): Entitlement {
-  if (!record || record.plan !== "pro") return FREE_ENTITLEMENT;
-  if (!ACTIVE_STATUSES.has(record.status)) return FREE_ENTITLEMENT;
-  // A period end in the past means the record is stale; fall back to Free. No end
-  // date (e.g. a manually granted comp account) is treated as open-ended.
-  if (typeof record.currentPeriodEnd === "number" && record.currentPeriodEnd < nowMs) return FREE_ENTITLEMENT;
-  return {
-    plan: PRO_PLAN,
-    planId: "pro",
-    status: record.status,
-    active: true,
-    currentPeriodEnd: record.currentPeriodEnd,
-    cancelAtPeriodEnd: Boolean(record.cancelAtPeriodEnd),
-  };
+  if (!record) return FREE_ENTITLEMENT;
+
+  // A one-off purchase is exempt from the subscription checks below: those
+  // describe subscription health, and there is no renewal here that can lapse.
+  const hasLifetime = typeof record.lifetimePurchasedAt === "number";
+
+  const subscriptionLive =
+    record.plan === "pro" &&
+    ACTIVE_STATUSES.has(record.status) &&
+    !(typeof record.currentPeriodEnd === "number" && record.currentPeriodEnd < nowMs);
+
+  // Holding both is legitimate — a lifetime owner may subscribe purely for the
+  // larger AI allowance. Resolve to the subscription, which is the superset.
+  if (subscriptionLive) {
+    return {
+      plan: PRO_PLAN,
+      planId: "pro",
+      status: record.status,
+      active: true,
+      currentPeriodEnd: record.currentPeriodEnd,
+      cancelAtPeriodEnd: Boolean(record.cancelAtPeriodEnd),
+      lifetime: hasLifetime,
+    };
+  }
+
+  if (hasLifetime) {
+    return {
+      plan: LIFETIME_PLAN,
+      planId: "lifetime",
+      status: "active",
+      active: true,
+      cancelAtPeriodEnd: false,
+      lifetime: true,
+    };
+  }
+
+  return FREE_ENTITLEMENT;
 }
 
 /** Does this entitlement include a capability? */

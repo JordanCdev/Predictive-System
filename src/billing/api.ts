@@ -16,7 +16,9 @@ export const BILLING_URL: string = import.meta.env.VITE_BILLING_URL ?? "";
  *  and every upgrade affordance hides itself rather than 404-ing. */
 export const billingEnabled = Boolean(BILLING_URL);
 
-export type BillingInterval = "month" | "year";
+/** "lifetime" is a one-off purchase; the server turns it into a `payment`
+ *  Checkout session rather than a subscription. */
+export type BillingInterval = "month" | "year" | "lifetime";
 
 interface BillingResponse {
   url?: string;
