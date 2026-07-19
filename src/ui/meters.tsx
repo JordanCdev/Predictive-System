@@ -29,7 +29,21 @@ function useCountUp(target: number, ms = 550): number {
       else prev.current = target;
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+
+    // Safety net: rAF does not run in a hidden tab, and some embedded webviews
+    // throttle it hard. Without this the hero renders a bare "0" beside the word
+    // "Excellent" — and that number is the single thing the whole product sells.
+    // A timer still fires when rAF is suspended, so snap to the real value.
+    const settle = setTimeout(() => {
+      cancelAnimationFrame(raf);
+      setV(target);
+      prev.current = target;
+    }, ms + 120);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(settle);
+    };
   }, [target, ms]);
   return v;
 }

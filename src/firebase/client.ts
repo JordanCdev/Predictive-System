@@ -98,16 +98,17 @@ export async function savePeople(uid: string, state: PeopleState): Promise<void>
   const active = state.people.find((p) => p.id === state.activeId);
   if (active) await saveProfile(uid, active);
 }
-/** users/{uid}/journal/{entryId} — saved decisions + their outcomes. */
+/** users/{uid}/meta/journal → { entries }. Saved decisions + their outcomes.
+ *  One document, like the cast: the journal is read and written whole, so a
+ *  collection would only add a round-trip per keystroke and partial-write risk. */
 export async function loadJournalCloud(uid: string): Promise<JournalEntry[]> {
-  const snap = await getDocs(collection(ensure().db, "users", uid, "journal"));
-  return snap.docs.map((d) => d.data() as JournalEntry);
+  const snap = await getDoc(doc(ensure().db, "users", uid, "meta", "journal"));
+  if (!snap.exists()) return [];
+  const raw = snap.data().entries;
+  return Array.isArray(raw) ? (raw as JournalEntry[]) : [];
 }
-export async function saveJournalEntryCloud(uid: string, entry: JournalEntry): Promise<void> {
-  await setDoc(doc(ensure().db, "users", uid, "journal", safeId(entry.id)), entry);
-}
-export async function deleteJournalEntryCloud(uid: string, id: string): Promise<void> {
-  await deleteDoc(doc(ensure().db, "users", uid, "journal", safeId(id)));
+export async function saveJournalCloud(uid: string, entries: JournalEntry[]): Promise<void> {
+  await setDoc(doc(ensure().db, "users", uid, "meta", "journal"), { entries, updatedAt: serverTimestamp() });
 }
 
 // ── billing (written only by the Stripe webhook; the client just reads) ───────

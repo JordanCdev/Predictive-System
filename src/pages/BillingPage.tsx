@@ -81,7 +81,9 @@ export function BillingPage() {
 
       {justPaid && entitlement.active && (
         <div className="note-soft" style={{ marginBottom: 14 }}>
-          You're on Pro — thank you. Everything is unlocked now.
+          {/* Name the plan they actually bought. Telling an £89 Lifetime buyer
+              "You're on Pro" contradicted the plan name three lines below it. */}
+          You're on {entitlement.plan.name} — thank you. Everything is unlocked now.
         </div>
       )}
       {awaiting && (
@@ -104,13 +106,15 @@ export function BillingPage() {
             <p style={{ margin: "4px 0 0", fontSize: 13.5, color: "var(--muted)", lineHeight: 1.55, maxWidth: 460 }}>
               {!ready
                 ? "Checking your plan…"
-                : entitlement.active
-                  ? entitlement.cancelAtPeriodEnd && entitlement.currentPeriodEnd
-                    ? `Cancelled — Pro stays active until ${formatDate(entitlement.currentPeriodEnd)}, then you'll move to Free. Nothing is deleted.`
-                    : entitlement.currentPeriodEnd
-                      ? `Renews on ${formatDate(entitlement.currentPeriodEnd)}.`
-                      : "Active."
-                  : "Every reading, the full engine, a two-month date search and one stored chart."}
+                : entitlement.planId === "lifetime"
+                  ? "Bought outright — nothing to renew and nothing to cancel. The AI advisor stays at the free daily allowance, which is the one part with a real per-use cost."
+                  : entitlement.active
+                    ? entitlement.cancelAtPeriodEnd && entitlement.currentPeriodEnd
+                      ? `Cancelled — Pro stays active until ${formatDate(entitlement.currentPeriodEnd)}, then you'll move to Free. Nothing is deleted.`
+                      : entitlement.currentPeriodEnd
+                        ? `Renews on ${formatDate(entitlement.currentPeriodEnd)}.`
+                        : "Active."
+                    : "Every reading, the full engine, a two-month date search and one stored chart."}
             </p>
             {entitlement.status === "past_due" && (
               <div className="warn" style={{ marginTop: 10 }}>
@@ -120,10 +124,16 @@ export function BillingPage() {
             )}
           </div>
           {billingAvailable ? (
-            entitlement.active ? (
+            entitlement.planId === "pro" ? (
               <button className="btn-ghost" style={{ width: "auto", padding: "8px 16px" }} disabled={busy} onClick={portal}>
                 {busy ? "Opening…" : "Manage subscription"}
               </button>
+            ) : entitlement.planId === "lifetime" ? (
+              // No subscription exists to manage — offering a portal button would
+              // send them to an empty page.
+              <Link className="btn-ghost" style={{ width: "auto", padding: "8px 16px", textDecoration: "none" }} to="/pricing">
+                See plans
+              </Link>
             ) : (
               <Link className="btn" style={{ maxWidth: 180 }} to="/pricing">See Pro</Link>
             )

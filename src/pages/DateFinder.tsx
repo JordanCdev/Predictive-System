@@ -31,11 +31,12 @@ import { PersonalizeCard } from "../ui/PersonalizeCard.tsx";
 import { ProfilePanel } from "../ui/ProfilePanel.tsx";
 import { ChatPanel } from "../ui/ChatPanel.tsx";
 import { Journal } from "../ui/Journal.tsx";
-import { JournalEntry, entryId, isJournalFull, loadJournal, recordOutcome, removeEntry, updateNote, upsertEntry } from "../ui/journalStore.ts";
+import { entryId, isJournalFull, recordOutcome, removeEntry, updateNote, upsertEntry } from "../ui/journalStore.ts";
 import { downloadReport } from "../ui/report.ts";
 import { YourChart } from "../ui/YourChart.tsx";
 import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
+import { useJournalSync } from "../ui/profile/useJournalSync.ts";
 import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
 import { UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
 import { DEFAULT_TZ, TODAY_ISO, buildRequest } from "../ui/shared.ts";
@@ -83,7 +84,7 @@ export function DateFinderPage() {
   const [windowDays, setWindowDays] = useState(31);
   const [phase, setPhase] = useState<"ask" | "answer">("ask");
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
-  const [journal, setJournal] = useState<JournalEntry[]>(() => loadJournal());
+  const { entries: journal, apply: setJournal, syncError: journalSyncError } = useJournalSync();
   const heroRef = useRef<HTMLDivElement>(null);
   const pendingScroll = useRef(false);
 
@@ -296,6 +297,12 @@ export function DateFinderPage() {
             <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} boundary={boundary} />
           )}
           {showJournalPrompt && <UpgradePrompt feature="journal_unlimited" compact />}
+          {journalSyncError && (
+            <div className="warn" style={{ marginTop: 8 }}>
+              <span aria-hidden="true">⚠</span> Your journal is saved on this device but couldn't sync to your account:{" "}
+              {journalSyncError}
+            </div>
+          )}
           <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} onOutcome={(id, o) => setJournal(recordOutcome(id, o))} />
         </>
       ) : (
@@ -337,6 +344,12 @@ export function DateFinderPage() {
             <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} boundary={boundary} />
           )}
           {showJournalPrompt && <UpgradePrompt feature="journal_unlimited" compact />}
+          {journalSyncError && (
+            <div className="warn" style={{ marginTop: 8 }}>
+              <span aria-hidden="true">⚠</span> Your journal is saved on this device but couldn't sync to your account:{" "}
+              {journalSyncError}
+            </div>
+          )}
           <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} onOutcome={(id, o) => setJournal(recordOutcome(id, o))} />
 
           {result.personalized && result.subjectChart && (

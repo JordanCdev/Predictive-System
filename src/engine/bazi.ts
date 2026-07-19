@@ -78,7 +78,11 @@ export type SeasonalState = "prosperous" | "strong" | "resting" | "trapped" | "d
 export type ChartStructure = "normal" | "follow" | "dominant";
 
 /** How the climate school (調候) relates to the balance school's useful element. */
-export type ClimaticReconciliation = "aligned" | "conflict" | "not_applicable";
+/** How the 調候 (climate) school's needed element relates to the balance school's
+ *  useful element. `neutral` matters: the climate need can be simply orthogonal —
+ *  neither supporting nor opposing 用神 — which is NOT a disagreement between
+ *  schools and must not be reported as one. */
+export type ClimaticReconciliation = "aligned" | "conflict" | "neutral" | "not_applicable";
 
 /** Transparent strength arithmetic + near-threshold instability flags. The
  *  cut-points are engine calibration, not doctrine (docs/DECISIONS.md §6.7),
@@ -405,7 +409,12 @@ export function analyzeDayMaster(fp: FourPillars, elements: ElementProfile): Day
       ? "aligned"
       : climatic.needed.some((e) => unfavorableElements.includes(e))
         ? "conflict"
-        : "conflict";
+        // Neither favourable nor unfavourable: the balance school simply has no
+        // opinion on this element. Two identical "conflict" branches used to sit
+        // here, so every such chart claimed a school disagreement that wasn't
+        // there — including every 從格/專旺 chart, whose unfavourable list is
+        // deliberately emptied above.
+        : "neutral";
 
   const rootDesc = rooting.mainQiRoot
     ? `rooted (得地, strong root in ${rooting.rootBranches.join("")})`
