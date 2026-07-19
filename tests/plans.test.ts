@@ -3,10 +3,13 @@ import {
   BillingRecord,
   FREE_PLAN,
   PRO_PLAN,
+  ROUNDS_PER_MESSAGE,
   checkQuota,
   clampHorizon,
   formatPrice,
   hasFeature,
+  requestCeilingReached,
+  requestLimit,
   resolveEntitlement,
   usageDayKey,
   yearlySavingPercent,
@@ -132,6 +135,41 @@ describe("AI quota", () => {
 
   it("ignores a corrupt negative count", () => {
     expect(checkQuota(free, { day: today, count: -50 }, NOW).used).toBe(0);
+  });
+});
+
+describe("request ceiling (the enforceable spend bound)", () => {
+  const free = resolveEntitlement(null, NOW);
+  const paid = resolveEntitlement(pro(), NOW);
+  const today = usageDayKey(NOW);
+
+  it("bounds a plan at messages × rounds", () => {
+    expect(requestLimit(free)).toBe(FREE_PLAN.limits.aiMessagesPerDay * ROUNDS_PER_MESSAGE);
+    expect(requestLimit(paid)).toBeGreaterThan(requestLimit(free));
+  });
+
+  it("still blocks once the ceiling is hit even though messages look untouched", () => {
+    // The attack the ceiling exists for: fake every request as a tool
+    // continuation so the message counter never moves. `count: 0` here is
+    // exactly what that looks like server-side — and it must not help.
+    const usage = { day: today, count: 0, requests: requestLimit(free) };
+    expect(checkQuota(free, usage, NOW).allowed).toBe(true); // message counter says fine…
+    expect(requestCeilingReached(free, usage, NOW)).toBe(true); // …the real bound says no.
+  });
+
+  it("allows normal tool-loop usage well within the ceiling", () => {
+    const usage = { day: today, count: 1, requests: ROUNDS_PER_MESSAGE };
+    expect(requestCeilingReached(free, usage, NOW)).toBe(false);
+  });
+
+  it("treats a missing or corrupt request count as zero, never as unlimited", () => {
+    expect(requestCeilingReached(free, { day: today, count: 0 }, NOW)).toBe(false);
+    expect(requestCeilingReached(free, { day: today, count: 0, requests: -99 }, NOW)).toBe(false);
+  });
+
+  it("rolls the ceiling over with the UTC day", () => {
+    const yesterday = { day: usageDayKey(NOW - DAY), count: 0, requests: 99_999 };
+    expect(requestCeilingReached(free, yesterday, NOW)).toBe(false);
   });
 });
 

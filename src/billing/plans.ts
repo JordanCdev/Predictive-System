@@ -233,7 +233,37 @@ export function usageDayKey(nowMs: number): string {
 
 export interface UsageRecord {
   day: string;
+  /** User-facing messages: a genuine new question. */
   count: number;
+  /** EVERY upstream call, including tool-loop continuations. The security bound. */
+  requests?: number;
+}
+
+/**
+ * How many upstream calls one message may legitimately fan out into. The browser
+ * runs the tool loop and sends each round back, so one question can be several
+ * requests (`MAX_TOOL_ROUNDS` in the chat client).
+ */
+export const ROUNDS_PER_MESSAGE = 8;
+
+/** The hard per-day ceiling on upstream calls for a plan. */
+export function requestLimit(ent: Entitlement): number {
+  return ent.plan.limits.aiMessagesPerDay * ROUNDS_PER_MESSAGE;
+}
+
+/**
+ * Has the caller exhausted the hard request ceiling?
+ *
+ * This is the boundary that actually bounds spend. Whether a request is a
+ * "continuation" is read off the message shape the client sent, and a client can
+ * append a fabricated `tool_result` to dodge the message counter — so the
+ * message limit alone is not enforceable. This one counts every call and cannot
+ * be talked out of it.
+ */
+export function requestCeilingReached(ent: Entitlement, usage: UsageRecord | null | undefined, nowMs: number): boolean {
+  const today = usageDayKey(nowMs);
+  const used = usage && usage.day === today ? Math.max(0, usage.requests ?? 0) : 0;
+  return used >= requestLimit(ent);
 }
 
 export interface QuotaVerdict {

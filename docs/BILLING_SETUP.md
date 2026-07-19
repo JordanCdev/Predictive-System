@@ -30,6 +30,28 @@ npm run sync:shared
 Skip it and `npm test` fails with a message telling you to run it. That guard
 exists because silent drift means a paying user gets metered as Free.
 
+### How AI spend is actually bounded
+
+Two counters live on `users/{uid}/billing/usage`:
+
+- `count` — user-facing **messages**. Only a genuine new question increments it,
+  so the browser's tool round-trips don't bill someone for the model deciding to
+  look something up. This is the number the UI shows.
+- `requests` — **every** upstream call. This is the security boundary.
+
+They're separate because the "is this a tool continuation?" test reads the
+message shape the *client* sent, and a client can append a fabricated
+`tool_result` to skip the message counter. The request ceiling
+(`messages × ROUNDS_PER_MESSAGE`) counts every call regardless of what the
+client claims, so spend stays bounded either way. `tests/plans.test.ts` asserts
+exactly that attack fails.
+
+Alongside it: the model is allowlisted server-side, `max_tokens` is capped, and
+request body size and message count are limited — otherwise "5 free messages"
+would say nothing about actual cost. Metering **fails closed**: the transaction
+contends on one document, which is precisely what a parallel-request attack
+produces, so failing open there would turn the defence into the bypass.
+
 ### Where entitlement is decided
 
 The browser's gates are **presentation**. Anything that costs money is decided
@@ -110,6 +132,14 @@ shows a "waiting for Stripe to confirm" state for up to 15 seconds after the
 redirect, then an actionable message if nothing arrived.
 
 ---
+
+### Also set
+
+`ALLOWED_ORIGINS` — a comma-separated list of origins Stripe may redirect back
+to (e.g. `https://you.github.io`). Unset, the functions accept any https URL;
+set, they accept only these. Never set `REQUIRE_AUTH=false` on a deployed
+function: it disables authentication **and** metering together (quota is keyed on
+the uid), leaving an open Claude proxy on your key.
 
 ## 4. Developing against Pro
 

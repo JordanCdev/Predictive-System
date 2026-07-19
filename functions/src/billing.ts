@@ -64,13 +64,42 @@ async function customerFor(uid: string): Promise<string> {
   if (cached) return cached;
 
   const user = await getAuth().getUser(uid);
-  const customer = await stripe().customers.create({
-    email: user.email ?? undefined,
-    metadata: { firebaseUid: uid },
+  // Idempotency key derived from the uid: a double-click or a second tab racing
+  // the cache read below returns Stripe's SAME customer rather than creating a
+  // duplicate. Without it the loser's id could end up cached, pointing the
+  // portal at a customer that has no subscription — and inviting a second one.
+  const customer = await stripe().customers.create(
+    { email: user.email ?? undefined, metadata: { firebaseUid: uid } },
+    { idempotencyKey: `customer-for-${uid}` },
+  );
+
+  // Commit the cache transactionally, and defer to whoever got there first.
+  const winner = await db.runTransaction(async (tx) => {
+    const fresh = await tx.get(ref);
+    const existing = fresh.exists ? (fresh.data()?.stripeCustomerId as string | undefined) : undefined;
+    if (existing) return existing;
+    tx.set(ref, { stripeCustomerId: customer.id, createdAt: Date.now() });
+    return customer.id;
   });
-  await ref.set({ stripeCustomerId: customer.id, createdAt: Date.now() });
-  await db.doc(`stripeCustomers/${customer.id}`).set({ uid, createdAt: Date.now() });
-  return customer.id;
+  await db.doc(`stripeCustomers/${winner}`).set({ uid, createdAt: Date.now() });
+  return winner;
+}
+
+/** Only ever send the browser back to our own origin. */
+function safeReturnUrl(candidate: string | undefined, fallback: string): string {
+  if (!candidate) return fallback;
+  try {
+    const url = new URL(candidate);
+    const allowed = (process.env.ALLOWED_ORIGINS ?? "")
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean);
+    // Unconfigured → accept only https, which still blocks javascript:/data:.
+    if (allowed.length === 0) return url.protocol === "https:" ? url.toString() : fallback;
+    return allowed.includes(url.origin) ? url.toString() : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 // ── checkout + portal ────────────────────────────────────────────────────────
@@ -110,8 +139,8 @@ export const billing = onRequest(
           mode: "subscription",
           customer: await customerFor(uid),
           line_items: [{ price, quantity: 1 }],
-          success_url: successUrl || "https://example.invalid/#/settings/billing",
-          cancel_url: cancelUrl || "https://example.invalid/#/pricing",
+          success_url: safeReturnUrl(successUrl, "https://example.invalid/#/settings/billing"),
+          cancel_url: safeReturnUrl(cancelUrl, "https://example.invalid/#/pricing"),
           client_reference_id: uid,
           // Repeated on the subscription so webhook events that don't carry the
           // session (e.g. renewals, cancellations) can still resolve the user.
@@ -125,7 +154,7 @@ export const billing = onRequest(
       if (action === "portal") {
         const session = await stripe().billingPortal.sessions.create({
           customer: await customerFor(uid),
-          return_url: returnUrl || "https://example.invalid/#/settings/billing",
+          return_url: safeReturnUrl(returnUrl, "https://example.invalid/#/settings/billing"),
         });
         res.json({ url: session.url });
         return;
@@ -161,7 +190,9 @@ function recordFor(sub: Stripe.Subscription, customerId: string): BillingRecord 
 }
 
 /** Resolve the Firebase uid behind a subscription: metadata first (set at
- *  checkout), then the customer mirror, then the customer's own metadata. */
+ *  checkout), then the customer mirror, then the customer's own metadata.
+ *  Throws if the final lookup fails *transiently*, so the caller can 500 and let
+ *  Stripe retry rather than acking an entitlement change it couldn't apply. */
 async function uidForSubscription(sub: Stripe.Subscription, customerId: string): Promise<string | null> {
   const fromMeta = sub.metadata?.firebaseUid;
   if (fromMeta) return fromMeta;
@@ -170,12 +201,11 @@ async function uidForSubscription(sub: Stripe.Subscription, customerId: string):
   const fromMirror = mirror.exists ? (mirror.data()?.uid as string | undefined) : undefined;
   if (fromMirror) return fromMirror;
 
-  try {
-    const customer = await stripe().customers.retrieve(customerId);
-    if (!customer.deleted && customer.metadata?.firebaseUid) return customer.metadata.firebaseUid;
-  } catch {
-    /* fall through */
-  }
+  // Deliberately NOT swallowed: a network blip here is indistinguishable from
+  // "no such customer" if we catch it, and silently acking would strand the user
+  // on whatever their record last said — including Pro after a cancellation.
+  const customer = await stripe().customers.retrieve(customerId);
+  if (!customer.deleted && customer.metadata?.firebaseUid) return customer.metadata.firebaseUid;
   return null;
 }
 
@@ -218,7 +248,22 @@ export const stripeWebhook = onRequest(
             event.type === "customer.subscription.deleted"
               ? { ...recordFor(sub, customerId), plan: "free" as PlanId, status: "canceled" as SubscriptionStatus }
               : recordFor(sub, customerId);
-          await getFirestore().doc(`users/${uid}/billing/subscription`).set(record);
+
+          // Stripe does not guarantee ordering, and the 500-to-retry path below
+          // makes delayed redelivery routine. Without this stamp, a retried
+          // "active" event arriving AFTER a cancellation would overwrite the
+          // cancellation and hand back Pro until the stale period end — with no
+          // further event coming to correct it.
+          const ref = getFirestore().doc(`users/${uid}/billing/subscription`);
+          await getFirestore().runTransaction(async (tx) => {
+            const snap = await tx.get(ref);
+            const seen = snap.exists ? ((snap.data()?.eventCreated as number | undefined) ?? 0) : 0;
+            if (event.created < seen) {
+              console.warn("ignoring out-of-order stripe event", event.id, event.type);
+              return;
+            }
+            tx.set(ref, { ...record, eventCreated: event.created });
+          });
           break;
         }
         default:

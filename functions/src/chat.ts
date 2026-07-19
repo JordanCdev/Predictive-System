@@ -24,19 +24,56 @@ import { getAuth } from "firebase-admin/auth";
 import { consumeAiMessage, entitlementFor } from "./entitlements";
 
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
+
+/**
+ * Local-testing escape hatch. Turning it off disables auth AND metering together
+ * — quota is keyed on the uid, so with no caller identity there is nothing to
+ * meter, and the endpoint becomes an open Claude proxy on the project's key.
+ * That coupling is not obvious at the call sites, so it is stated here and
+ * logged loudly at cold start; it must never be set on a deployed function.
+ */
 const REQUIRE_AUTH = (process.env.REQUIRE_AUTH ?? "true") !== "false";
+if (!REQUIRE_AUTH) {
+  console.warn(
+    "SECURITY: REQUIRE_AUTH=false — the chat relay is UNAUTHENTICATED and UNMETERED. " +
+      "Local testing only; never deploy with this set.",
+  );
+}
 
 /** Ceiling on what a single request may ask the model to generate, regardless of
  *  what the client sent — a bounded blast radius if the client is tampered with. */
 const MAX_TOKENS_CEILING = 2048;
+
+/**
+ * Models this relay will spend the project's key on. The client picks from a
+ * menu, but the client is not trusted to define the menu: without this an
+ * account holder could name the most expensive model available to the key.
+ */
+const ALLOWED_MODELS = new Set(["claude-sonnet-5", "claude-haiku-4-5", "claude-opus-4-8"]);
+const DEFAULT_MODEL = "claude-sonnet-5";
+
+/**
+ * Hard caps on request *size*. The quota counts messages, not tokens, so
+ * without these a handful of "free" messages could each carry an enormous input
+ * and the tier's real cost would bear no relation to its stated limit.
+ */
+const MAX_BODY_BYTES = 256 * 1024;
+const MAX_MESSAGES = 60;
 
 interface AnthropicMessage {
   role: string;
   content: unknown;
 }
 
-/** True when the final message is a tool-result turn, i.e. the browser is
- *  continuing a tool loop rather than sending a new user message. */
+/**
+ * True when the final message is a tool-result turn, i.e. the browser is
+ * continuing a tool loop rather than asking something new.
+ *
+ * SECURITY: this is a *billing convenience*, not a control. It reads the shape
+ * the client sent, and a client can trivially append a fabricated `tool_result`
+ * to dodge the message counter. The hard bound is the per-request ceiling in
+ * consumeAiMessage(), which counts every call regardless of this verdict.
+ */
 function isToolContinuation(messages: AnthropicMessage[]): boolean {
   const last = messages[messages.length - 1];
   if (!last || last.role !== "user" || !Array.isArray(last.content)) return false;
@@ -72,13 +109,28 @@ export const chat = onRequest(
       }
     }
 
-    const body = (req.body ?? {}) as { messages?: AnthropicMessage[]; max_tokens?: number };
+    const body = (req.body ?? {}) as { messages?: AnthropicMessage[]; max_tokens?: number; model?: string };
     const messages = Array.isArray(body.messages) ? body.messages : [];
 
-    // ── gate 2: the caller's daily allowance ─────────────────────────────────
-    if (uid && !isToolContinuation(messages)) {
+    // ── gate 2: request shape and size ───────────────────────────────────────
+    if (messages.length === 0) {
+      res.status(400).json({ error: { message: "No messages supplied." } });
+      return;
+    }
+    if (messages.length > MAX_MESSAGES || Buffer.byteLength(JSON.stringify(body)) > MAX_BODY_BYTES) {
+      res.status(413).json({
+        error: { message: "That conversation is too long. Start a new chat and ask again." },
+      });
+      return;
+    }
+
+    // ── gate 3: the caller's daily allowance ─────────────────────────────────
+    // Every request consumes from the hard ceiling; only a genuine new question
+    // consumes a user-facing message. See consumeAiMessage() for why the
+    // continuation check can't be the security boundary.
+    if (uid) {
       const entitlement = await entitlementFor(uid);
-      const verdict = await consumeAiMessage(uid, entitlement);
+      const verdict = await consumeAiMessage(uid, entitlement, { metered: !isToolContinuation(messages) });
       if (!verdict.allowed) {
         res.status(429).json({
           error: { message: verdict.message ?? "Daily limit reached.", type: "quota_exceeded" },
@@ -99,6 +151,8 @@ export const chat = onRequest(
       },
       body: JSON.stringify({
         ...body,
+        // Never take the model or the generation ceiling on the client's word.
+        model: body.model && ALLOWED_MODELS.has(body.model) ? body.model : DEFAULT_MODEL,
         max_tokens: Math.min(Number(body.max_tokens) || 1024, MAX_TOKENS_CEILING),
       }),
     });
