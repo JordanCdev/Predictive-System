@@ -91,7 +91,7 @@ export function ChatPanel({
   const threadRef = useRef<HTMLDivElement>(null);
 
   const auth = useAuth();
-  const { quota, entitlement, noteAiMessage, billingAvailable, can } = useEntitlements();
+  const { quota, entitlement, noteAiMessage, releaseAiMessage, billingAvailable, can } = useEntitlements();
   const configured = Boolean(PROXY_URL || apiKey);
   // Metering only exists behind the hosted relay. A BYOK user is spending their
   // own Anthropic key, so it isn't ours to ration.
@@ -157,10 +157,16 @@ export function ChatPanel({
       } catch (e) {
         const aborted = controller.signal.aborted || (e instanceof DOMException && e.name === "AbortError");
         if (aborted) {
+          // A stop still consumed the upstream call, but the user got nothing
+          // useful — don't bill the local counter for it either.
+          if (metered) releaseAiMessage();
           // Keep whatever streamed before the stop.
           patch((b) => ({ ...b, text: b.text ? `${b.text} …(stopped)` : "(stopped)" }));
         } else {
           const quotaHit = e instanceof Error && e.name === "QuotaError";
+          // Give the optimistic message back unless the SERVER said we're out —
+          // otherwise five failed sends silently lock the session until reload.
+          if (metered && !quotaHit) releaseAiMessage();
           setError(e instanceof Error ? e.message : String(e));
           // A quota block isn't retryable — offering "Retry" would just fail again.
           setOutOfQuota(quotaHit);
@@ -185,6 +191,10 @@ export function ChatPanel({
     setBubbles([]);
     setError(null);
     setRetryText(null);
+    // Clear the latch too. The server stamps "quota_exceeded" on its fail-CLOSED
+    // path as well as a genuine limit, so a Firestore blip used to switch the
+    // advisor off for the rest of the session with no way back but a reload.
+    setOutOfQuota(false);
     setInput("");
   };
 
@@ -223,7 +233,7 @@ export function ChatPanel({
           </div>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
           <button className="btn" style={{ maxWidth: 220 }} disabled={!PROXY_URL && !keyDraft.trim()} onClick={enable}>
             {PROXY_URL ? "I understand — start chatting" : "Save key & start"}
           </button>

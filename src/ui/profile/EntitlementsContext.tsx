@@ -38,6 +38,8 @@ export interface EntitlementsValue {
   quota: QuotaVerdict;
   /** Optimistically bump the local meter after a message is sent. */
   noteAiMessage: () => void;
+  /** Give an optimistic message back when the send failed or was aborted. */
+  releaseAiMessage: () => void;
 }
 
 const EntitlementsCtx = createContext<EntitlementsValue | null>(null);
@@ -125,6 +127,7 @@ export function EntitlementsProvider({ children }: { children: ReactNode }) {
       clamp: (requestedDays: number) => clampHorizon(entitlement, requestedDays),
       quota,
       noteAiMessage: () => setOptimistic((n) => n + 1),
+      releaseAiMessage: () => setOptimistic((n) => Math.max(0, n - 1)),
     }),
     [entitlement, ready, enabled, quota],
   );

@@ -20,13 +20,21 @@ export const BAND_COLOR: Record<BandKey, string> = {
   avoid: "#cf6a64",
 };
 
-// Darkened variants that meet WCAG AA (~4.5:1) on the rice-paper surfaces — for TEXT.
+/**
+ * TEXT variants, as CSS custom properties rather than literals.
+ *
+ * These are applied through inline `style={{ color }}`, which no
+ * `@media (prefers-color-scheme: dark)` rule can override — so hard-coded hex
+ * tuned for the light rice-paper measured ~3:1 on the dark surfaces and failed
+ * WCAG AA there. Going through variables lets the dark theme restate them (see
+ * styles.css), which is the only way an inline colour can be theme-aware.
+ */
 export const BAND_TEXT_COLOR: Record<BandKey, string> = {
-  excellent: "#2f7d4f",
-  favourable: "#577a26",
-  neutral: "#8a6a1c",
-  caution: "#a85a1f",
-  avoid: "#b3403a",
+  excellent: "var(--band-text-excellent)",
+  favourable: "var(--band-text-favourable)",
+  neutral: "var(--band-text-neutral)",
+  caution: "var(--band-text-caution)",
+  avoid: "var(--band-text-avoid)",
 };
 
 /** Colour for a 0..100 score, via the engine's canonical band — for dots/rings/fills. */
@@ -51,11 +59,11 @@ export const VALENCE_COLOR: Record<PeriodValence, string> = {
   neutral: "var(--muted)",
 };
 
-// AA-legible text variants on the rice-paper surfaces.
+// AA-legible text variants; theme-aware for the same reason as BAND_TEXT_COLOR.
 export const VALENCE_TEXT_COLOR: Record<PeriodValence, string> = {
-  supportive: "#15795a",
-  mixed: "#8a6a1c",
-  challenging: "#b3403a",
+  supportive: "var(--valence-text-supportive)",
+  mixed: "var(--valence-text-mixed)",
+  challenging: "var(--valence-text-challenging)",
   neutral: "var(--muted)",
 };
 

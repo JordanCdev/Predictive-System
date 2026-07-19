@@ -31,8 +31,11 @@ export function DayVerification({
           ✓ Calendar verified · {report.overallAgreementScore}/100
         </span>
       ) : (
-        <span className="pill danger" title={`Blocking disagreement with an independent source: ${report.blockingDisagreements.join("; ")}`}>
-          ⚠ Calendar disagreement
+        // The list of disagreements used to live ONLY in `title`, so it existed
+        // nowhere at all for a touch or screen-reader user — the one badge whose
+        // whole point is telling you what went wrong.
+        <span className="pill danger">
+          ⚠ Calendar disagreement: {report.blockingDisagreements.join("; ")}
         </span>
       )}
 

@@ -145,7 +145,16 @@ export function boundaryAlternatives(
     out.push({ flag, scenario, pillars: altPillars, differs });
   }
 
-  return out;
+  // 立春 IS a 節, so a birth at that instant trips both flags and produced two
+  // entries with identical pillars and identical wording — the same doubt stated
+  // twice, which reads like two separate problems.
+  const seen = new Set<string>();
+  return out.filter((a) => {
+    const key = `${a.scenario}|${a.pillars.join(",")}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /** True when any flag puts a whole pillar in doubt — the case worth interrupting for. */

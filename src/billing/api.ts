@@ -26,11 +26,18 @@ interface BillingResponse {
 }
 
 async function post(action: string, body: object, idToken: string): Promise<BillingResponse> {
-  const res = await fetch(BILLING_URL, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
-    body: JSON.stringify({ action, ...body }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(BILLING_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ action, ...body }),
+    });
+  } catch {
+    // A network-level rejection never reaches the status-based message below, so
+    // the raw browser string ("Failed to fetch") was rendered on the buy button.
+    throw new Error("Couldn't reach the payment service. Check your connection and try again.");
+  }
   let json: BillingResponse = {};
   try {
     json = (await res.json()) as BillingResponse;
