@@ -1,5 +1,6 @@
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CONVENTION_PRESETS } from "../engine/index.ts";
-import { PersonalizeCard } from "../ui/PersonalizeCard.tsx";
+import { Person, PersonalizeCard } from "../ui/PersonalizeCard.tsx";
 import { YourChart } from "../ui/YourChart.tsx";
 import { HowItWorks } from "../ui/HowItWorks.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
@@ -10,8 +11,23 @@ import { DEFAULT_TZ } from "../ui/shared.ts";
 /** Profile & settings — sign in (when Firebase is configured), then set/replace the
  *  stored birth chart. Without Firebase it's stored only in this browser. */
 export function ProfilePage() {
-  const { person, setPerson, chart, dayun, currentAge, warnings } = useProfile();
+  const { person, setPerson, chart, dayun, currentAge, warnings, people } = useProfile();
   const { enabled, user, signIn, signOut, error } = useAuth();
+  const [params] = useSearchParams();
+  const nav = useNavigate();
+
+  // Arriving from the landing CTA ("Get my reading"). Open the form immediately
+  // rather than making someone who already asked for a reading click through a
+  // second "Add my birth details" upsell.
+  const onboarding = params.get("start") === "1" && !person;
+
+  const applyPerson = (p: Person) => {
+    const first = !person;
+    setPerson(p);
+    // Deliver what the CTA promised: the first profile lands on the reading, not
+    // back on a settings page.
+    if (first) nav("/today");
+  };
 
   return (
     <>
@@ -47,9 +63,20 @@ export function ProfilePage() {
         Your birth chart powers every personalised reading. It's stored {enabled && user ? "in your account (and cached in this browser)" : "only in this browser"}
         {person ? "" : " — nothing is set yet"}.
       </p>
-      <PersonalizeCard person={person} defaultTz={DEFAULT_TZ} presets={CONVENTION_PRESETS} onApply={setPerson} onClear={() => setPerson(null)} />
+      <PersonalizeCard
+        key={onboarding ? "onboarding" : "settings"}
+        person={person}
+        defaultTz={DEFAULT_TZ}
+        presets={CONVENTION_PRESETS}
+        startEditing={onboarding}
+        applyLabel={onboarding ? "See my reading" : undefined}
+        onApply={applyPerson}
+        onClear={() => setPerson(null)}
+      />
 
-      <PeoplePanel />
+      {/* Adding *other* people only makes sense once there's a "you" to compare
+          against — offering it first reads as a confusing second empty slot. */}
+      {people.length > 0 && <PeoplePanel />}
 
       {chart && <YourChart chart={chart} dayun={dayun} currentAge={currentAge} boundaryWarnings={warnings} />}
 

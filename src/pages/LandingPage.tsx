@@ -44,7 +44,7 @@ export function LandingPage() {
           from real astronomy. It tells you which day suits the thing you're about to do, and shows its working.
         </p>
         <div className="hero-cta">
-          <Link className="btn" to={personalized ? "/today" : "/settings/profile"}>
+          <Link className="btn" to={personalized ? "/today" : "/settings/profile?start=1"}>
             {personalized ? "Open today's reading" : "Get my reading — free"}
           </Link>
           <Link className="btn-ghost" to="/pricing">See plans</Link>

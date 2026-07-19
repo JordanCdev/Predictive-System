@@ -9,7 +9,9 @@ export function NeedsProfile({ what }: { what: string }) {
       <p style={{ margin: "0 auto 14px", fontSize: 14, color: "var(--muted)", maxWidth: 420, lineHeight: 1.55 }}>
         To {what}, set up your chart once — date, time and place of birth. It's stored only in this browser.
       </p>
-      <Link className="btn" style={{ maxWidth: 220, margin: "0 auto", display: "inline-block", textDecoration: "none" }} to="/settings/profile">
+      {/* ?start=1 opens the birth form straight away — someone who clicked
+          "set up my profile" has already opted in; don't ask them twice. */}
+      <Link className="btn" style={{ maxWidth: 220, margin: "0 auto", display: "inline-block", textDecoration: "none" }} to="/settings/profile?start=1">
         Set up my profile
       </Link>
     </div>
