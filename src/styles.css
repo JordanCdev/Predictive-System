@@ -1854,3 +1854,766 @@ button {
 .nav-search input::placeholder {
   color: var(--faint);
 }
+
+/* ============================================================================
+   Billing, plans & the public surface
+   Same rice-paper vocabulary as the rest of the app: hairline borders, gold for
+   anything "premium", jade reserved for the go action. Nothing shouts.
+   ========================================================================== */
+
+/* ---------- upgrade prompts (the paywall) ---------- */
+.upsell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+  padding: 18px 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+.upsell.compact {
+  padding: 14px 16px;
+}
+.upsell-body {
+  flex: 1 1 260px;
+}
+.upsell-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+  background: var(--gold-soft);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-bottom: 8px;
+}
+.upsell-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.upsell-blurb {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.upsell-cta {
+  width: auto;
+  min-width: 130px;
+  flex: none;
+  text-decoration: none;
+}
+.upsell-soon {
+  font-size: 12.5px;
+  color: var(--faint);
+}
+/* A gated preview: show a taste of the real thing, unreadable but shaped. */
+.gate-preview {
+  position: relative;
+  max-height: 190px;
+  overflow: hidden;
+  filter: blur(3px) saturate(0.7);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+}
+
+.plan-badge {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+  background: var(--gold-soft);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+/* ---------- pricing ---------- */
+.pricing-lede {
+  margin: 0 0 18px;
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 620px;
+}
+.interval-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  margin-bottom: 20px;
+}
+.interval-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 8px 18px;
+  min-height: 40px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.interval-toggle button.on {
+  background: var(--surface-2);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+}
+.save-tag {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--jade-text);
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.plan-card {
+  position: relative;
+  padding: 24px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.plan-card.featured {
+  border-color: var(--gold);
+}
+.plan-current-tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+  background: var(--gold-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.plan-name {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.plan-tagline {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 16px 0 14px;
+}
+.plan-price b {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.plan-price span {
+  font-size: 13px;
+  color: var(--faint);
+}
+.plan-everything {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gold-text);
+}
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  flex: 1;
+}
+.plan-features li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 10px;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.plan-features li::before {
+  content: "·";
+  position: absolute;
+  left: 6px;
+  color: var(--gold);
+  font-weight: 700;
+}
+.plan-features li b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.plan-cta {
+  margin-top: auto;
+  text-decoration: none;
+}
+.plan-unavailable {
+  margin-top: auto;
+  font-size: 12.5px;
+  color: var(--faint);
+  line-height: 1.5;
+}
+
+.pricing-notes {
+  margin-top: 32px;
+  padding-top: 22px;
+  border-top: 1px solid var(--hairline);
+}
+.pricing-notes h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pricing-notes ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+.pricing-notes li,
+.pricing-notes p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+/* ---------- billing settings ---------- */
+.billing-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.quota-bar {
+  height: 6px;
+  margin-top: 12px;
+  background: var(--hairline);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.quota-fill {
+  height: 100%;
+  background: var(--jade);
+  border-radius: 999px;
+  transition: width 220ms ease;
+}
+.quota-chip {
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+
+/* ---------- people (multi-profile) ---------- */
+.people-panel {
+  padding: 20px;
+  margin-top: 12px;
+}
+.people-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.people-head b {
+  font-size: 15px;
+}
+.people-head p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 460px;
+}
+.people-add {
+  width: auto;
+  padding: 8px 16px;
+  flex: none;
+}
+.people-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+.person-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  border-top: 1px solid var(--hairline);
+}
+.person-row:first-child {
+  border-top: none;
+}
+.person-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  padding: 6px 2px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.person-pick:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.person-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  border: 1.5px solid var(--hairline-strong);
+}
+.person-row.active .person-dot {
+  background: var(--jade);
+  border-color: var(--jade);
+}
+.person-name {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.person-row.active .person-name {
+  font-weight: 600;
+}
+.person-rel {
+  color: var(--faint);
+  font-weight: 400;
+}
+.person-dob {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.person-actions {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+.person-actions .btn-text {
+  font-size: 12.5px;
+  padding: 8px 6px;
+  min-height: 36px;
+}
+.btn-text.danger {
+  color: var(--cinnabar);
+}
+.person-locked-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+  background: var(--gold-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.people-parked,
+.people-hint {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+/* ---------- group date finder ---------- */
+.group-controls {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 13px;
+}
+.group-who {
+  margin-top: 16px;
+}
+.group-who-label {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.group-days {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.group-day {
+  padding: 15px 18px;
+  margin-bottom: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--band-neutral);
+  border-radius: var(--radius-cell);
+  box-shadow: var(--shadow-card);
+}
+.group-day.consensus-strong {
+  border-left-color: var(--band-excellent);
+}
+.group-day.consensus-workable {
+  border-left-color: var(--band-favourable);
+}
+.group-day.consensus-split {
+  border-left-color: var(--band-caution);
+}
+.group-day.consensus-poor {
+  border-left-color: var(--band-avoid);
+}
+.group-day-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.group-day-date {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.group-day-verdict {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.group-day-score {
+  flex: none;
+  text-align: right;
+}
+.group-day-score b {
+  display: block;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
+}
+.group-day-score span {
+  font-size: 11px;
+  color: var(--faint);
+}
+.group-day-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.member-pill {
+  font-size: 11.5px;
+  color: var(--muted);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+/* The person the group score is bound to — the constraint, made visible. */
+.member-pill.binding {
+  border-color: var(--gold);
+  color: var(--gold-text);
+  font-weight: 600;
+}
+
+/* ---------- landing ---------- */
+.landing {
+  animation: fade-in 240ms ease both;
+}
+.hero {
+  text-align: center;
+  padding: 34px 0 30px;
+}
+.hero-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+  background: var(--cinnabar);
+  color: #fff;
+  font-family: var(--serif-cjk);
+  font-size: 30px;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.15;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.hero-sub {
+  margin: 16px auto 0;
+  max-width: 560px;
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.hero-cta {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+.hero-cta .btn,
+.hero-cta .btn-ghost {
+  width: auto;
+  min-width: 190px;
+  text-decoration: none;
+}
+.hero-note {
+  margin: 16px 0 0;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.landing-block {
+  padding: 30px 0;
+  border-top: 1px solid var(--hairline);
+}
+.landing-block h2 {
+  margin: 0 0 12px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.landing-lede {
+  margin: 0 0 20px;
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.65;
+  max-width: 640px;
+}
+.proof-grid,
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.proof-card,
+.step-card {
+  padding: 18px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+.proof-card b,
+.step-card b {
+  display: block;
+  font-size: 14.5px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.proof-card p,
+.step-card p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--gold-soft);
+  color: var(--gold-text);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.use-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 640px;
+}
+.use-list li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 11px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.use-list li::before {
+  content: "·";
+  position: absolute;
+  left: 6px;
+  color: var(--gold);
+  font-weight: 700;
+}
+.use-list b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.landing-honest p {
+  max-width: 640px;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.landing-legal {
+  margin-top: 18px;
+  font-size: 13px;
+}
+.landing-legal a {
+  color: var(--jade-text);
+}
+
+/* ---------- legal documents ---------- */
+.legal {
+  max-width: 680px;
+}
+.legal-updated {
+  margin: 0 0 20px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.legal-lede {
+  margin: 0 0 24px;
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.65;
+}
+.legal h3 {
+  margin: 26px 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.legal p,
+.legal li {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.legal ul {
+  padding-left: 20px;
+  margin: 0 0 12px;
+}
+.legal li {
+  margin-bottom: 9px;
+}
+.legal b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.legal a {
+  color: var(--jade-text);
+}
+.legal-contact,
+.legal-close {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+}
+
+/* ---------- footer links ---------- */
+.foot-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 16px;
+}
+.foot-links a {
+  color: var(--faint);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+.foot-links a:hover {
+  color: var(--jade-text);
+  text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .hero h1 {
+    font-size: 31px;
+  }
+  .hero-sub {
+    font-size: 15px;
+  }
+  .group-controls {
+    grid-template-columns: 1fr;
+  }
+  .plan-card {
+    padding: 20px;
+  }
+  .person-dob {
+    display: none;
+  }
+}
+
+/* A window span the plan doesn't reach. Kept legible and clickable — tapping it
+   explains the limit, which beats a dead grey control the user can't interpret. */
+.chip.locked {
+  border-style: dashed;
+  border-color: var(--gold);
+  color: var(--gold-text);
+}
+.chip.locked.on {
+  background: var(--surface-2);
+  color: var(--gold-text);
+}
+.chip-lock {
+  font-size: 10px;
+  opacity: 0.9;
+}

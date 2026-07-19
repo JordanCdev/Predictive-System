@@ -17,12 +17,15 @@ import {
   getDoc,
   getDocs,
   getFirestore,
+  onSnapshot,
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
 import { firebaseConfig } from "./config.ts";
 import type { Person } from "../ui/PersonalizeCard.tsx";
 import type { JournalEntry } from "../ui/journalStore.ts";
+import type { BillingRecord, UsageRecord } from "../billing/plans.ts";
+import type { PeopleState } from "../ui/profile/peopleStore.ts";
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
@@ -72,6 +75,24 @@ export async function clearProfile(uid: string): Promise<void> {
   await deleteDoc(doc(ensure().db, "users", uid, "meta", "profile"));
 }
 
+// ── the cast (multi-profile) ─────────────────────────────────────────────────
+
+/** users/{uid}/meta/people → { people, activeId }. Stored as one document rather
+ *  than a collection: the whole cast is read and written together on every
+ *  change, so a collection would only add round-trips and partial-write risk. */
+export async function loadPeople(uid: string): Promise<PeopleState | null> {
+  const snap = await getDoc(doc(ensure().db, "users", uid, "meta", "people"));
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return { people: (data.people ?? []) as PeopleState["people"], activeId: (data.activeId ?? null) as string | null };
+}
+export async function savePeople(uid: string, state: PeopleState): Promise<void> {
+  await setDoc(doc(ensure().db, "users", uid, "meta", "people"), { ...state, updatedAt: serverTimestamp() });
+  // Mirror the active person to the legacy single-profile doc so an older client
+  // signing into the same account still finds a chart.
+  const active = state.people.find((p) => p.id === state.activeId);
+  if (active) await saveProfile(uid, active);
+}
 /** users/{uid}/journal/{entryId} — saved decisions + their outcomes. */
 export async function loadJournalCloud(uid: string): Promise<JournalEntry[]> {
   const snap = await getDocs(collection(ensure().db, "users", uid, "journal"));
@@ -82,6 +103,29 @@ export async function saveJournalEntryCloud(uid: string, entry: JournalEntry): P
 }
 export async function deleteJournalEntryCloud(uid: string, id: string): Promise<void> {
   await deleteDoc(doc(ensure().db, "users", uid, "journal", safeId(id)));
+}
+
+// ── billing (written only by the Stripe webhook; the client just reads) ───────
+
+/** users/{uid}/billing/subscription — live entitlement. Subscribed rather than
+ *  fetched so the UI flips to Pro the moment the webhook lands, without the user
+ *  having to reload after returning from Stripe Checkout. */
+export function watchBilling(uid: string, cb: (record: BillingRecord | null) => void): () => void {
+  return onSnapshot(
+    doc(ensure().db, "users", uid, "billing", "subscription"),
+    (snap) => cb(snap.exists() ? (snap.data() as BillingRecord) : null),
+    () => cb(null), // permission/network failure → Free, never a locked UI
+  );
+}
+
+/** users/{uid}/billing/usage — the AI meter the Cloud Function increments. Read
+ *  here only to show "N messages left today"; the server remains the authority. */
+export function watchUsage(uid: string, cb: (record: UsageRecord | null) => void): () => void {
+  return onSnapshot(
+    doc(ensure().db, "users", uid, "billing", "usage"),
+    (snap) => cb(snap.exists() ? (snap.data() as UsageRecord) : null),
+    () => cb(null),
+  );
 }
 
 /** Generic per-user collection helpers for the remaining spec collections

@@ -24,3 +24,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # The Cloud Functions are a separate tsconfig/dependency tree, so the app's
+      # typecheck says nothing about them. They enforce billing and AI quotas —
+      # a type error there is a production outage, not a lint nit.
+      - run: npm ci --prefix functions
+      - run: npm run build --prefix functions

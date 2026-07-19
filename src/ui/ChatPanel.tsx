@@ -1,6 +1,8 @@
 import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { BaziChart, DaYun, DecisionResult } from "../engine/index.ts";
 import { useAuth } from "./profile/AuthContext.tsx";
+import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import type { AiToolContext } from "../ai/tools.ts";
 import type { ChatMessage, ChatSettings } from "../ai/chatClient.ts";
 
@@ -78,13 +80,19 @@ export function ChatPanel({
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [outOfQuota, setOutOfQuota] = useState(false);
   const [retryText, setRetryText] = useState<string | null>(null);
   const historyRef = useRef<ChatMessage[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
   const auth = useAuth();
+  const { quota, entitlement, noteAiMessage, billingAvailable } = useEntitlements();
   const configured = Boolean(PROXY_URL || apiKey);
+  // Metering only exists behind the hosted relay. A BYOK user is spending their
+  // own Anthropic key, so it isn't ours to ration.
+  const metered = Boolean(PROXY_URL) && auth.enabled && Boolean(auth.user);
+  const blocked = metered && (outOfQuota || !quota.allowed);
 
   const settings: ChatSettings = useMemo(() => ({ model, apiKey: apiKey || undefined, proxyUrl: PROXY_URL }), [model, apiKey]);
 
@@ -109,10 +117,11 @@ export function ChatPanel({
   const send = useCallback(
     async (raw: string) => {
       const text = raw.trim();
-      if (!text || busy) return;
+      if (!text || busy || blocked) return;
       setError(null);
       setRetryText(null);
       setInput("");
+      if (metered) noteAiMessage(); // move the local counter now; the server is authoritative
       const assistantIdx = { current: -1 };
       setBubbles((prev) => {
         const next = [...prev, { role: "user" as const, text, tools: [] }, { role: "assistant" as const, text: "", tools: [] }];
@@ -147,8 +156,11 @@ export function ChatPanel({
           // Keep whatever streamed before the stop.
           patch((b) => ({ ...b, text: b.text ? `${b.text} …(stopped)` : "(stopped)" }));
         } else {
+          const quotaHit = e instanceof Error && e.name === "QuotaError";
           setError(e instanceof Error ? e.message : String(e));
-          setRetryText(text);
+          // A quota block isn't retryable — offering "Retry" would just fail again.
+          setOutOfQuota(quotaHit);
+          setRetryText(quotaHit ? null : text);
           // Roll back the just-added user + empty assistant bubbles; restore the input.
           setBubbles((prev) => prev.slice(0, Math.max(0, assistantIdx.current - 1)));
           setInput(text);
@@ -230,6 +242,11 @@ export function ChatPanel({
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Chat with your reading</h3>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {metered && (
+            <span className="quota-chip" title={`${quota.used} of ${quota.limit} used today`}>
+              {quota.remaining} left today
+            </span>
+          )}
           {bubbles.length > 0 && (
             <button className="btn-text" onClick={newChat}>New chat</button>
           )}
@@ -304,6 +321,11 @@ export function ChatPanel({
               Retry
             </button>
           )}
+          {outOfQuota && !entitlement.active && billingAvailable && (
+            <Link className="btn-text" style={{ padding: 0, color: "var(--warn-ink)", fontWeight: 600 }} to="/pricing">
+              See Pro
+            </Link>
+          )}
         </div>
       )}
 
@@ -312,18 +334,25 @@ export function ChatPanel({
           className="qa-input"
           type="text"
           value={input}
-          placeholder="e.g. “compare my two best wedding days next year”"
+          placeholder={blocked ? "You're out of advisor messages for today" : "e.g. “compare my two best wedding days next year”"}
           aria-label="Chat with your reading"
-          disabled={busy}
+          disabled={busy || blocked}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send(input)}
         />
         {busy ? (
           <button className="btn qa-send" onClick={stop} title="Stop generating">■ Stop</button>
         ) : (
-          <button className="btn qa-send" disabled={!input.trim()} onClick={() => send(input)}>Send</button>
+          <button className="btn qa-send" disabled={!input.trim() || blocked} onClick={() => send(input)}>Send</button>
         )}
       </div>
+
+      {blocked && !entitlement.active && (
+        <p className="ask-note" style={{ marginTop: 8 }}>
+          Your free allowance resets at midnight UTC. The rest of the app — every reading, score and forecast — keeps
+          working; only the AI narration is metered.
+        </p>
+      )}
 
       {bubbles.length === 0 && (
         <div className="qa-suggest">

@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { Objective, objectivePlain, parseActivity } from "../engine/index.ts";
+import { UpgradePrompt } from "./billing/UpgradePrompt.tsx";
+import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 
 const metaChipStyle = { fontSize: 11.5, color: "var(--muted)", border: "1px solid var(--hairline)", borderRadius: 999, padding: "1px 9px", textTransform: "capitalize" as const };
 
@@ -29,6 +31,9 @@ export function AskStep({
   onSubmit: () => void;
 }) {
   const [query, setQuery] = useState("");
+  const [showHorizonPrompt, setShowHorizonPrompt] = useState(false);
+  const { entitlement } = useEntitlements();
+  const horizonDays = entitlement.plan.limits.horizonDays;
   const chosen = objectiveId ? objectives.find((o) => o.id === objectiveId) : null;
 
   // Deterministic free-text → structured activity profile. Updates as you type.
@@ -131,17 +136,24 @@ export function AskStep({
         How far ahead should we look?
       </div>
       <div className="when-chips" role="group" aria-labelledby="when-label">
-        {WINDOW_OPTIONS.map((w) => (
-          <button
-            key={w.days}
-            className={`chip ${windowDays === w.days ? "on" : ""}`}
-            aria-pressed={windowDays === w.days}
-            onClick={() => onWindow(w.days)}
-          >
-            {w.label}
-          </button>
-        ))}
+        {WINDOW_OPTIONS.map((w) => {
+          const locked = w.days > horizonDays;
+          return (
+            <button
+              key={w.days}
+              className={`chip ${windowDays === w.days ? "on" : ""}${locked ? " locked" : ""}`}
+              aria-pressed={windowDays === w.days}
+              // Locked spans stay visible and clickable: tapping one explains the
+              // limit rather than leaving a mystery grey chip.
+              onClick={() => (locked ? setShowHorizonPrompt(true) : onWindow(w.days))}
+            >
+              {w.label}
+              {locked && <span className="chip-lock" aria-hidden="true"> ✦</span>}
+            </button>
+          );
+        })}
       </div>
+      {showHorizonPrompt && <UpgradePrompt feature="horizon_5y" compact />}
       <div className="ask-note" style={{ marginTop: 6 }}>
         Looking further ahead finds the single strongest day in that span — plus the soonest good one.
       </div>

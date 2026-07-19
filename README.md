@@ -30,9 +30,19 @@ npm run dev        # open http://localhost:5173
 npm test           # deterministic golden tests + offline third-party verification
 npm run build      # static production build (no backend)
 
+npm run dev:pro    # dev server with the Pro tier unlocked (dev-only override)
+npm run sync:shared # after editing src/billing/plans.ts — see docs/BILLING_SETUP.md
+npm run icons      # regenerate the PWA icons
+
 # opt-in LIVE verification against JPL Horizons (never runs by default):
 VERIFY_LIVE_JPL=1 npm test -- tests/verification/solarTerms.live.test.ts
 ```
+
+Everything runs with no configuration: no account, no backend, no keys. Accounts
+and cloud sync ([docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md)) and
+subscriptions ([docs/BILLING_SETUP.md](docs/BILLING_SETUP.md)) are optional
+layers on top — with neither configured the app is fully usable on the free tier
+and every upgrade affordance hides itself.
 
 ## How it works (the experience)
 
@@ -119,6 +129,18 @@ School-dependent doctrine (用神 selection, 調候, branch-frame weighting) is 
 shows both rather than silently picking one. Strong calendar taboos (歲破, 四離/四絕) are
 **hard exclusions** for high-stakes objectives (weddings, moving, openings, contracts,
 renovation) — a good-looking score can no longer buy back a forbidden day.
+
+## Plans
+
+The app is free to use, and the **engine is never the paid part**. A free user
+gets the same deterministic scores, the same declared conventions, the same
+conflicts between schools and the same disclaimers as a subscriber. Pro buys
+*range, breadth and storage*: a five-year date search instead of sixty days, any
+year past or future, the 大運 decade scrubber, several people's charts and a date
+that suits all of them, export, and the full reasoning dossier.
+
+Downgrading never deletes anything — extra charts and journal entries are paused,
+not erased. Setup and the full gate list: [docs/BILLING_SETUP.md](docs/BILLING_SETUP.md).
 
 ## Honest scope
 

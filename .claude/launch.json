@@ -4,8 +4,34 @@
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 5173,
+      "autoPort": true
+    },
+    {
+      "name": "web-pro",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:pro"
+      ],
+      "port": 5174,
+      "autoPort": true
+    },
+    {
+      "name": "preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "4173"
+      ],
+      "port": 4173,
       "autoPort": true
     }
   ]

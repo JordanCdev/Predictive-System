@@ -69,6 +69,19 @@ export function upsertEntry(entry: JournalEntry): JournalEntry[] {
   return persist([entry, ...rest]);
 }
 
+/**
+ * Is the plan's entry allowance used up?
+ *
+ * Only ever blocks *new* entries. Existing ones are never trimmed to fit a
+ * smaller plan — a downgrade must not destroy someone's decision history, and
+ * the outcome log is what the honest-feedback loop is built on. Re-saving an
+ * entry that already exists is always allowed.
+ */
+export function isJournalFull(list: JournalEntry[], limit: number, id?: string): boolean {
+  if (id && list.some((e) => e.id === id)) return false;
+  return list.length >= limit;
+}
+
 export function removeEntry(id: string): JournalEntry[] {
   return persist(loadJournal().filter((e) => e.id !== id));
 }

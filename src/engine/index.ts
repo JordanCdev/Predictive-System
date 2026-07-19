@@ -13,6 +13,7 @@ export * from "./bazi.ts";
 export * from "./tongshu.ts";
 export * from "./objectives.ts";
 export * from "./decision.ts";
+export * from "./group.ts";
 export * from "./plainEnglish.ts";
 export * from "./advisor.ts";
 export * from "./periods.ts";

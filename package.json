@@ -6,6 +6,9 @@
   "description": "Deterministic, explainable Chinese metaphysics decision engine — helps decide WHEN to act.",
   "scripts": {
     "dev": "vite",
+    "dev:pro": "VITE_DEV_FORCE_PLAN=pro vite",
+    "sync:shared": "node scripts/sync-shared.mjs",
+    "icons": "node scripts/make-icons.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",

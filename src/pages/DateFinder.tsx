@@ -31,10 +31,12 @@ import { PersonalizeCard } from "../ui/PersonalizeCard.tsx";
 import { ProfilePanel } from "../ui/ProfilePanel.tsx";
 import { ChatPanel } from "../ui/ChatPanel.tsx";
 import { Journal } from "../ui/Journal.tsx";
-import { JournalEntry, entryId, loadJournal, recordOutcome, removeEntry, updateNote, upsertEntry } from "../ui/journalStore.ts";
+import { JournalEntry, entryId, isJournalFull, loadJournal, recordOutcome, removeEntry, updateNote, upsertEntry } from "../ui/journalStore.ts";
 import { downloadReport } from "../ui/report.ts";
 import { YourChart } from "../ui/YourChart.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
+import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
+import { UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
 import { DEFAULT_TZ, TODAY_ISO, buildRequest } from "../ui/shared.ts";
 
 const WINDOW_LADDER = WINDOW_DAYS as readonly number[];
@@ -73,8 +75,10 @@ function computeAlternatives(recs: DayRecommendation[], excludeIso: string): Alt
 
 export function DateFinderPage() {
   const { person, setPerson, birthCivil, currentAge, warnings, evaluate, evaluateDay } = useProfile();
+  const { clamp, entitlement } = useEntitlements();
 
   const [objectiveId, setObjectiveId] = useState<string | null>(null);
+  const [showJournalPrompt, setShowJournalPrompt] = useState(false);
   const [windowDays, setWindowDays] = useState(31);
   const [phase, setPhase] = useState<"ask" | "answer">("ask");
   const [selectedIso, setSelectedIso] = useState<string | null>(null);
@@ -95,11 +99,19 @@ export function DateFinderPage() {
     }
   }, [qParam]);
 
+  // The plan's horizon is enforced here, at the one place the window reaches the
+  // engine — so no UI path (the chip row, `widen()`, a stale state, a shared URL)
+  // can search further than the plan allows.
+  const { days: effectiveWindow, capped: horizonCapped } = clamp(windowDays);
+  // "Widen the search" must stop at whichever comes first: the engine's ceiling
+  // or the plan's — otherwise the button promises days it won't return.
+  const maxWindow = Math.min(MAX_WINDOW_DAYS, clamp(MAX_WINDOW_DAYS).days);
+
   const computed = useMemo(() => {
     if (!objectiveId) return null;
-    const req = buildRequest(objectiveId, windowDays, person);
+    const req = buildRequest(objectiveId, effectiveWindow, person);
     return { req, result: evaluateDecision(req) };
-  }, [objectiveId, windowDays, person]);
+  }, [objectiveId, effectiveWindow, person]);
 
   const [enriched, setEnriched] = useState<{ baseHash: string; result: DecisionResult } | null>(null);
   const reqHash = computed?.result.meta.calculationHash;
@@ -197,9 +209,14 @@ export function DateFinderPage() {
 
   const loggedId = entryId(objectiveId, selectedRec.isoDate);
   const isLogged = journal.some((e) => e.id === loggedId);
+  const journalFull = isJournalFull(journal, entitlement.plan.limits.journalEntries, loggedId);
   const toggleLog = () => {
     if (isLogged) {
       setJournal(removeEntry(loggedId));
+      return;
+    }
+    if (journalFull) {
+      setShowJournalPrompt(true);
       return;
     }
     const ph = selectedRec.personalized ? practicalBestHour(selectedRec) : null;
@@ -236,7 +253,7 @@ export function DateFinderPage() {
     <>
       <div className="context-bar">
         <div className="ctx-text">
-          <b>{objectivePlain(objectiveId).gerund}</b> <span className="ctx-sub">· {windowPlain(windowDays)}</span>
+          <b>{objectivePlain(objectiveId).gerund}</b> <span className="ctx-sub">· {windowPlain(effectiveWindow)}</span>
           {pick && (
             <span className="ctx-sub">
               {" "}· best <b style={{ fontWeight: 600 }}>{shortDate(pick.civil)}</b> ({pick.recommendationScore})
@@ -246,19 +263,24 @@ export function DateFinderPage() {
         <button className="btn-text ctx-change" onClick={toAsk}>Change</button>
       </div>
 
+      {/* Say so when the search was shortened — a silently truncated window would
+          read as "there's nothing good further out", which isn't what happened. */}
+      {horizonCapped && <UpgradePrompt feature="horizon_5y" compact />}
+
       {todayRec && <TodayCard chart={result.subjectChart} today={todayRec} />}
 
       {recs.length === 0 ? (
         <>
-          <VetoState objective={objective} windowDays={windowDays} onWiden={widen} canWiden={windowDays < MAX_WINDOW_DAYS} />
+          <VetoState objective={objective} windowDays={effectiveWindow} onWiden={widen} canWiden={effectiveWindow < maxWindow} />
           <RuledOutDrawer rejected={result.rejected} objective={objective} />
           {personalize}
           {result.personalized && result.subjectChart && (
-            <ProfilePanel chart={result.subjectChart} evaluate={evaluate} defaultWindowDays={windowDays} todayIso={TODAY_ISO} personalized={result.personalized} onOpenReading={openReading} />
+            <ProfilePanel chart={result.subjectChart} evaluate={evaluate} defaultWindowDays={effectiveWindow} todayIso={TODAY_ISO} personalized={result.personalized} onOpenReading={openReading} />
           )}
           {result.personalized && result.subjectChart && birthCivil && (
             <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} />
           )}
+          {showJournalPrompt && <UpgradePrompt feature="journal_unlimited" compact />}
           <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} onOutcome={(id, o) => setJournal(recordOutcome(id, o))} />
         </>
       ) : (
@@ -291,7 +313,7 @@ export function DateFinderPage() {
           {result.personalized && personalize}
 
           {result.personalized && result.subjectChart && (
-            <ProfilePanel chart={result.subjectChart} evaluate={evaluate} defaultWindowDays={windowDays} todayIso={TODAY_ISO} personalized={result.personalized} onOpenReading={openReading} />
+            <ProfilePanel chart={result.subjectChart} evaluate={evaluate} defaultWindowDays={effectiveWindow} todayIso={TODAY_ISO} personalized={result.personalized} onOpenReading={openReading} />
           )}
           {result.personalized && result.subjectChart && birthCivil && (
             <PeriodsPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} />
@@ -299,6 +321,7 @@ export function DateFinderPage() {
           {result.personalized && result.subjectChart && birthCivil && (
             <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} />
           )}
+          {showJournalPrompt && <UpgradePrompt feature="journal_unlimited" compact />}
           <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} onOutcome={(id, o) => setJournal(recordOutcome(id, o))} />
 
           {result.personalized && result.subjectChart && (

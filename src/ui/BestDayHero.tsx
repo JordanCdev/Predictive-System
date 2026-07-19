@@ -17,6 +17,8 @@ import {
 } from "../engine/index.ts";
 import { ConfidenceChip, ConfidencePanel, GoodMeter } from "./meters.tsx";
 import { ReasoningDossier } from "./ReasoningDossier.tsx";
+import { Gate, UpgradePrompt } from "./billing/UpgradePrompt.tsx";
+import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import { downloadICS } from "./ics.ts";
 import { scoreColor } from "./format.ts";
 
@@ -137,21 +139,7 @@ export function BestDayHero({
             <li key={i}>{t}</li>
           ))}
         </ul>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={() => downloadICS(rec, objective)}>
-            <span aria-hidden="true">＋</span> Add to calendar
-          </button>
-          {onToggleLog && (
-            <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onToggleLog} aria-pressed={logged}>
-              <span aria-hidden="true">{logged ? "✓" : "誌"}</span> {logged ? "Saved to journal" : "Log this decision"}
-            </button>
-          )}
-          {onDownloadReport && (
-            <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onDownloadReport}>
-              <span aria-hidden="true">⇩</span> Download report
-            </button>
-          )}
-        </div>
+        <ExportActions rec={rec} objective={objective} logged={logged} onToggleLog={onToggleLog} onDownloadReport={onDownloadReport} />
       </div>
 
       {alternatives.length > 0 && (
@@ -172,8 +160,57 @@ export function BestDayHero({
         </div>
       )}
 
-      <ReasoningDossier rec={rec} objective={objective} hash={meta.calculationHash} versions={meta.engineVersions} />
+      <Gate feature="reasoning_dossier" compact>
+        <ReasoningDossier rec={rec} objective={objective} hash={meta.calculationHash} versions={meta.engineVersions} />
+      </Gate>
     </div>
+  );
+}
+
+/**
+ * The action row under a reading.
+ *
+ * Logging a decision stays free — it's the honest-feedback loop, and metering it
+ * would corrupt the data the app learns from. Taking the day *out* of the app
+ * (calendar file, written report) is the Pro line.
+ */
+function ExportActions({
+  rec,
+  objective,
+  logged,
+  onToggleLog,
+  onDownloadReport,
+}: {
+  rec: DayRecommendation;
+  objective: Objective;
+  logged?: boolean;
+  onToggleLog?: () => void;
+  onDownloadReport?: () => void;
+}) {
+  const { can } = useEntitlements();
+  const canExport = can("export");
+
+  return (
+    <>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {canExport && (
+          <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={() => downloadICS(rec, objective)}>
+            <span aria-hidden="true">＋</span> Add to calendar
+          </button>
+        )}
+        {onToggleLog && (
+          <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onToggleLog} aria-pressed={logged}>
+            <span aria-hidden="true">{logged ? "✓" : "誌"}</span> {logged ? "Saved to journal" : "Log this decision"}
+          </button>
+        )}
+        {canExport && onDownloadReport && (
+          <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onDownloadReport}>
+            <span aria-hidden="true">⇩</span> Download report
+          </button>
+        )}
+      </div>
+      {!canExport && <UpgradePrompt feature="export" compact />}
+    </>
   );
 }
 
@@ -207,7 +244,9 @@ export function RuledOutCard({
           See our top pick instead
         </button>
       )}
-      <ReasoningDossier rec={rec} objective={objective} hash={hash} versions={versions} />
+      <Gate feature="reasoning_dossier" compact>
+        <ReasoningDossier rec={rec} objective={objective} hash={hash} versions={versions} />
+      </Gate>
     </div>
   );
 }

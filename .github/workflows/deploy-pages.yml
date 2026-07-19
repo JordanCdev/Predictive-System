@@ -1,7 +1,14 @@
 # Deploy the static Vite build to GitHub Pages on every push to main.
-# The app is fully client-side (no backend, no network in the calc path), and
+# The deterministic engine is fully client-side (no network in the calc path), and
 # vite.config.ts uses base:"./" so assets resolve under the /Predictive-System/
 # subpath. Tests run first — a red suite never ships.
+#
+# The VITE_* values below are build-time configuration, not secrets: the Firebase
+# web apiKey is a public project identifier (access is controlled by Firestore
+# rules + Auth), and the billing URL is a public endpoint that verifies an ID
+# token. They live in repository secrets purely to keep the project's identifiers
+# out of the source tree. Leaving any of them unset is a supported configuration:
+# the build succeeds and the app runs local-only on the free plan.
 name: deploy-pages
 
 on:
@@ -33,6 +40,17 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          # The deployed chat + billing Cloud Functions. Unset → BYOK chat and a
+          # free-only app, which is the app's original shape and still valid.
+          VITE_AI_PROXY_URL: ${{ secrets.VITE_AI_PROXY_URL }}
+          VITE_BILLING_URL: ${{ secrets.VITE_BILLING_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

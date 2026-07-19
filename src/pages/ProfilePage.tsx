@@ -4,6 +4,7 @@ import { YourChart } from "../ui/YourChart.tsx";
 import { HowItWorks } from "../ui/HowItWorks.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { useAuth } from "../ui/profile/AuthContext.tsx";
+import { PeoplePanel } from "../ui/profile/PeoplePanel.tsx";
 import { DEFAULT_TZ } from "../ui/shared.ts";
 
 /** Profile & settings — sign in (when Firebase is configured), then set/replace the
@@ -47,6 +48,8 @@ export function ProfilePage() {
         {person ? "" : " — nothing is set yet"}.
       </p>
       <PersonalizeCard person={person} defaultTz={DEFAULT_TZ} presets={CONVENTION_PRESETS} onApply={setPerson} onClear={() => setPerson(null)} />
+
+      <PeoplePanel />
 
       {chart && <YourChart chart={chart} dayun={dayun} currentAge={currentAge} boundaryWarnings={warnings} />}
 

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# The app is a hash-routed SPA, so every route lives behind "/#/…" and is not
+# separately crawlable. The landing page carries the indexable description.

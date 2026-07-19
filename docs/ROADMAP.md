@@ -200,11 +200,20 @@ Many are partly built already; this is the prioritized backlog.
 
 ## 6. Suggested sequence
 
-> **Status:** Phases 1–4 shipped, Phase 5 partially. Phase 1 (forecasting engine) landed in
-> `98c8270`; Phases 2 (time navigation) & 3 (life-area / hour / 宜忌) in `c4f0281`; Phase 4
-> (AI chat — a guardrailed explanation shell) in `853e312`/`9bb4b3a`. Phase 5: the **decision
-> journal** (item 11) and a **shareable HTML report** (item 12) are done; **multi-profile /
-> relationship-aware selection** (item 10) remains the main open item.
+> **Status:** Phases 1–5 shipped, plus Phase 9 (commercial readiness). Phase 1 (forecasting
+> engine) landed in `98c8270`; Phases 2 (time navigation) & 3 (life-area / hour / 宜忌) in
+> `c4f0281`; Phase 4 (AI chat — a guardrailed explanation shell) in `853e312`/`9bb4b3a`;
+> Phase 5 completed with the decision journal (item 11), the shareable HTML report (item 12)
+> and finally **multi-profile + group date selection** (item 10) — `engine/group.ts` binds a
+> group day to the *worst* reading in the party, never the average, so a day that clashes one
+> principal can't ride on everyone else's enthusiasm.
+>
+> **Phase 9 — commercial readiness:** Free/Pro plans with a shared, drift-guarded catalogue
+> (`src/billing/plans.ts`), Stripe Checkout + customer portal + webhook-driven entitlements,
+> server-side AI quota metering, a public landing/pricing surface, privacy & terms, PWA
+> install + offline service worker. The gating rule: **paid tiers buy range, breadth and
+> storage — never the correctness, transparency or honesty of a reading.** See
+> [BILLING_SETUP.md](BILLING_SETUP.md).
 >
 > **Deployment decision (§7.1):** GitHub Pages (static) → **BYOK** for the live site; the
 > **dev proxy** in `vite.config.ts` reads the key from `.env.local` for local testing only.

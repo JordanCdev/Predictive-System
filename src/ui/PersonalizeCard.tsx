@@ -30,20 +30,39 @@ const TZ_OPTIONS = (() => {
   return opts;
 })();
 
+/** Optional "who is this?" fields, used when the card captures someone *other*
+ *  than the account holder (the multi-profile cast). Absent for the self flow, so
+ *  the original single-profile experience is untouched. */
+export interface NamedSubject {
+  label: string;
+  relation?: string;
+  onChange: (next: { label: string; relation?: string }) => void;
+}
+
 export function PersonalizeCard({
   person,
   defaultTz,
   presets,
   onApply,
   onClear,
+  subject,
+  startEditing = false,
+  applyLabel,
+  onCancel,
 }: {
   person: Person | null;
   defaultTz: number;
   presets: ConventionSet[];
   onApply: (p: Person) => void;
   onClear: () => void;
+  /** When set, the form also captures a name + relation for this person. */
+  subject?: NamedSubject;
+  /** Open straight into the form (adding someone new). */
+  startEditing?: boolean;
+  applyLabel?: string;
+  onCancel?: () => void;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   const [draft, setDraft] = useState<Person>(
     person ?? {
       birthDate: "",
@@ -71,6 +90,11 @@ export function PersonalizeCard({
     return y >= 1850 && y <= 2100 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31;
   })();
   const canApply = validDate && (noTime || /^\d{2}:\d{2}$/.test(draft.birthTime));
+
+  const cancel = () => {
+    setEditing(false);
+    onCancel?.();
+  };
 
   // Applied + not editing → compact summary.
   if (person && !editing) {
@@ -123,9 +147,35 @@ export function PersonalizeCard({
   // Editing form.
   return (
     <div className="card personalize-card">
-      <h3 style={{ marginBottom: 4 }}>Your birth details</h3>
-      <p>Used only to personalize the reading. Nothing is uploaded.</p>
+      <h3 style={{ marginBottom: 4 }}>{subject ? "Their birth details" : "Your birth details"}</h3>
+      <p>
+        {subject
+          ? "Stored alongside your own chart so a date can be checked against everyone involved."
+          : "Used only to personalize the reading. Nothing is uploaded."}
+      </p>
       <div className="birth-form">
+        {subject && (
+          <div className="row-2">
+            <label className="field">
+              <span>Name</span>
+              <input
+                type="text"
+                placeholder="e.g. Mei"
+                value={subject.label}
+                onChange={(e) => subject.onChange({ label: e.target.value, relation: subject.relation })}
+              />
+            </label>
+            <label className="field">
+              <span>Relationship (optional)</span>
+              <input
+                type="text"
+                placeholder="e.g. partner, co-founder"
+                value={subject.relation ?? ""}
+                onChange={(e) => subject.onChange({ label: subject.label, relation: e.target.value || undefined })}
+              />
+            </label>
+          </div>
+        )}
         <div className="row-2">
           <label className="field">
             <span>Birth date</span>
@@ -218,10 +268,14 @@ export function PersonalizeCard({
         </details>
 
         <div style={{ display: "flex", gap: 10 }}>
-          <button className="btn" disabled={!canApply} onClick={() => { onApply(draft); setEditing(false); }}>
-            Apply to my reading
+          <button
+            className="btn"
+            disabled={!canApply || (subject !== undefined && !subject.label.trim())}
+            onClick={() => { onApply(draft); setEditing(false); }}
+          >
+            {applyLabel ?? "Apply to my reading"}
           </button>
-          <button className="btn-ghost" style={{ width: "auto", padding: "8px 16px" }} onClick={() => setEditing(false)}>
+          <button className="btn-ghost" style={{ width: "auto", padding: "8px 16px" }} onClick={cancel}>
             Cancel
           </button>
         </div>

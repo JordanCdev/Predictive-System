@@ -13,6 +13,12 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_STORAGE_BUCKET?: string;
   readonly VITE_FIREBASE_MESSAGING_SENDER_ID?: string;
   readonly VITE_FIREBASE_APP_ID?: string;
+  /** The billing Cloud Function's URL. Unset → the app runs Free-only and hides
+   *  every upgrade affordance rather than offering a CTA that goes nowhere. */
+  readonly VITE_BILLING_URL?: string;
+  /** DEV ONLY. "pro" opens the paid surface locally without a real subscription.
+   *  Read behind `import.meta.env.DEV`, so it is stripped from production builds. */
+  readonly VITE_DEV_FORCE_PLAN?: string;
 }
 
 interface ImportMeta {

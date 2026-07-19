@@ -134,7 +134,7 @@ async function streamOnce(body: unknown, settings: ChatSettings, events: ChatEve
   const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body), signal });
   if (!res.ok || !res.body) {
     const detail = await res.text().catch(() => "");
-    throw new Error(friendlyHttpError(res.status, detail));
+    throw friendlyHttpError(res.status, detail);
   }
 
   // Accumulate content blocks by index as SSE events arrive.
@@ -211,16 +211,43 @@ async function readSse(stream: ReadableStream<Uint8Array>, onEvent: (event: stri
   }
 }
 
-function friendlyHttpError(status: number, detail: string): string {
-  if (status === 401) return "Your Anthropic key was rejected (401). Check the key and try again.";
-  if (status === 403) return "Access denied (403). This key can't use the Messages API.";
-  if (status === 429) return "Rate limited by Anthropic (429). Wait a moment and retry.";
-  if (status === 529) return "Anthropic is overloaded (529). Please retry shortly.";
-  let msg = "";
-  try {
-    msg = JSON.parse(detail)?.error?.message ?? "";
-  } catch {
-    /* detail wasn't JSON */
+/** Thrown when the proxy refuses because the caller is out of daily allowance,
+ *  so the UI can offer an upgrade instead of a generic "try again". */
+export class QuotaError extends Error {
+  readonly quota: { used: number; limit: number; plan: string } | null;
+  constructor(message: string, quota: QuotaError["quota"]) {
+    super(message);
+    this.name = "QuotaError";
+    this.quota = quota;
   }
-  return `Chat request failed (${status})${msg ? `: ${msg}` : ""}.`;
+}
+
+interface ProxyErrorBody {
+  error?: { message?: string; type?: string };
+  quota?: { used: number; limit: number; plan: string };
+}
+
+function parseErrorBody(detail: string): ProxyErrorBody {
+  try {
+    return JSON.parse(detail) as ProxyErrorBody;
+  } catch {
+    return {};
+  }
+}
+
+function friendlyHttpError(status: number, detail: string): Error {
+  const body = parseErrorBody(detail);
+  const serverMsg = body.error?.message;
+
+  // Our own proxy sends a specific, user-ready message — prefer it over any
+  // generic text, and distinguish "you're out of messages" from Anthropic's
+  // upstream rate limiting, which means something entirely different to the user.
+  if (status === 429) {
+    if (body.error?.type === "quota_exceeded") return new QuotaError(serverMsg ?? "You've used today's advisor messages.", body.quota ?? null);
+    return new Error(serverMsg ?? "Rate limited (429). Wait a moment and retry.");
+  }
+  if (status === 401) return new Error(serverMsg ?? "Your Anthropic key was rejected (401). Check the key and try again.");
+  if (status === 403) return new Error(serverMsg ?? "Access denied (403). This key can't use the Messages API.");
+  if (status === 529) return new Error("Anthropic is overloaded (529). Please retry shortly.");
+  return new Error(serverMsg ? `${serverMsg}` : `Chat request failed (${status}).`);
 }

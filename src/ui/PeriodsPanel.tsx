@@ -6,6 +6,7 @@ import {
 } from "../engine/index.ts";
 import { PeriodSummaryBlock } from "./PeriodSummaryBlock.tsx";
 import { LuckEntry, LuckTimeline } from "./LuckTimeline.tsx";
+import { Gate } from "./billing/UpgradePrompt.tsx";
 import { valenceColor } from "./format.ts";
 
 /** Year & month tendency analysis (大運 / 流年 / 流月) tied to the chart, with a
@@ -59,7 +60,9 @@ export function PeriodsPanel({
 
       {/* Life-spanning luck scrubber — the decade active for the selected year is
           highlighted and opened; tap any decade to read it. */}
-      <LuckTimeline entries={luckEntries} natalGanzhi={natalGanzhi} />
+      <Gate feature="luck_pillars" compact preview={<LuckTimeline entries={luckEntries} natalGanzhi={natalGanzhi} />}>
+        <LuckTimeline entries={luckEntries} natalGanzhi={natalGanzhi} />
+      </Gate>
 
       <p style={{ margin: "14px 0 0", fontSize: 14, color: "var(--ink)", lineHeight: 1.55 }}>{report.interaction}</p>
 

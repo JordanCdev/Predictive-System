@@ -5,6 +5,8 @@ import { PeriodSummaryBlock } from "../ui/PeriodSummaryBlock.tsx";
 import { LuckEntry, LuckTimeline } from "../ui/LuckTimeline.tsx";
 import { valenceColor } from "../ui/format.ts";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
+import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
+import { Gate, UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
 import { NeedsProfile } from "./NeedsProfile.tsx";
 
 const CURRENT_YEAR = Number(new Date().getFullYear());
@@ -16,7 +18,13 @@ export function YearlyPage() {
   const parsedYear = /^\d{4}$/.test(params.year ?? "") ? Number(params.year) : NaN;
   const year = parsedYear >= 1000 ? parsedYear : CURRENT_YEAR;
   const { chart, dayun, birthCivil } = useProfile();
+  const { can } = useEntitlements();
   const [openMonth, setOpenMonth] = useState<string | null>(null);
+
+  // The *current* year reads in full on every plan — a paywall on "what's this
+  // year about" would gate the app's core promise. Pro buys the range: any other
+  // year, plus the luck decades that give a year its context.
+  const yearLocked = year !== CURRENT_YEAR && !can("year_forecast");
 
   const report = useMemo(
     () => (chart && birthCivil ? buildPeriodsReport({ chart, dayun, birth: birthCivil, targetYear: year }) : null),
@@ -60,11 +68,34 @@ export function YearlyPage() {
     );
   }
 
+  if (yearLocked) {
+    return (
+      <>
+        <div className="page-head"><h2 className="page-title">Year {year}</h2>{navRow}</div>
+        <div className="card" style={{ padding: 16 }}>
+          <p style={{ margin: 0, fontSize: 14, color: "var(--ink)" }}>
+            {year} is the year of <b style={{ fontFamily: "var(--serif-cjk)" }}>{annualPillar(year).hanzi}</b> (流年).
+          </p>
+        </div>
+        <UpgradePrompt feature="year_forecast" />
+        <p className="ask-note">
+          <Link className="btn-text" style={{ padding: 0 }} to={`/year/${CURRENT_YEAR}`}>{CURRENT_YEAR} is free to read in full</Link>, month by month.
+        </p>
+      </>
+    );
+  }
+
   return (
     <>
       <div className="page-head"><h2 className="page-title">Year {year}</h2>{navRow}</div>
 
-      <LuckTimeline entries={luckEntries} natalGanzhi={chart!.pillars.map((p) => p.ganzhi.hanzi)} />
+      <Gate
+        feature="luck_pillars"
+        compact
+        preview={<LuckTimeline entries={luckEntries} natalGanzhi={chart!.pillars.map((p) => p.ganzhi.hanzi)} />}
+      >
+        <LuckTimeline entries={luckEntries} natalGanzhi={chart!.pillars.map((p) => p.ganzhi.hanzi)} />
+      </Gate>
 
       <p style={{ margin: "14px 0 0", fontSize: 14, color: "var(--ink)", lineHeight: 1.55 }}>{report.interaction}</p>
       <div className="card" style={{ padding: 20, marginTop: 10 }}>
