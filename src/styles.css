@@ -2823,3 +2823,97 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- time-correction chain ---------- */
+/* The most-disputed calculation in this field, shown as working rather than
+   asserted. Styled as a ledger, not an alert — it's evidence, not a warning. */
+.timechain {
+  margin-top: 12px;
+  padding: 18px 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+.tc-head {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.tc-steps {
+  list-style: none;
+  counter-reset: tc;
+  margin: 0;
+  padding: 0;
+}
+.tc-steps li {
+  counter-increment: tc;
+  position: relative;
+  padding: 8px 0 8px 26px;
+  border-top: 1px solid var(--hairline);
+}
+.tc-steps li:first-child {
+  border-top: none;
+}
+.tc-steps li::before {
+  content: counter(tc);
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline-strong);
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tc-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tc-label {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.tc-value {
+  font-size: 14px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tc-note {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--faint);
+  line-height: 1.5;
+}
+.tc-result {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline-strong);
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.tc-result b {
+  font-family: var(--serif-cjk);
+  font-size: 16px;
+}
+.tc-conv {
+  color: var(--muted);
+}
+.tc-foot,
+.tc-unknown {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 620px;
+}

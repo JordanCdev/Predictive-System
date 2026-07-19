@@ -11,6 +11,7 @@ import {
   evaluateDecision,
 } from "../../engine/index.ts";
 import type { BoundaryAlternative } from "../../engine/index.ts";
+import type { TimeChainInput } from "../TimeChain.tsx";
 import { Person } from "../PersonalizeCard.tsx";
 import { DEFAULT_TZ, TODAY_CIVIL, ageOn, birthCivilOf, buildRequest, canonicalFor } from "../shared.ts";
 import { useAuth } from "./AuthContext.tsx";
@@ -91,6 +92,8 @@ export interface ProfileValue {
   boundary: BoundaryAlternative[];
   /** The active chart's four pillars, year→hour, for side-by-side comparison. */
   primaryPillars: [string, string, string, string] | null;
+  /** Everything the "how your birth time was read" panel needs, or null. */
+  timeChain: TimeChainInput | null;
   personalized: boolean;
   tzOffset: number;
   /** Rank a window from today. */
@@ -210,6 +213,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           warnings: canonical?.warnings ?? [],
           boundary: [] as BoundaryAlternative[],
           primaryPillars: null,
+          timeChain: null as TimeChainInput | null,
         };
       }
       const fp = buildFourPillars(canonical.moment, canonical.convention);
@@ -219,6 +223,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         warnings: [...fp.meta.boundaryWarnings, ...canonical.warnings],
         boundary: boundaryAlternatives(canonical.moment, canonical.convention, fp),
         primaryPillars: [fp.year.hanzi, fp.month.hanzi, fp.day.hanzi, fp.hour.hanzi] as [string, string, string, string],
+        timeChain: {
+          recordedTime: active.timeCertainty === "hour_unknown" ? "—" : active.birthTime,
+          tzOffsetMinutes: active.tzOffset,
+          birthCity: active.birthCity,
+          longitudeEast: active.longitudeEast,
+          solarCorrectionMinutes: fp.meta.normalized.solarCorrectionMinutes,
+          effective: fp.meta.normalized.effective,
+          convention: canonical.convention,
+          hourPillar: fp.hour.hanzi,
+          timeUnknown: active.timeCertainty === "hour_unknown",
+        } as TimeChainInput,
       };
     } catch {
       return {
@@ -227,6 +242,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         warnings: [] as string[],
         boundary: [] as BoundaryAlternative[],
         primaryPillars: null,
+        timeChain: null as TimeChainInput | null,
       };
     }
   }, [active]);
@@ -275,6 +291,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       warnings: derived.warnings,
       boundary: derived.boundary,
       primaryPillars: derived.primaryPillars,
+      timeChain: derived.timeChain,
       personalized: derived.chart !== null,
       tzOffset: active ? active.tzOffset : DEFAULT_TZ,
       evaluate,

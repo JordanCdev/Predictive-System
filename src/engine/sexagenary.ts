@@ -217,7 +217,7 @@ export function buildFourPillars(m: MomentInput, conv: ConventionSet): FourPilla
   // warning there was a false alarm on a chart that is not in doubt.
   if (n.effective.hour === 23) {
     const msg =
-      "Birth falls in the late 子 (Zi) hour, 23:00–24:00 — the two day-boundary schools disagree here, which moves the day pillar AND (via 五鼠遁) the hour stem.";
+      "Birth falls in the late 子 (Zi) hour, 23:00–24:00 — the three day-boundary schools disagree here, which moves the day pillar and/or (via 五鼠遁) the hour stem.";
     warnings.push(msg);
     flags.push({ kind: "zi_hour", minutesAway: null, affects: "day", message: msg });
   }
