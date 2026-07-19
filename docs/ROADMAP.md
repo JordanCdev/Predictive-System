@@ -208,7 +208,18 @@ Many are partly built already; this is the prioritized backlog.
 > group day to the *worst* reading in the party, never the average, so a day that clashes one
 > principal can't ride on everyone else's enthusiasm.
 >
-> **Phase 9 — commercial readiness:** Free/Pro plans with a shared, drift-guarded catalogue
+> **Phase 10 — accuracy & trust.** Driven by competitor research and an adversarial audit of the
+> engine against practitioner expectations. Historical timezone resolution (DST, wartime clocks,
+> permanent zone moves) from the IANA database; the full time-correction chain shown as a checkable
+> ledger; boundary-proximity disclosure that computes and displays the ALTERNATIVE chart rather than
+> silently picking a side; the 晚子時 middle position implemented, which lets the engine reproduce its
+> own third-party comparator exactly at the Zi seam; and the classical clash hierarchy
+> 「日時沖命大凶不用，月沖次之權用，年沖可用」 replacing a flat model that hard-vetoed year clashes the
+> tradition calls usable. The paywall was also moved off the honesty half of the reasoning dossier —
+> charging to see where the traditions disagree, after telling the user they do, was the category's
+> worst trust failure reproduced inside the product.
+>
+> > **Phase 9 — commercial readiness:** Free/Pro plans with a shared, drift-guarded catalogue
 > (`src/billing/plans.ts`), Stripe Checkout + customer portal + webhook-driven entitlements,
 > server-side AI quota metering, a public landing/pricing surface, privacy & terms, PWA
 > install + offline service worker. The gating rule: **paid tiers buy range, breadth and
