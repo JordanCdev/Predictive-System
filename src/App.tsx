@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { HashRouter, NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { HashRouter, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { ProfileProvider, useProfile } from "./ui/profile/ProfileContext.tsx";
 import { AuthProvider } from "./ui/profile/AuthContext.tsx";
 import { EntitlementsProvider } from "./ui/profile/EntitlementsContext.tsx";
@@ -32,6 +32,17 @@ const NAV = [
   { to: "/group", label: "For a group" },
   { to: "/chat", label: "Advisor" },
 ];
+
+/** Every route change starts at the top. Without this, clicking a nav item from
+ *  a scrolled page lands mid-content with the heading off-screen, which reads as
+ *  a broken page rather than a new one. */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [pathname]);
+  return null;
+}
 
 /** "/" shows the pitch to a first-time visitor and the reading to everyone else —
  *  a returning user shouldn't have to walk past marketing to reach their day. */
@@ -108,6 +119,7 @@ export function App() {
     <ProfileProvider>
       <HashRouter>
         <div className="app">
+          <ScrollToTop />
           <NavBar />
           <main className="page">
             <ErrorBoundary>

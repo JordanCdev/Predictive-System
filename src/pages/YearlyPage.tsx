@@ -95,7 +95,7 @@ export function YearlyPage() {
       <Gate
         feature="luck_pillars"
         compact
-        preview={<LuckTimeline entries={luckEntries} natalGanzhi={chart!.pillars.map((p) => p.ganzhi.hanzi)} />}
+        preview={<LuckTimeline entries={luckEntries} natalGanzhi={chart!.pillars.map((p) => p.ganzhi.hanzi)} teaser />}
       >
         <LuckTimeline entries={luckEntries} natalGanzhi={chart!.pillars.map((p) => p.ganzhi.hanzi)} />
       </Gate>

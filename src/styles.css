@@ -2917,3 +2917,32 @@ button {
   line-height: 1.6;
   max-width: 620px;
 }
+
+/* The onward step from a reading page. /today is where onboarding lands and where
+   the first nav tab points, so it must never be a terminus. */
+.next-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 18px 20px;
+  margin-top: 14px;
+}
+.next-step b {
+  font-size: 15px;
+  color: var(--ink);
+}
+.next-step p {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 520px;
+}
+.next-step-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+}

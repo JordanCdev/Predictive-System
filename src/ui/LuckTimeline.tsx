@@ -13,15 +13,38 @@ export interface LuckEntry {
 /** A life-spanning 大運 scrubber: one cell per 10-year luck decade, coloured by
  *  its valence, the current decade highlighted, tap to expand its reading. The
  *  natal chart is pinned as the fixed anchor at the left (ROADMAP §A1). */
-export function LuckTimeline({ entries, natalGanzhi }: { entries: LuckEntry[]; natalGanzhi: string[] }) {
+export function LuckTimeline({
+  entries,
+  natalGanzhi,
+  teaser = false,
+}: {
+  entries: LuckEntry[];
+  natalGanzhi: string[];
+  /** Preview mode for the paywall: show the SHAPE of the timeline — the decades,
+   *  their spans and their colours — but withhold the written decade reading.
+   *  A CSS blur is not a gate: the text stays in the DOM, selectable, and read
+   *  aloud by a screen reader. */
+  teaser?: boolean;
+}) {
   const activeIdx = entries.findIndex((e) => e.active);
   const [open, setOpen] = useState<number | null>(activeIdx >= 0 ? activeIdx : null);
   const activeRef = useRef<HTMLButtonElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
 
-  // Re-centre when the active decade changes (year stepping crosses a decade).
+  // Re-centre the active decade when it changes (year stepping crosses a decade).
+  //
+  // This deliberately sets scrollLeft on the strip rather than calling
+  // scrollIntoView. `block: "nearest"` is NOT inert: when the strip sits below
+  // the fold, the browser satisfies it by scrolling the WINDOW, which yanked the
+  // page thousands of pixels down — past the user's actual answer — the instant a
+  // personalised reading rendered. Adjusting the container's own scroll offset
+  // cannot move the page.
   useEffect(() => {
     setOpen(activeIdx >= 0 ? activeIdx : null);
-    activeRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+    const strip = stripRef.current;
+    const cell = activeRef.current;
+    if (!strip || !cell) return;
+    strip.scrollLeft = cell.offsetLeft - strip.clientWidth / 2 + cell.clientWidth / 2;
   }, [activeIdx]);
 
   if (entries.length === 0) return null;
@@ -29,7 +52,7 @@ export function LuckTimeline({ entries, natalGanzhi }: { entries: LuckEntry[]; n
   return (
     <div>
       <div className="section-title" style={{ marginTop: 16, marginBottom: 6 }}>Your life in 10-year chapters (大運)</div>
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6, alignItems: "stretch" }}>
+      <div ref={stripRef} style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6, alignItems: "stretch" }}>
         {/* Natal anchor — the birth chart the whole timeline reads against. */}
         <div
           title="Your natal chart — the fixed reference every decade is read against"
@@ -87,7 +110,7 @@ export function LuckTimeline({ entries, natalGanzhi }: { entries: LuckEntry[]; n
         })}
       </div>
 
-      {open !== null && entries[open] && <PeriodSummaryBlock s={entries[open].summary} />}
+      {!teaser && open !== null && entries[open] && <PeriodSummaryBlock s={entries[open].summary} />}
     </div>
   );
 }

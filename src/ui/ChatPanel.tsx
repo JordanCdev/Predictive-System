@@ -91,7 +91,7 @@ export function ChatPanel({
   const threadRef = useRef<HTMLDivElement>(null);
 
   const auth = useAuth();
-  const { quota, entitlement, noteAiMessage, billingAvailable } = useEntitlements();
+  const { quota, entitlement, noteAiMessage, billingAvailable, can } = useEntitlements();
   const configured = Boolean(PROXY_URL || apiKey);
   // Metering only exists behind the hosted relay. A BYOK user is spending their
   // own Anthropic key, so it isn't ours to ration.
@@ -101,8 +101,8 @@ export function ChatPanel({
   const settings: ChatSettings = useMemo(() => ({ model, apiKey: apiKey || undefined, proxyUrl: PROXY_URL }), [model, apiKey]);
 
   const ctx: AiToolContext = useMemo(
-    () => ({ chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary }),
-    [chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary],
+    () => ({ chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary, can }),
+    [chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary, can],
   );
 
   const enable = () => {

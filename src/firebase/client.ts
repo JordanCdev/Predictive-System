@@ -11,12 +11,12 @@ import { FirebaseApp, initializeApp } from "firebase/app";
 import { Auth, GoogleAuthProvider, User, getAuth, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import {
   Firestore,
+  initializeFirestore,
   collection,
   deleteDoc,
   doc,
   getDoc,
   getDocs,
-  getFirestore,
   onSnapshot,
   serverTimestamp,
   setDoc,
@@ -35,7 +35,12 @@ function ensure(): { auth: Auth; db: Firestore } {
   if (!app) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    db = getFirestore(app);
+    // ignoreUndefinedProperties is REQUIRED, not a nicety. Optional fields on a
+    // stored person (relation, birthCity, longitudeEast) are legitimately
+    // undefined, and plain getFirestore() makes setDoc() throw SYNCHRONOUSLY on
+    // the first one — which, behind a write-through .catch(), silently disabled
+    // cloud sync entirely for anyone whose profile had an unset optional field.
+    db = initializeFirestore(app, { ignoreUndefinedProperties: true });
   }
   return { auth: auth!, db: db! };
 }

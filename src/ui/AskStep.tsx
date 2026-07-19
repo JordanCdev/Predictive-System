@@ -19,6 +19,7 @@ export function AskStep({
   objectives,
   objectiveId,
   windowDays,
+  unmatchedQuery,
   onObjective,
   onWindow,
   onSubmit,
@@ -26,6 +27,8 @@ export function AskStep({
   objectives: Objective[];
   objectiveId: string | null;
   windowDays: number;
+  /** A search we could not map to an objective — told plainly rather than ignored. */
+  unmatchedQuery?: string | null;
   onObjective: (id: string) => void;
   onWindow: (days: number) => void;
   onSubmit: () => void;
@@ -45,6 +48,12 @@ export function AskStep({
 
   return (
     <div className="ask">
+      {unmatchedQuery && (
+        <div className="warn" style={{ marginBottom: 14 }}>
+          <span aria-hidden="true">⚠</span> We couldn't work out what kind of decision “{unmatchedQuery}” is, so we
+          haven't guessed. Pick the closest one below — the engine only times the activities listed here.
+        </div>
+      )}
       <h1>What are you trying to time?</h1>
       <p className="lede">Describe it in your own words, or pick one below. You'll get one clear best day — and exactly why.</p>
 

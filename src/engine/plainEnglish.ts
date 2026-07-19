@@ -12,7 +12,9 @@
  * truth; `ui/format.ts` derives colours from `verdictBand`.
  */
 
-import { ConfidenceBreakdown, ConflictRecord, DayRecommendation, HourPick } from "./decision.ts";
+import { ConfidenceBreakdown, ConflictRecord, DayRecommendation, HourPick,
+  clashSeverityOf,
+} from "./decision.ts";
 import { McdaWeights, Objective } from "./objectives.ts";
 import { BranchInteraction, DaYun, DayMasterAnalysis, LuckPillar, SeasonalState } from "./bazi.ts";
 import { BRANCHES, FivePhase, TenGod } from "./symbols.ts";
@@ -247,13 +249,38 @@ export function headlineVerdict(rec: DayRecommendation, objective: Objective): s
   if (fb) {
     return `Best avoided to ${verb} — it's a ${fb.code === "four_departure" ? "四離" : "四絕"} day (a season-pivot eve), which tradition marks “大事勿用”.`;
   }
-  const clash = rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
-  if (clash) {
+  // The headline must agree with the SEVERITY the engine actually applied, not
+  // with a flat "any clash is bad" test. Under the classical hierarchy
+  // 「日時沖命大凶不用，月沖次之權用，年沖可用」 a year clash no longer caps the score, so
+  // calling such a day "risky" while it scores in the Excellent band contradicts
+  // the number beside it — and a month clash was getting no mention at all.
+  const severity = clashSeverityOf(rec.shenShaTags);
+  const clashName = (codes: string[]) =>
+    rec.shenShaTags.find((t) => codes.includes(t.code))?.nameZh ?? "";
+
+  if (severity === "severe") {
+    const which = clashName(["clash_day", "clash_hour"]);
     return rec.almanacVerdict === "favourable"
-      ? `A poor personal fit to ${verb} — the almanac likes this day, but it clashes your own chart. ${gerund} elsewhere if you can.`
-      : `A risky day to ${verb} — it clashes your own chart. ${gerund} elsewhere if you can.`;
+      ? `A poor personal fit to ${verb} — the almanac likes this day, but it clashes your own chart (${which}). Choose another day if you can.`
+      : `A risky day to ${verb} — it clashes your own chart (${which}). Choose another day if you can.`;
   }
+
   const band = verdictBand(rec.recommendationScore);
+  if (severity === "moderate") {
+    // 月沖次之權用 — weighed, not ruled out. Say both halves.
+    return `A workable day to ${verb}, but it clashes your Month pillar (${clashName(["clash_month"])}) — classically one to weigh rather than rule out.`;
+  }
+  if (severity === "mild") {
+    // 年沖可用 — the band verdict stands; the clash is a footnote, not a veto.
+    const lead =
+      band.key === "excellent" || band.key === "favourable"
+        ? `A good day to ${verb}`
+        : band.key === "neutral"
+          ? `A workable day to ${verb}`
+          : `A weak day to ${verb}`;
+    return `${lead} — it clashes your birth-year animal (${clashName(["clash_zodiac"])}), which tradition still counts as usable (年沖可用).`;
+  }
+
   switch (band.key) {
     case "excellent":
       return `An excellent day to ${verb}.`;
@@ -276,7 +303,10 @@ export function whyThisDay(rec: DayRecommendation): string[] {
   // since their penalty only dents one sub-score (the headline already says "avoid").
   const taboo =
     rec.rulesFired.some((r) => r.code === "year_break" || r.code === "four_departure" || r.code === "four_severance") ||
-    rec.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac");
+    // Only a 大凶 day/hour clash steers the whole reading pessimistic. A month
+    // clash is weighed and a year clash is classically usable, so neither should
+    // strip the supportive bullets off a day the engine rates well.
+    clashSeverityOf(rec.shenShaTags) === "severe";
   const cautious = rec.recommendationScore < 45 || taboo;
 
   // Strong calendar taboos — lead with them.

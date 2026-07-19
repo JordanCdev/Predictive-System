@@ -112,7 +112,7 @@ const ProfileCtx = createContext<ProfileValue | null>(null);
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PeopleState>(() => loadPeople());
   const { enabled, user } = useAuth();
-  const { entitlement } = useEntitlements();
+  const { entitlement, clamp } = useEntitlements();
 
   const profileLimit = entitlement.plan.limits.profiles;
 
@@ -247,15 +247,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   }, [active]);
 
+  // The plan horizon is enforced HERE, at the shared evaluator, not at each call
+  // site. Gating only the date-finder UI left two open doors: the AI advisor's
+  // find_best_days tool and the ProfilePanel ask box both called evaluate()
+  // directly and happily returned a five-year search on a 60-day free plan. A
+  // boundary check closes those and any future caller by construction.
   const evaluate = useCallback(
     (objectiveId: string, windowDays: number, options: DecisionRequest["options"] = { sweeps: false }) =>
-      evaluateDecision(buildRequest(objectiveId, windowDays, active, options)),
-    [active],
+      evaluateDecision(buildRequest(objectiveId, clamp(windowDays).days, active, options)),
+    [active, clamp],
   );
   const evaluateWindow = useCallback(
     (objectiveId: string, start: { year: number; month: number; day: number }, days: number, options: DecisionRequest["options"] = { sweeps: false }) =>
-      evaluateDecision(buildRequest(objectiveId, days, active, options, start)),
-    [active],
+      evaluateDecision(buildRequest(objectiveId, clamp(days).days, active, options, start)),
+    [active, clamp],
   );
   const evaluateDay = useCallback(
     (objectiveId: string, iso: string, options: DecisionRequest["options"] = { sweeps: false }) => {
@@ -266,8 +271,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   );
   const evaluateFor = useCallback(
     (p: Person, objectiveId: string, windowDays: number, options: DecisionRequest["options"] = { sweeps: false }) =>
-      evaluateDecision(buildRequest(objectiveId, windowDays, p, options)),
-    [],
+      evaluateDecision(buildRequest(objectiveId, clamp(windowDays).days, p, options)),
+    [clamp],
   );
 
   const value: ProfileValue = useMemo(

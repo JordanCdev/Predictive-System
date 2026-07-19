@@ -119,6 +119,28 @@ export function DailyPage() {
         <NeedsProfile what="see how this day tilts your career, wealth, relationships and wellbeing, plus your best hours" />
       )}
 
+      {/* /today is where onboarding lands and where the nav's first tab points,
+          but it only ever described the day — it never offered the product's
+          actual promise ("one clear best day for the thing you're deciding").
+          It terminated. This is the way onward. */}
+      <div className="card next-step">
+        <div>
+          <b>Got something specific to time?</b>
+          <p>
+            This page reads {isToday ? "today" : "this day"} as it falls. To find the <i>best</i> day for a particular
+            decision — signing, launching, marrying, moving — say what it is and the engine ranks a whole window for you.
+          </p>
+        </div>
+        <div className="next-step-actions">
+          <Link className="btn" style={{ width: "auto", textDecoration: "none" }} to="/date-finder">Find my best day ›</Link>
+          {chart && (
+            <Link className="btn-ghost" style={{ width: "auto", padding: "8px 16px", textDecoration: "none" }} to="/chat">
+              Ask the advisor ›
+            </Link>
+          )}
+        </div>
+      </div>
+
       <DayVerification
         rec={rec}
         report={res.meta.verification}

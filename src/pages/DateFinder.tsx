@@ -91,13 +91,22 @@ export function DateFinderPage() {
   // the reading, so a decision typed anywhere jumps straight to its best day.
   const [searchParams] = useSearchParams();
   const qParam = searchParams.get("q");
+  const [unmatchedQuery, setUnmatchedQuery] = useState<string | null>(null);
   useEffect(() => {
     if (!qParam) return;
     const a = parseActivity(qParam);
     if (a) {
       setObjectiveId(a.objective.id);
+      setUnmatchedQuery(null);
       setPhase("answer");
+      return;
     }
+    // We could NOT interpret the query. Previously this fell through silently and
+    // left whatever reading was already on screen — so searching "adopt a puppy"
+    // showed the last contract-signing answer under a new URL, which a user could
+    // act on. Send them back to the picker and say what happened.
+    setUnmatchedQuery(qParam);
+    setPhase("ask");
   }, [qParam]);
 
   // The plan's horizon is enforced here, at the one place the window reaches the
@@ -183,7 +192,11 @@ export function DateFinderPage() {
         objectives={OBJECTIVES}
         objectiveId={objectiveId}
         windowDays={windowDays}
-        onObjective={setObjectiveId}
+        unmatchedQuery={unmatchedQuery}
+        onObjective={(id) => {
+          setUnmatchedQuery(null);
+          setObjectiveId(id);
+        }}
         onWindow={setWindowDays}
         onSubmit={toAnswer}
       />

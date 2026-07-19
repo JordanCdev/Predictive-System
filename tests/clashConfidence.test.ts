@@ -6,6 +6,7 @@ import {
   evaluateDecision,
   headlineVerdict,
   objectiveById,
+  whyThisDay,
   ZIPING_DEFAULT,
 } from "../src/engine/index.ts";
 import { buildReportHTML } from "../src/ui/report.ts";
@@ -210,5 +211,64 @@ describe("confidence is capped by the same hierarchy", () => {
     });
     expect(html).not.toContain("High confidence");
     expect(html).toMatch(/not a prediction/i);
+  });
+});
+
+describe("the prose agrees with the severity the engine applied", () => {
+  /**
+   * The regression this pins: grading clash severity in decision.ts while the
+   * prose layer still used a flat "any clash is bad" test produced headlines
+   * that contradicted the number beside them — a 年沖 day scoring in the
+   * Excellent band was captioned "A risky day … it clashes your own chart",
+   * while a 月沖 day was captioned "a green light" with no mention at all.
+   */
+  const objective = objectiveById("contract_signing");
+  // A strong CALENDAR taboo (歲破/四離/四絕) legitimately owns the headline, so
+  // exclude those days when asserting what the clash prose says.
+  const CAL_TABOO = new Set(["year_break", "four_departure", "four_severance"]);
+  const noTaboo = (d: DayRecommendation) => !d.rulesFired.some((r) => CAL_TABOO.has(r.code));
+
+  it("calls a Day/Hour clash risky, and names the pillar", () => {
+    const { res } = run("career_move");
+    const d = only(res.allDays, "clash_day").filter(noTaboo)[0];
+    const line = headlineVerdict(d, objective);
+    expect(line).toMatch(/risky|poor personal fit/i);
+    expect(line).toMatch(/沖日柱/);
+  });
+
+  it("does not call a Month clash a green light — it says weigh it", () => {
+    const { res } = run("career_move");
+    const d = only(res.allDays, "clash_month").filter(noTaboo)[0];
+    const line = headlineVerdict(d, objective);
+    expect(line).toMatch(/沖月柱/);
+    expect(line).toMatch(/weigh/i);
+    expect(line).not.toMatch(/^An excellent day/);
+  });
+
+  it("does not call a Year clash risky when the engine rates the day well", () => {
+    const { res } = run("career_move");
+    const days = only(res.allDays, "clash_zodiac").filter(noTaboo).filter((d) => d.recommendationScore >= 58);
+    expect(days.length).toBeGreaterThan(0);
+    for (const d of days) {
+      const line = headlineVerdict(d, objective);
+      expect(line, d.isoDate).not.toMatch(/risky/i);
+      expect(line, d.isoDate).toMatch(/年沖可用|still counts as usable/);
+    }
+  });
+
+  it("never emits the broken gerund sentence", () => {
+    // "A big purchase elsewhere if you can." — a noun phrase used as a verb.
+    const { res } = run("investment_purchase");
+    const obj = objectiveById("investment_purchase");
+    for (const d of res.allDays) {
+      expect(headlineVerdict(d, obj), d.isoDate).not.toMatch(/elsewhere if you can/);
+    }
+  });
+
+  it("keeps a mild clash from stripping the supportive bullets off a good day", () => {
+    const { res } = run("career_move");
+    const good = only(res.allDays, "clash_zodiac").filter(noTaboo).filter((d) => d.recommendationScore >= 58)[0];
+    expect(good).toBeTruthy();
+    expect(whyThisDay(good).length).toBeGreaterThan(0);
   });
 });
