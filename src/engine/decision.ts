@@ -32,6 +32,7 @@ import { BaziChart, DaYun, buildBaziChart, computeDaYun } from "./bazi.ts";
 import { monthBranchIndexFromLongitude, solarLongitudeAtMillis } from "./astronomy.ts";
 import { CONVENTION_PRESETS, ConventionSet } from "./conventions.ts";
 import {
+  NatalBranches,
   TongShuDay,
   computeTongShuDay,
   isNoblemanDay,
@@ -196,14 +197,52 @@ export function computeConfidence(x: ConfidenceInputs): number {
   return Math.max(0, Math.min(100, Math.round(raw)));
 }
 
-/** The recommendation-confidence ceiling implied by a personal clash. A day that
- *  clashes the subject's own Day/Year branch can never read "Good" (65) or "High"
- *  (80) confidence; a weaker luck-pillar clash caps below "High". null = no cap. */
+/**
+ * Classical severity of a candidate-day clash, by which natal pillar it strikes:
+ *
+ *   「日時沖命大凶不用，月沖次之權用，年沖可用」
+ *
+ * Day/Hour → 大凶, do not use. Month → second in severity, use with weighing.
+ * Year (the zodiac animal) → classically still usable.
+ *
+ * This grading is the doctrine the engine declares. Note it deliberately does
+ * NOT hard-veto a 沖生肖 year clash, which popular usage often treats as decisive
+ * — the classical date-selection rule is explicit that 年沖可用, and the app's
+ * contract is to follow a stated doctrine and show the disagreement rather than
+ * quietly adopt the more dramatic reading.
+ */
+export type ClashSeverity = "severe" | "moderate" | "mild";
+
+export const CLASH_SEVERITY: Record<string, ClashSeverity> = {
+  clash_day: "severe",
+  clash_hour: "severe",
+  clash_month: "moderate",
+  clash_zodiac: "mild",
+};
+
+export function clashSeverityOf(tags: { code: string }[]): ClashSeverity | null {
+  let worst: ClashSeverity | null = null;
+  for (const t of tags) {
+    const s = CLASH_SEVERITY[t.code];
+    if (!s) continue;
+    if (s === "severe") return "severe";
+    if (s === "moderate") worst = "moderate";
+    else if (worst === null) worst = "mild";
+  }
+  return worst;
+}
+
+/** The recommendation-confidence ceiling implied by a personal clash, graded by
+ *  the same hierarchy: a Day/Hour clash can never read "Good" (65) or "High"
+ *  (80); a Month clash caps below "High"; a Year clash is noted but uncapped.
+ *  A weaker luck-pillar clash caps below "High". null = no cap. */
 export function personalClashCap(
   shenShaTags: { code: string }[],
   rulesFired: { code: string }[],
 ): number | null {
-  if (shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_zodiac")) return 49;
+  const severity = clashSeverityOf(shenShaTags);
+  if (severity === "severe") return 49;
+  if (severity === "moderate") return 55;
   if (rulesFired.some((r) => r.code === "luck_clash")) return 55;
   return null;
 }
@@ -331,6 +370,9 @@ const ALMANAC_BLEND = { base: 0.6, almanac: 0.4 } as const;
  *  day can still be a poor personal fit. Objectives may set a stricter ceiling
  *  (study_exam uses 44, which lands a clash day in the Weak band). */
 const CLASH_SCORE_CEILING = 57;
+/** 月沖次之權用 — a Month-pillar clash is weighed, not ruled out. Capped out of
+ *  "Excellent" (72+) but still able to read "Good", unlike a Day/Hour clash. */
+const MONTH_CLASH_SCORE_CEILING = 68;
 
 // Per-god 黄黑道 scores (0..100).
 const DAY_GOD_SCORE = [88, 80, 28, 30, 82, 90, 22, 84, 30, 26, 78, 34];
@@ -484,7 +526,7 @@ function evaluateDay(
   let bestHour: HourPick | null = null;
   let allHours: HourPick[] = [];
   let shenShaTags: DayRecommendation["shenShaTags"] = [];
-  let clashTags: { code: string; nameZh: string }[] = [];
+  let clashTags: { code: string; nameZh: string; nameEn: string }[] = [];
 
   if (chart) {
     const fav = chart.dayMaster.favorableElements;
@@ -492,6 +534,15 @@ function evaluateDay(
     const dmStem = chart.dayMaster.dayMaster.index;
     const subjectDayBranch = chart.pillars[2].ganzhi.branch.index;
     const subjectYearBranch = chart.pillars[0].ganzhi.branch.index;
+    // The Hour pillar is only a real datum when the birth time is known; with an
+    // unknown time the engine substitutes noon, and 時沖 is a hard veto.
+    const hourKnown = req.birth?.timeCertainty !== undefined && req.birth.timeCertainty !== "hour_unknown";
+    const natalBranches: NatalBranches = {
+      year: subjectYearBranch,
+      month: chart.pillars[1].ganzhi.branch.index,
+      day: subjectDayBranch,
+      hour: hourKnown ? chart.pillars[3].ganzhi.branch.index : undefined,
+    };
 
     let personal = 50;
     dayStemTenGod = tenGodOf(STEMS[dmStem], dayGz.stem);
@@ -523,13 +574,15 @@ function evaluateDay(
       rules.push({ code: "nobleman", layer: "shensha", label: "天乙貴人 — Nobleman day (helpful people, protection).", effect: 14, citation: CITES.shensha });
     }
 
-    const ss = personalShenSha(dayGz, subjectDayBranch, subjectYearBranch);
+    const ss = personalShenSha(dayGz, natalBranches);
     shenShaTags = ss.tags;
-    clashTags = ss.tags.filter((t) => t.code === "clash_day" || t.code === "clash_zodiac");
+    clashTags = ss.tags.filter((t) => CLASH_SEVERITY[t.code] !== undefined);
     for (const t of ss.tags) {
       let eff = 0;
-      if (t.code === "clash_day") eff = -20;
-      else if (t.code === "clash_zodiac") eff = -16;
+      // Graded by the classical hierarchy, not flat.
+      if (t.code === "clash_day" || t.code === "clash_hour") eff = -20;
+      else if (t.code === "clash_month") eff = -11;
+      else if (t.code === "clash_zodiac") eff = -6;
       // 神煞 harmonies sit strictly below officer/element structure (spec §6.4).
       else if (t.code === "six_harmony") eff = 6;
       else if (t.code === "triple_harmony") eff = 6;
@@ -595,7 +648,13 @@ function evaluateDay(
   // it: a good calendar day can still be a poor personal fit. Objective-independent
   // (applies whatever the objective), with a stricter ceiling where the objective
   // opts in (study_exam). Applied as the LAST step of score assembly.
-  const clashCeiling = personalized && clashTags.length > 0 ? obj.clashScoreCeiling ?? CLASH_SCORE_CEILING : null;
+  const clashSeverity = personalized ? clashSeverityOf(clashTags) : null;
+  const clashCeiling =
+    clashSeverity === "severe"
+      ? obj.clashScoreCeiling ?? CLASH_SCORE_CEILING
+      : clashSeverity === "moderate"
+        ? MONTH_CLASH_SCORE_CEILING // 月沖次之權用 — weighed down, not ruled out
+        : null; // 年沖可用 — recorded in the sub-score, but no ceiling
   if (clashCeiling !== null) recommendationScore = Math.min(recommendationScore, clashCeiling);
 
   const subScores: SubScores = {
@@ -618,11 +677,14 @@ function evaluateDay(
     hardReject = true;
     rejectReasons.push(TABOO_REJECT_REASON[t]);
   }
-  if (personalized && obj.clashVeto) {
-    const hasClash = clashTags[0];
-    if (hasClash) {
+  // 日時沖命大凶不用 — only a Day or Hour clash is a hard veto. A Month clash is
+  // weighed (ceiling above), a Year clash is merely noted. Previously ANY clash
+  // vetoed, so a 沖生肖 year clash — classically usable — silently removed the day.
+  if (personalized && obj.clashVeto && clashSeverity === "severe") {
+    const hit = clashTags.find((t) => CLASH_SEVERITY[t.code] === "severe");
+    if (hit) {
       hardReject = true;
-      rejectReasons.push(`Day clashes your chart (${hasClash.nameZh}); a hard taboo for this objective.`);
+      rejectReasons.push(`${hit.nameEn} (${hit.nameZh}) — 大凶 for this objective under the classical rule 日時沖命不用.`);
     }
   }
 

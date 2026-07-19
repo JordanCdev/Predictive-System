@@ -197,23 +197,52 @@ export interface PersonalShenSha {
 }
 
 /**
- * Relationship of a candidate day branch (+ stem) to the subject's chart.
- * Uses the subject's day branch and year branch (zodiac) as references.
+ * The subject's four natal branches, as references for candidate-day clashes.
+ *
+ * `hour` is deliberately optional. With an unknown birth time the engine
+ * substitutes noon (`request.ts`), so an hour pillar still exists but is
+ * fabricated — and 時沖 is a hard veto. Rejecting someone's wedding date because
+ * of a branch derived from a default would be far worse than not checking, so
+ * callers omit it unless the hour is genuinely known.
  */
-export function personalShenSha(
-  candidate: GanZhi,
-  subjectDayBranch: number,
-  subjectYearBranch: number,
-): PersonalShenSha {
+export interface NatalBranches {
+  year: number;
+  month: number;
+  day: number;
+  hour?: number;
+}
+
+/**
+ * Relationship of a candidate day branch (+ stem) to the subject's chart.
+ *
+ * Clashes are reported **per natal pillar**, because the classical date-selection
+ * hierarchy grades them by which pillar was struck:
+ *
+ *   「日時沖命大凶不用，月沖次之權用，年沖可用」
+ *
+ * — a clash to the Day or Hour pillar is 大凶 (do not use); to the Month pillar
+ * it is second in severity and used with weighing; to the Year pillar (the
+ * zodiac animal) it is acceptable. The caller applies that grading; this function
+ * only reports which pillars were hit.
+ */
+export function personalShenSha(candidate: GanZhi, natal: NatalBranches): PersonalShenSha {
   const tags: PersonalShenSha["tags"] = [];
   const cb = candidate.branch.index;
+  const subjectDayBranch = natal.day;
+  const subjectYearBranch = natal.year;
 
-  // Clashes (沖) — significant negatives.
+  // Clashes (沖), most severe first so `clashTags[0]` is the binding one.
   if (cb === clashBranch(subjectDayBranch)) {
-    tags.push({ code: "clash_day", nameZh: "沖日柱", nameEn: "Clashes your Day Pillar", polarity: "bad", note: "Day branch directly clashes your Day Master branch." });
+    tags.push({ code: "clash_day", nameZh: "沖日柱", nameEn: "Clashes your Day Pillar", polarity: "bad", note: "Day branch directly clashes your Day Master branch — 大凶 for date selection." });
+  }
+  if (natal.hour !== undefined && cb === clashBranch(natal.hour)) {
+    tags.push({ code: "clash_hour", nameZh: "沖時柱", nameEn: "Clashes your Hour Pillar", polarity: "bad", note: "Day branch clashes your Hour Pillar — 大凶, ranked with the Day clash." });
+  }
+  if (cb === clashBranch(natal.month)) {
+    tags.push({ code: "clash_month", nameZh: "沖月柱", nameEn: "Clashes your Month Pillar", polarity: "bad", note: "Day branch clashes your Month Pillar — 次之, weigh it rather than rule the day out." });
   }
   if (cb === clashBranch(subjectYearBranch)) {
-    tags.push({ code: "clash_zodiac", nameZh: "沖生肖", nameEn: "Clashes your zodiac", polarity: "bad", note: "Day branch clashes your birth-year animal (犯沖)." });
+    tags.push({ code: "clash_zodiac", nameZh: "沖生肖", nameEn: "Clashes your zodiac", polarity: "bad", note: "Day branch clashes your birth-year animal (犯沖) — 年沖可用: noted, but classically still usable." });
   }
 
   // Harmonies (合).

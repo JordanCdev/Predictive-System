@@ -17,7 +17,7 @@ import {
 } from "../engine/index.ts";
 import { ConfidenceChip, ConfidencePanel, GoodMeter } from "./meters.tsx";
 import { ReasoningDossier } from "./ReasoningDossier.tsx";
-import { Gate, UpgradePrompt } from "./billing/UpgradePrompt.tsx";
+import { UpgradePrompt } from "./billing/UpgradePrompt.tsx";
 import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import { downloadICS } from "./ics.ts";
 import { scoreColor } from "./format.ts";
@@ -53,6 +53,8 @@ export function BestDayHero({
   onDownloadReport?: () => void;
 }) {
   const [confOpen, setConfOpen] = useState(false);
+  const { can } = useEntitlements();
+  const canAudit = can("reasoning_dossier");
   const conflict = rec.conflicts[0];
 
   return (
@@ -127,7 +129,7 @@ export function BestDayHero({
           <span className="ico" aria-hidden="true">⚠</span>
           <span>
             <b>The traditions disagree a little here.</b> {conflictSentence(conflict)}
-            {rec.conflicts.length > 1 && ` (and ${rec.conflicts.length - 1} more — see the full reasoning).`}
+            {rec.conflicts.length > 1 && ` (and ${rec.conflicts.length - 1} more — all listed under "Show the full reasoning").`}
           </span>
         </div>
       )}
@@ -160,9 +162,7 @@ export function BestDayHero({
         </div>
       )}
 
-      <Gate feature="reasoning_dossier" compact>
-        <ReasoningDossier rec={rec} objective={objective} hash={meta.calculationHash} versions={meta.engineVersions} />
-      </Gate>
+      <ReasoningDossier rec={rec} objective={objective} hash={meta.calculationHash} versions={meta.engineVersions} detailed={canAudit} />
     </div>
   );
 }
@@ -232,6 +232,8 @@ export function RuledOutCard({
   pickIso: string | null;
   onBackToPick?: () => void;
 }) {
+  const { can } = useEntitlements();
+  const canAudit = can("reasoning_dossier");
   return (
     <div className="card hero">
       <div className="rel" style={{ color: "var(--cinnabar)" }}>
@@ -244,9 +246,7 @@ export function RuledOutCard({
           See our top pick instead
         </button>
       )}
-      <Gate feature="reasoning_dossier" compact>
-        <ReasoningDossier rec={rec} objective={objective} hash={hash} versions={versions} />
-      </Gate>
+      <ReasoningDossier rec={rec} objective={objective} hash={hash} versions={versions} detailed={canAudit} />
     </div>
   );
 }

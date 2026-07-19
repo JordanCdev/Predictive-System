@@ -171,8 +171,9 @@ export const FEATURE_COPY: Record<Feature, { title: string; blurb: string }> = {
     blurb: "Add chosen days to your calendar and share a full written report.",
   },
   reasoning_dossier: {
-    title: "Full reasoning dossier",
-    blurb: "Every rule that fired, the sensitivity sweeps and the third-party verification trail.",
+    title: "The practitioner audit trail",
+    blurb:
+      "Every rule that fired with its classical citation, the score broken down by weighted factor, and all twelve double-hours. The plain-English reasoning, the conflicts between schools and the reproducibility hash are free.",
   },
 };
 

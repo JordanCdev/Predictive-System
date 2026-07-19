@@ -10,6 +10,7 @@ import {
   whyThisDay,
 } from "../engine/index.ts";
 import { ConfidencePanel } from "./meters.tsx";
+import { UpgradePrompt } from "./billing/UpgradePrompt.tsx";
 import { scoreColor, scoreTextColor } from "./format.ts";
 
 const LAYER_TITLE: Record<RuleFired["layer"], string> = {
@@ -25,16 +26,35 @@ function classicalCite(citation: string): string {
   return citation.replace(/spec §[\d.,\s§]+;?\s*/g, "").replace(/\(\s*/, "(").trim();
 }
 
+/**
+ * The reasoning dossier, split along an honesty line.
+ *
+ * WHAT IS FREE, AND WHY: the app's whole claim is that it doesn't ask to be taken
+ * on trust. Three things carry that claim and are therefore never gated —
+ * the plain-English summary, **the complete list of where the traditions
+ * disagree**, and the reproducibility block. Charging to see the disagreements
+ * after telling a user they exist would reproduce this category's single biggest
+ * trust complaint inside the product, with a price on the resolution. It would
+ * read as engineered doubt, and it would be beneath the rest of the app.
+ *
+ * WHAT IS PAID: the practitioner audit trail — per-factor score decomposition
+ * with weights, every rule with its classical citation, and the full
+ * twelve-hour table. That's depth for people working professionally, not the
+ * evidence that the reading is honest.
+ */
 export function ReasoningDossier({
   rec,
   objective,
   hash,
   versions,
+  detailed,
 }: {
   rec: DayRecommendation;
   objective: Objective;
   hash: string;
   versions: Versions;
+  /** False on the free tier: keeps the honesty half, drops the audit half. */
+  detailed: boolean;
 }) {
   const subs = subScoreNarrative(rec, objective.weights);
   const bullets = whyThisDay(rec);
@@ -56,6 +76,51 @@ export function ReasoningDossier({
           ))}
         </ul>
 
+        {/* The conflicts sit ABOVE the paid section deliberately: a user who has
+            been told the traditions disagree must always be able to read how. */}
+        {rec.conflicts.length > 0 && (
+          <>
+            <h4>Where the traditions disagree</h4>
+            {rec.conflicts.map((c, i) => (
+              <p key={i} style={{ fontSize: 13, color: "var(--warn-ink)", margin: "0 0 8px", lineHeight: 1.5 }}>
+                {conflictSentence(c)}
+              </p>
+            ))}
+          </>
+        )}
+
+        <h4>How sure we are, and why</h4>
+        <ConfidencePanel confidence={rec.confidence} personalized={rec.personalized} />
+
+        <div className="verify">
+          <span className="seal-mark"><span aria-hidden="true">✓</span> Verify</span> — this exact result reproduces from the same inputs.
+          <br />
+          Result ID <code>{hash}</code> · engine <code>{versions.engine}</code> · calendar{" "}
+          <code>{versions.calendarKernel}</code> · BaZi <code>{versions.baziAlgorithm}</code> · almanac{" "}
+          <code>{versions.tongshuRulePack}</code>
+        </div>
+
+        {!detailed && <UpgradePrompt feature="reasoning_dossier" compact />}
+        {!detailed ? null : (
+          <DetailedAudit rec={rec} subs={subs} grouped={grouped} />
+        )}
+      </div>
+    </details>
+  );
+}
+
+/** The practitioner audit trail — depth, not evidence of honesty. Pro only. */
+function DetailedAudit({
+  rec,
+  subs,
+  grouped,
+}: {
+  rec: DayRecommendation;
+  subs: ReturnType<typeof subScoreNarrative>;
+  grouped: { layer: RuleFired["layer"]; rules: RuleFired[] }[];
+}) {
+  return (
+    <>
         <h4>What went into the score</h4>
         {subs.map((s) => (
           <div className="sub-bar" key={s.key}>
@@ -73,20 +138,6 @@ export function ReasoningDossier({
             <div className="sb-blurb">{s.blurb}</div>
           </div>
         ))}
-
-        {rec.conflicts.length > 0 && (
-          <>
-            <h4>Where the traditions disagree</h4>
-            {rec.conflicts.map((c, i) => (
-              <p key={i} style={{ fontSize: 13, color: "var(--warn-ink)", margin: "0 0 8px", lineHeight: 1.5 }}>
-                {conflictSentence(c)}
-              </p>
-            ))}
-          </>
-        )}
-
-        <h4>How sure we are, and why</h4>
-        <ConfidencePanel confidence={rec.confidence} personalized={rec.personalized} />
 
         <h4>Every rule that fired, with its source</h4>
         {grouped.map((g) => (
@@ -132,15 +183,6 @@ export function ReasoningDossier({
             </>
           );
         })()}
-
-        <div className="verify">
-          <span className="seal-mark"><span aria-hidden="true">✓</span> Verify</span> — this exact result reproduces from the same inputs.
-          <br />
-          Result ID <code>{hash}</code> · engine <code>{versions.engine}</code> · calendar{" "}
-          <code>{versions.calendarKernel}</code> · BaZi <code>{versions.baziAlgorithm}</code> · almanac{" "}
-          <code>{versions.tongshuRulePack}</code>
-        </div>
-      </div>
-    </details>
+    </>
   );
 }
