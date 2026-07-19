@@ -34,6 +34,7 @@ import { Journal } from "../ui/Journal.tsx";
 import { JournalEntry, entryId, isJournalFull, loadJournal, recordOutcome, removeEntry, updateNote, upsertEntry } from "../ui/journalStore.ts";
 import { downloadReport } from "../ui/report.ts";
 import { YourChart } from "../ui/YourChart.tsx";
+import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
 import { UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
@@ -74,7 +75,7 @@ function computeAlternatives(recs: DayRecommendation[], excludeIso: string): Alt
 }
 
 export function DateFinderPage() {
-  const { person, setPerson, birthCivil, currentAge, warnings, evaluate, evaluateDay } = useProfile();
+  const { person, setPerson, birthCivil, currentAge, warnings, evaluate, evaluateDay, boundary, primaryPillars } = useProfile();
   const { clamp, entitlement } = useEntitlements();
 
   const [objectiveId, setObjectiveId] = useState<string | null>(null);
@@ -266,6 +267,7 @@ export function DateFinderPage() {
       {/* Say so when the search was shortened — a silently truncated window would
           read as "there's nothing good further out", which isn't what happened. */}
       {horizonCapped && <UpgradePrompt feature="horizon_5y" compact />}
+      {primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} compact />}
 
       {todayRec && <TodayCard chart={result.subjectChart} today={todayRec} />}
 
@@ -278,7 +280,7 @@ export function DateFinderPage() {
             <ProfilePanel chart={result.subjectChart} evaluate={evaluate} defaultWindowDays={effectiveWindow} todayIso={TODAY_ISO} personalized={result.personalized} onOpenReading={openReading} />
           )}
           {result.personalized && result.subjectChart && birthCivil && (
-            <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} />
+            <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} boundary={boundary} />
           )}
           {showJournalPrompt && <UpgradePrompt feature="journal_unlimited" compact />}
           <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} onOutcome={(id, o) => setJournal(recordOutcome(id, o))} />
@@ -319,7 +321,7 @@ export function DateFinderPage() {
             <PeriodsPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} />
           )}
           {result.personalized && result.subjectChart && birthCivil && (
-            <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} />
+            <ChatPanel chart={result.subjectChart} dayun={result.dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} boundary={boundary} />
           )}
           {showJournalPrompt && <UpgradePrompt feature="journal_unlimited" compact />}
           <Journal entries={journal} todayIso={TODAY_ISO} onOpen={(id) => openReading(id, windowDays)} onRemove={(id) => setJournal(removeEntry(id))} onNote={(id, note) => setJournal(updateNote(id, note))} onOutcome={(id, o) => setJournal(recordOutcome(id, o))} />

@@ -6,9 +6,11 @@ import {
   DecisionResult,
   buildBaziChart,
   buildFourPillars,
+  boundaryAlternatives,
   computeDaYun,
   evaluateDecision,
 } from "../../engine/index.ts";
+import type { BoundaryAlternative } from "../../engine/index.ts";
 import { Person } from "../PersonalizeCard.tsx";
 import { DEFAULT_TZ, TODAY_CIVIL, ageOn, birthCivilOf, buildRequest, canonicalFor } from "../shared.ts";
 import { useAuth } from "./AuthContext.tsx";
@@ -84,6 +86,11 @@ export interface ProfileValue {
   birthCivil: { year: number; month: number; day: number } | null;
   currentAge: number | null;
   warnings: string[];
+  /** Both candidate charts when the birth sits on a pillar boundary. Empty when
+   *  the chart is unambiguous — the common case. */
+  boundary: BoundaryAlternative[];
+  /** The active chart's four pillars, year→hour, for side-by-side comparison. */
+  primaryPillars: [string, string, string, string] | null;
   personalized: boolean;
   tzOffset: number;
   /** Rank a window from today. */
@@ -197,16 +204,30 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const canonical = canonicalFor(active);
       if (!active || !canonical || !canonical.moment) {
-        return { chart: null as BaziChart | null, dayun: null as DaYun | null, warnings: canonical?.warnings ?? [] };
+        return {
+          chart: null as BaziChart | null,
+          dayun: null as DaYun | null,
+          warnings: canonical?.warnings ?? [],
+          boundary: [] as BoundaryAlternative[],
+          primaryPillars: null,
+        };
       }
       const fp = buildFourPillars(canonical.moment, canonical.convention);
       return {
         chart: buildBaziChart(fp),
         dayun: computeDaYun(fp, active.sex),
         warnings: [...fp.meta.boundaryWarnings, ...canonical.warnings],
+        boundary: boundaryAlternatives(canonical.moment, canonical.convention, fp),
+        primaryPillars: [fp.year.hanzi, fp.month.hanzi, fp.day.hanzi, fp.hour.hanzi] as [string, string, string, string],
       };
     } catch {
-      return { chart: null as BaziChart | null, dayun: null as DaYun | null, warnings: [] as string[] };
+      return {
+        chart: null as BaziChart | null,
+        dayun: null as DaYun | null,
+        warnings: [] as string[],
+        boundary: [] as BoundaryAlternative[],
+        primaryPillars: null,
+      };
     }
   }, [active]);
 
@@ -252,6 +273,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       birthCivil: active ? birthCivilOf(active.birthDate) : null,
       currentAge: active ? ageOn(active.birthDate) : null,
       warnings: derived.warnings,
+      boundary: derived.boundary,
+      primaryPillars: derived.primaryPillars,
       personalized: derived.chart !== null,
       tzOffset: active ? active.tzOffset : DEFAULT_TZ,
       evaluate,

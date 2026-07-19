@@ -19,6 +19,7 @@ import {
   solarLongitudeAtMillis,
 } from "./astronomy.ts";
 import { ConventionSet } from "./conventions.ts";
+import type { BoundaryFlag } from "./boundary.ts";
 
 export interface MomentInput {
   year: number;
@@ -116,6 +117,8 @@ export interface FourPillars {
     dayJDN: number;
     normalized: NormalizedMoment;
     boundaryWarnings: string[];
+    /** Structured form of the above: which pillar is in doubt, and how near. */
+    boundaryFlags: BoundaryFlag[];
   };
 }
 
@@ -136,6 +139,10 @@ export function hourBranchIndexFromHour(hour: number): number {
 export function buildFourPillars(m: MomentInput, conv: ConventionSet): FourPillars {
   const n = normalizeMoment(m, conv);
   const warnings: string[] = [];
+  // Structured companions to `warnings`. The strings are kept for existing
+  // consumers; the flags carry the machine-readable facts (which pillar is at
+  // stake, how far the boundary is) that a string forces callers to regex back out.
+  const flags: BoundaryFlag[] = [];
 
   // A solar hour-basis is location-dependent. Without a longitude the engine can
   // only apply the date-only equation of time (true-solar) or nothing at all
@@ -158,9 +165,9 @@ export function buildFourPillars(m: MomentInput, conv: ConventionSet): FourPilla
   // Boundary sensitivity near 立春.
   const minutesToLichun = Math.abs(n.utcMillis - lichun) / 60000;
   if (minutesToLichun < conv.boundaryWarnMinutes) {
-    warnings.push(
-      `Birth is within ${Math.round(minutesToLichun)} min of 立春 (year boundary); year pillar is sensitive to time accuracy.`,
-    );
+    const msg = `Birth is within ${Math.round(minutesToLichun)} min of 立春 (year boundary); year pillar is sensitive to time accuracy.`;
+    warnings.push(msg);
+    flags.push({ kind: "lichun", minutesAway: minutesToLichun, affects: "year", message: msg });
   }
 
   // --- Month pillar (節 boundary from solar longitude) ---
@@ -175,9 +182,9 @@ export function buildFourPillars(m: MomentInput, conv: ConventionSet): FourPilla
   const minsToNextJie = (jw.next.millis - n.utcMillis) / 60000;
   const nearestJieMin = Math.min(Math.abs(minsToPrevJie), Math.abs(minsToNextJie));
   if (nearestJieMin < conv.boundaryWarnMinutes) {
-    warnings.push(
-      `Birth is within ${Math.round(nearestJieMin)} min of a 節 (month boundary); month pillar is sensitive to time accuracy.`,
-    );
+    const msg = `Birth is within ${Math.round(nearestJieMin)} min of a 節 (month boundary); month pillar is sensitive to time accuracy.`;
+    warnings.push(msg);
+    flags.push({ kind: "jie", minutesAway: nearestJieMin, affects: "month", message: msg });
   }
 
   // --- Day pillar ---
@@ -185,11 +192,15 @@ export function buildFourPillars(m: MomentInput, conv: ConventionSet): FourPilla
   const day = ganZhiFromIndex(dayIndex);
   const dayJDN = gregorianToJDN(n.dayCivil.year, n.dayCivil.month, n.dayCivil.day);
 
-  // Zi-hour ambiguity warning.
-  if (n.effective.hour === 23 || n.effective.hour === 0) {
-    warnings.push(
-      "Birth falls in the 子 (Zi) hour around midnight; day pillar depends on the day-boundary convention.",
-    );
+  // Zi-hour ambiguity. ONLY 23:00-23:59 is ambiguous: that is the window where
+  // the two day-boundary conventions actually disagree. The 00:00-00:59 half of
+  // the 子 hour is also 子, but both conventions assign it the same civil day, so
+  // warning there was a false alarm on a chart that is not in doubt.
+  if (n.effective.hour === 23) {
+    const msg =
+      "Birth falls in the late 子 (Zi) hour, 23:00–24:00 — the two day-boundary schools disagree here, which moves the day pillar AND (via 五鼠遁) the hour stem.";
+    warnings.push(msg);
+    flags.push({ kind: "zi_hour", minutesAway: null, affects: "day", message: msg });
   }
 
   // --- Hour pillar ---
@@ -210,6 +221,7 @@ export function buildFourPillars(m: MomentInput, conv: ConventionSet): FourPilla
       dayJDN,
       normalized: n,
       boundaryWarnings: warnings,
+      boundaryFlags: flags,
     },
   };
 }

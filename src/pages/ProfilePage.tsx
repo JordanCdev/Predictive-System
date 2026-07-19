@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { CONVENTION_PRESETS } from "../engine/index.ts";
 import { Person, PersonalizeCard } from "../ui/PersonalizeCard.tsx";
 import { YourChart } from "../ui/YourChart.tsx";
+import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { HowItWorks } from "../ui/HowItWorks.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { useAuth } from "../ui/profile/AuthContext.tsx";
@@ -11,7 +12,7 @@ import { DEFAULT_TZ } from "../ui/shared.ts";
 /** Profile & settings — sign in (when Firebase is configured), then set/replace the
  *  stored birth chart. Without Firebase it's stored only in this browser. */
 export function ProfilePage() {
-  const { person, setPerson, chart, dayun, currentAge, warnings, people } = useProfile();
+  const { person, setPerson, chart, dayun, currentAge, warnings, people, boundary, primaryPillars } = useProfile();
   const { enabled, user, signIn, signOut, error } = useAuth();
   const [params] = useSearchParams();
   const nav = useNavigate();
@@ -77,6 +78,10 @@ export function ProfilePage() {
       {/* Adding *other* people only makes sense once there's a "you" to compare
           against — offering it first reads as a confusing second empty slot. */}
       {people.length > 0 && <PeoplePanel />}
+
+      {/* Above the chart, not buried under it: if the reading might hinge on a
+          ten-minute recording error, say so before it's read. */}
+      {chart && primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} />}
 
       {chart && <YourChart chart={chart} dayun={dayun} currentAge={currentAge} boundaryWarnings={warnings} />}
 

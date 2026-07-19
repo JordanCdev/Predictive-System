@@ -9,6 +9,7 @@ export * from "./symbols.ts";
 export * from "./conventions.ts";
 export * from "./astronomy.ts";
 export * from "./timezone.ts";
+export * from "./boundary.ts";
 export * from "./sexagenary.ts";
 export * from "./bazi.ts";
 export * from "./tongshu.ts";

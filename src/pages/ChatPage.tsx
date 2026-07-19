@@ -6,7 +6,7 @@ import { NeedsProfile } from "./NeedsProfile.tsx";
 
 /** The AI advisor chat — a full-page home for the guardrailed chat shell. */
 export function ChatPage() {
-  const { chart, dayun, birthCivil, evaluate, evaluateDay } = useProfile();
+  const { chart, dayun, birthCivil, evaluate, evaluateDay, boundary } = useProfile();
   if (!chart || !birthCivil) return <NeedsProfile what="chat with the AI advisor" />;
   return (
     <>
@@ -14,7 +14,7 @@ export function ChatPage() {
         <h2 className="page-title">AI advisor</h2>
         <Link className="btn-text" to="/today">Back to today</Link>
       </div>
-      <ChatPanel chart={chart} dayun={dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} />
+      <ChatPanel chart={chart} dayun={dayun} birth={birthCivil} todayIso={TODAY_ISO} evaluate={evaluate} evaluateDay={evaluateDay} boundary={boundary} />
     </>
   );
 }

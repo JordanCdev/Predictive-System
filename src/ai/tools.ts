@@ -23,10 +23,14 @@ import {
   practicalBestHour,
   verdictBand,
 } from "../engine/index.ts";
-import type { DayRecommendation, PeriodSummary } from "../engine/index.ts";
+import type { BoundaryAlternative, DayRecommendation, PeriodSummary } from "../engine/index.ts";
 
 /** Everything a tool needs to answer, all deterministic and client-side. */
 export interface AiToolContext {
+  /** Both candidate charts when the birth sits on a pillar boundary; empty
+   *  otherwise. Surfaced so the advisor cannot narrate an ambiguous chart as if
+   *  it were settled. */
+  boundary?: BoundaryAlternative[];
   chart: BaziChart;
   dayun: DaYun | null;
   birth: { year: number; month: number; day: number };
@@ -161,6 +165,17 @@ export function executeTool(name: string, rawInput: unknown, ctx: AiToolContext)
           strengths: profile.strengths,
           cautions: profile.cautions,
           chartInteractions: ctx.chart.elements.interactions.map(interactionPlain),
+          // The advisor previously never saw this, so it narrated a chart that
+          // might hinge on a ten-minute recording error with full confidence.
+          boundaryAmbiguity:
+            (ctx.boundary ?? []).length === 0
+              ? null
+              : (ctx.boundary ?? []).map((b) => ({
+                  why: b.flag.message,
+                  alternativeScenario: b.scenario,
+                  pillarsThatWouldChange: b.differs,
+                  alternativePillars: b.pillars,
+                })),
           note: "Strength + useful-element reading is MEDIUM confidence and school-dependent.",
         };
       }

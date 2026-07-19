@@ -1,6 +1,7 @@
 import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { BaziChart, DaYun, DecisionResult } from "../engine/index.ts";
+import type { BoundaryAlternative } from "../engine/index.ts";
 import { useAuth } from "./profile/AuthContext.tsx";
 import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import type { AiToolContext } from "../ai/tools.ts";
@@ -62,6 +63,7 @@ export function ChatPanel({
   todayIso,
   evaluate,
   evaluateDay,
+  boundary,
 }: {
   chart: BaziChart;
   dayun: DaYun | null;
@@ -69,6 +71,8 @@ export function ChatPanel({
   todayIso: string;
   evaluate: (objectiveId: string, windowDays: number) => DecisionResult;
   evaluateDay: (objectiveId: string, isoDate: string) => DecisionResult;
+  /** Passed through to the advisor so it can't narrate an ambiguous chart as settled. */
+  boundary?: BoundaryAlternative[];
 }) {
   const [apiKey, setApiKey] = useState<string>(() => readLS(KEY_STORE) ?? "");
   const [model, setModel] = useState<string>(() => readLS(MODEL_STORE) ?? DEFAULT_MODEL);
@@ -97,8 +101,8 @@ export function ChatPanel({
   const settings: ChatSettings = useMemo(() => ({ model, apiKey: apiKey || undefined, proxyUrl: PROXY_URL }), [model, apiKey]);
 
   const ctx: AiToolContext = useMemo(
-    () => ({ chart, dayun, birth, todayIso, evaluate, evaluateDay }),
-    [chart, dayun, birth, todayIso, evaluate, evaluateDay],
+    () => ({ chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary }),
+    [chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary],
   );
 
   const enable = () => {

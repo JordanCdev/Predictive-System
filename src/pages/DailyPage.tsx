@@ -11,6 +11,7 @@ import {
 } from "../engine/index.ts";
 import { DayInsights } from "../ui/DayInsights.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
+import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { TODAY_ISO, addDaysIso, buildRequest, civilOfIso, isValidIso } from "../ui/shared.ts";
 import { NeedsProfile } from "./NeedsProfile.tsx";
 import { DayVerification } from "./PlannerBits.tsx";
@@ -23,7 +24,7 @@ export function DailyPage() {
   const nav = useNavigate();
   const iso = isValidIso(params.date) ? params.date : TODAY_ISO;
   const isToday = iso === TODAY_ISO;
-  const { chart, person } = useProfile();
+  const { chart, person, boundary, primaryPillars } = useProfile();
 
   // Sweeps ON (for convention-sensitivity) + a lazy third-party cross-check so the
   // verification badges reflect a real VerificationReport, not a placeholder.
@@ -72,6 +73,8 @@ export function DailyPage() {
           {!isToday && <Link className="btn-text" to="/today">Today</Link>}
         </div>
       </div>
+
+      {primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} compact />}
 
       <div className="card" style={{ padding: 18 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>

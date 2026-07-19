@@ -5,6 +5,7 @@ import { PeriodSummaryBlock } from "../ui/PeriodSummaryBlock.tsx";
 import { LuckEntry, LuckTimeline } from "../ui/LuckTimeline.tsx";
 import { valenceColor } from "../ui/format.ts";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
+import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
 import { Gate, UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
 import { NeedsProfile } from "./NeedsProfile.tsx";
@@ -17,7 +18,7 @@ export function YearlyPage() {
   const nav = useNavigate();
   const parsedYear = /^\d{4}$/.test(params.year ?? "") ? Number(params.year) : NaN;
   const year = parsedYear >= 1000 ? parsedYear : CURRENT_YEAR;
-  const { chart, dayun, birthCivil } = useProfile();
+  const { chart, dayun, birthCivil, boundary, primaryPillars } = useProfile();
   const { can } = useEntitlements();
   const [openMonth, setOpenMonth] = useState<string | null>(null);
 
@@ -88,6 +89,8 @@ export function YearlyPage() {
   return (
     <>
       <div className="page-head"><h2 className="page-title">Year {year}</h2>{navRow}</div>
+
+      {primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} compact />}
 
       <Gate
         feature="luck_pillars"
