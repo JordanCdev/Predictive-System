@@ -178,15 +178,19 @@ function PlanCard({
   featured?: boolean;
   children: React.ReactNode;
 }) {
+  const free = plan.priceMonthly === 0;
   const price = interval === "year" ? plan.priceYearly : plan.priceMonthly;
-  const unit = plan.priceMonthly === 0 ? "" : interval === "year" ? "/year" : "/month";
+  // Show "£0", not the word "Free" — the card is already titled Free, and a
+  // number sits next to the paid column so the two are directly comparable.
+  const priceLabel = free ? "£0" : formatPrice(price, plan.currency);
+  const unit = free ? "forever" : interval === "year" ? "/year" : "/month";
   return (
     <div className={`plan-card${featured ? " featured" : ""}${current ? " current" : ""}`}>
       {current && <span className="plan-current-tag">Your plan</span>}
       <h3 className="plan-name">{plan.name}</h3>
       <p className="plan-tagline">{plan.tagline}</p>
       <div className="plan-price">
-        <b>{formatPrice(price, plan.currency)}</b>
+        <b>{priceLabel}</b>
         <span>{unit}</span>
       </div>
       {children}

@@ -1709,16 +1709,25 @@ button {
 }
 
 /* ---------- router nav + planner pages ---------- */
+/* Two deliberate rows — identity/search/account above, section links below.
+   A single wrapping row collapsed into four lines once the nav grew past six
+   links, because the links were competing with the search box for the same
+   ~900px. Giving the links their own full-width row makes the header's height
+   independent of how many sections exist. */
 .nav {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "brand search profile"
+    "links links   links";
   align-items: center;
   gap: 10px 14px;
-  flex-wrap: wrap;
   padding-bottom: 12px;
   margin-bottom: 6px;
   border-bottom: 1px solid var(--hairline);
 }
 .nav-brand {
+  grid-area: brand;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1737,10 +1746,18 @@ button {
   font-weight: 600;
 }
 .nav-links {
+  grid-area: links;
   display: flex;
   gap: 2px;
-  flex-wrap: wrap;
-  flex: 1;
+  /* Never wrap: on a narrow screen this becomes a horizontal strip, which keeps
+     the header one predictable height instead of growing on small phones. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.nav-links::-webkit-scrollbar {
+  display: none;
 }
 .nav-link {
   padding: 5px 10px;
@@ -1760,6 +1777,7 @@ button {
   font-weight: 600;
 }
 .nav-profile {
+  grid-area: profile;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1823,6 +1841,7 @@ button {
 
 /* ---------- global top search / command bar ---------- */
 .nav-search {
+  grid-area: search;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1830,9 +1849,9 @@ button {
   border-radius: 999px;
   padding: 4px 12px;
   background: var(--surface-2);
-  flex: 1 1 200px;
-  min-width: 170px;
+  min-width: 0;
   max-width: 340px;
+  justify-self: end;
 }
 .nav-search:focus-within {
   border-color: var(--gold);
