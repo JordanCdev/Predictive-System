@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  BRANCHES,
   DecisionResult,
   GENERAL_DAY_OBJECTIVE,
   classicalHoursOfDay,
@@ -13,6 +14,7 @@ import {
 import { AlmanacPanel } from "../ui/AlmanacPanel.tsx";
 import { DayHero } from "../ui/DayHero.tsx";
 import { DayInsights, HourGrid } from "../ui/DayInsights.tsx";
+import { PersonalDayCard } from "../ui/PersonalDayCard.tsx";
 import { PriorityFitChip } from "../ui/PriorityFitChip.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
@@ -20,15 +22,19 @@ import { TODAY_ISO, addDaysIso, buildRequest, civilOfIso, isValidIso } from "../
 import { NeedsProfile } from "./NeedsProfile.tsx";
 import { DayVerification } from "./PlannerBits.tsx";
 
-/** Daily planner view — one day's pillar, officer, day-god, special info,
- *  auspicious/inauspicious stars, personal fit, 12 hour slots, 宜/忌, and live
- *  verification badges. Browses past and future via /day/:date. */
+/** Daily planner view. Personalised (a chart is set): PERSON-FIRST — the
+ *  PersonalDayCard hero (their reading, verdict + score, priority fit, best
+ *  hour), then gauges/hours/宜忌, then the calendar day itself folded into a
+ *  collapsible 通勝 section. No chart: almanac-first, unchanged — pillar,
+ *  officer, day-god, classical hour gods, and the setup prompt. Same numbers
+ *  either way; only the order of presentation differs. Browses past and
+ *  future via /day/:date. */
 export function DailyPage() {
   const params = useParams();
   const nav = useNavigate();
   const iso = isValidIso(params.date) ? params.date : TODAY_ISO;
   const isToday = iso === TODAY_ISO;
-  const { chart, person, boundary, primaryPillars } = useProfile();
+  const { chart, person, activeStored, boundary, primaryPillars } = useProfile();
 
   // Sweeps ON (for convention-sensitivity) + a lazy third-party cross-check so the
   // verification badges reflect a real VerificationReport, not a placeholder.
@@ -66,6 +72,59 @@ export function DailyPage() {
     : null;
   const clash = rec.shenShaTags.filter((t) => t.code === "clash_day" || t.code === "clash_zodiac");
 
+  // Person-first vs almanac-first. With a personalised reading the page leads
+  // with the person and demotes the calendar; without one, almanac-first is the
+  // honest order (there is no person to lead with).
+  const personalized = !!chart && rec.personalized;
+  const gz = rec.tongshu.dayGanzhi;
+  const dayAnimal = BRANCHES[gz.branch.index].animal;
+  const HOUR_GRID_ID = "day-hour-grid";
+
+  // "The day at a glance" pills — identical content in both modes; only where
+  // they sit on the page differs.
+  const glancePills = (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+      <span className="pill" title={officer.blurb}>{officer.label} <span className="faint">· {officer.secondary}</span></span>
+      <span className="pill" title={god.blurb}>{god.label} <span className="faint">· {god.secondary}</span></span>
+      {rec.tongshu.sanShaDirection !== "—" && (
+        <span className="pill" title="三煞 (Three-Killings) direction — avoid facing it when breaking ground or moving in.">三煞: {rec.tongshu.sanShaDirection}</span>
+      )}
+      {taboo && <span className="pill danger">{taboo}</span>}
+      {clash.map((c) => (
+        <span key={c.code} className="pill danger" title={shenShaPlain(c.code).blurb}>{shenShaPlain(c.code).label}</span>
+      ))}
+    </div>
+  );
+
+  // Auspicious / inauspicious personal stars (神煞) — personal, so in the
+  // personalised layout they stay above the almanac fold, not inside it.
+  const starsBlock =
+    rec.personalized && rec.shenShaTags.length > 0 ? (
+      <>
+        <div className="section-title" style={{ marginBottom: 6 }}>Your stars today (神煞)</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {rec.shenShaTags.map((t) => {
+            const g = shenShaPlain(t.code);
+            const good = t.polarity === "good";
+            const bad = t.polarity === "bad";
+            return (
+              <span key={t.code} className={`pill ${bad ? "danger" : good ? "good" : ""}`} title={g.blurb}>
+                {good ? "★ " : bad ? "▽ " : "· "}{g.label} <span className="faint">{g.secondary}</span>
+              </span>
+            );
+          })}
+        </div>
+      </>
+    ) : null;
+
+  const crossLinks = (
+    <div style={{ display: "flex", gap: 14, margin: "10px 2px 12px", fontSize: 13 }}>
+      <Link className="btn-text" to={`/week/${iso}`}>This week ›</Link>
+      <Link className="btn-text" to={`/month/${iso.slice(0, 7)}`}>This month ›</Link>
+      <Link className="btn-text" to={`/year/${iso.slice(0, 4)}`}>This year ›</Link>
+    </div>
+  );
+
   return (
     <>
       <div className="page-head">
@@ -89,75 +148,86 @@ export function DailyPage() {
 
       {primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} compact />}
 
-      <DayHero rec={rec} />
+      {personalized && chart ? (
+        <>
+          {/* PERSON-FIRST (the Power Planner order): the person and their
+              reading, then their gauges/hours/宜忌, then — folded — the
+              calendar day itself. Presentation only; same engine numbers. */}
+          <PersonalDayCard chart={chart} rec={rec} label={activeStored?.label ?? "You"} hourGridId={HOUR_GRID_ID} />
 
-      {/* A SEPARATE axis, never a modifier: what the user says they care about
-          changes what we surface and in what order, never the classical score.
-          Renders nothing at all when no priorities are set. */}
-      {chart && <PriorityFitChip chart={chart} rec={rec} />}
-
-      <div style={{ display: "flex", gap: 14, margin: "10px 2px 12px", fontSize: 13 }}>
-        <Link className="btn-text" to={`/week/${iso}`}>This week ›</Link>
-        <Link className="btn-text" to={`/month/${iso.slice(0, 7)}`}>This month ›</Link>
-        <Link className="btn-text" to={`/year/${iso.slice(0, 4)}`}>This year ›</Link>
-      </div>
-
-      <div className="card" style={{ padding: 18 }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-          <b style={{ fontSize: 15 }}>The day at a glance</b>
-        </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-          <span className="pill" title={officer.blurb}>{officer.label} <span className="faint">· {officer.secondary}</span></span>
-          <span className="pill" title={god.blurb}>{god.label} <span className="faint">· {god.secondary}</span></span>
-          {rec.tongshu.sanShaDirection !== "—" && (
-            <span className="pill" title="三煞 (Three-Killings) direction — avoid facing it when breaking ground or moving in.">三煞: {rec.tongshu.sanShaDirection}</span>
-          )}
-          {taboo && <span className="pill danger">{taboo}</span>}
-          {clash.map((c) => (
-            <span key={c.code} className="pill danger" title={shenShaPlain(c.code).blurb}>{shenShaPlain(c.code).label}</span>
-          ))}
-        </div>
-
-        {/* Auspicious / inauspicious personal stars (神煞) */}
-        {rec.personalized && rec.shenShaTags.length > 0 && (
-          <div style={{ marginTop: 12 }}>
-            <div className="section-title" style={{ marginBottom: 6 }}>Your stars today (神煞)</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {rec.shenShaTags.map((t) => {
-                const g = shenShaPlain(t.code);
-                const good = t.polarity === "good";
-                const bad = t.polarity === "bad";
-                return (
-                  <span key={t.code} className={`pill ${bad ? "danger" : good ? "good" : ""}`} title={g.blurb}>
-                    {good ? "★ " : bad ? "▽ " : "· "}{g.label} <span className="faint">{g.secondary}</span>
-                  </span>
-                );
-              })}
-            </div>
+          <div id={HOUR_GRID_ID}>
+            <DayInsights chart={chart} rec={rec} />
           </div>
-        )}
-      </div>
 
-      {chart ? (
-        <DayInsights chart={chart} rec={rec} />
+          {starsBlock && (
+            <div className="card" style={{ padding: 18, marginTop: 18 }}>{starsBlock}</div>
+          )}
+
+          {/* The calendar-day material, demoted. A native <details> keeps the
+              fold keyboard- and screen-reader-accessible; the summary row shows
+              pillar · animal · officer so nothing is hidden, just folded. */}
+          <details className="almanac-fold">
+            <summary>
+              <b>The day itself (通勝 almanac)</b>
+              <span className="almanac-fold-meta">
+                <span style={{ fontFamily: "var(--serif-cjk)" }}>{gz.hanzi}</span> · Day of the {dayAnimal} · {officer.label}
+              </span>
+            </summary>
+            <div className="almanac-fold-body">
+              <DayHero rec={rec} quiet />
+              <div>
+                <div className="section-title" style={{ margin: "14px 0 0" }}>The day at a glance</div>
+                {glancePills}
+              </div>
+              <AlmanacPanel civil={rec.civil} />
+            </div>
+          </details>
+
+          {crossLinks}
+        </>
       ) : (
         <>
-          {/* No profile → the classical Tong Shu hour read: the 黃道/黑道 hour gods
-              (時辰吉凶), seeded by the day branch. The same for every visitor —
-              honest about being impersonal, free of charge, never gated. */}
-          <div className="card" style={{ padding: 20, marginTop: 18 }}>
-            <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 600 }}>Hour by hour (時辰吉凶)</h3>
-            <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
-              The classical almanac's hour gods (黃道/黑道) for this day — the traditional Tong Shu read, identical for
-              everyone. Add your birth details for hours weighed against your own chart.
-            </p>
-            <HourGrid hours={classicalHoursOfDay(rec.tongshu.dayGanzhi)} bestBranch={null} />
+          {/* ALMANAC-FIRST — the right order when there is no person to lead
+              with. This is today's layout, unchanged. */}
+          <DayHero rec={rec} />
+
+          {/* A SEPARATE axis, never a modifier: what the user says they care about
+              changes what we surface and in what order, never the classical score.
+              Renders nothing at all when no priorities are set. */}
+          {chart && <PriorityFitChip chart={chart} rec={rec} />}
+
+          {crossLinks}
+
+          <div className="card" style={{ padding: 18 }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+              <b style={{ fontSize: 15 }}>The day at a glance</b>
+            </div>
+            {glancePills}
+            {starsBlock && <div style={{ marginTop: 12 }}>{starsBlock}</div>}
           </div>
-          <NeedsProfile what="see how this day tilts your career, wealth, relationships and wellbeing, plus your best hours" />
+
+          {chart ? (
+            <DayInsights chart={chart} rec={rec} />
+          ) : (
+            <>
+              {/* No profile → the classical Tong Shu hour read: the 黃道/黑道 hour gods
+                  (時辰吉凶), seeded by the day branch. The same for every visitor —
+                  honest about being impersonal, free of charge, never gated. */}
+              <div className="card" style={{ padding: 20, marginTop: 18 }}>
+                <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 600 }}>Hour by hour (時辰吉凶)</h3>
+                <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
+                  The classical almanac's hour gods (黃道/黑道) for this day — the traditional Tong Shu read, identical for
+                  everyone. Add your birth details for hours weighed against your own chart.
+                </p>
+                <HourGrid hours={classicalHoursOfDay(rec.tongshu.dayGanzhi)} bestBranch={null} />
+              </div>
+              <NeedsProfile what="see how this day tilts your career, wealth, relationships and wellbeing, plus your best hours" />
+            </>
+          )}
+
+          <AlmanacPanel civil={rec.civil} />
         </>
       )}
-
-      <AlmanacPanel civil={rec.civil} />
 
       {/* /today is where onboarding lands and where the nav's first tab points,
           but it only ever described the day — it never offered the product's

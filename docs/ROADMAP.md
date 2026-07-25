@@ -219,6 +219,21 @@ Many are partly built already; this is the prioritized backlog.
 > charging to see where the traditions disagree, after telling the user they do, was the category's
 > worst trust failure reproduced inside the product.
 >
+> **Phase 13 — person-first presentation (2026-07-25).** Owner feedback: the app computed
+> personally but presented calendar-first, so it "didn't feel tailored". Verified against the
+> competitor's public daily-view order (name → day rating → activities → hours) and inverted:
+> `personalDayReading` in plainEnglish.ts composes a deterministic daily reading addressed to
+> the person (archetype meets the day's Ten God, per-element stem/branch fit, strongest
+> life-area tilt, priority-area sentence passed in as plain data, taboo/clash cautions, best
+> hour); PersonalDayCard leads the daily view with greeting + reading + verdict + priority
+> fit; the almanac material is demoted into a collapsed 通勝 fold (visitors keep almanac-first);
+> onboarding gains an optional name and a focused ?start=1 welcome. Adversarially reviewed:
+> 11 findings raised, 7 confirmed and fixed — notably three prose-honesty bugs (netted
+> element fit mis-attributing the branch's strain to the stem's element; 歲破 headlines
+> blaming the person's chart for a universal calendar taboo; "strongest workable window"
+> sold under sit-out headlines) and an askName flow that could rename a non-self person.
+> Presentation only: recommendationScore and calculationHash byte-identical throughout.
+>
 > **Phase 11 — the Tong Shu planner (2026-07-25).** Driven by a six-lens audit (UX restrictiveness,
 > calendar gaps vs Joey Yap's TongShu Power Planner, chat capability, profile depth, competitor
 > research, and a 349-case accuracy battery vs lunar-javascript). The battery confirmed the engine

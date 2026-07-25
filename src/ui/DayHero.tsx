@@ -13,8 +13,12 @@ function recentYearsOfBranch(branchIndex: number, uptoYear: number): number[] {
 
 /** Joey-Yap-style day hero: the day's verdict + score, the day pillar with its
  *  zodiac animal, and the Tong Shu's most-read fact — who the day clashes (沖).
- *  Free-tier: single-day transparency is never gated. */
-export function DayHero({ rec }: { rec: DayRecommendation }) {
+ *  Free-tier: single-day transparency is never gated.
+ *
+ *  `quiet` — the demoted form used inside the personalised view's "The day
+ *  itself (通勝 almanac)" fold: smaller pillar, no card chrome, and no big
+ *  score (the score lives in PersonalDayCard there). Same facts, lower voice. */
+export function DayHero({ rec, quiet }: { rec: DayRecommendation; quiet?: boolean }) {
   const gz = rec.tongshu.dayGanzhi;
   const animal = BRANCHES[gz.branch.index].animal;
   const clashAnimal = rec.tongshu.clashAnimal;
@@ -23,32 +27,37 @@ export function DayHero({ rec }: { rec: DayRecommendation }) {
   const years = recentYearsOfBranch(rec.tongshu.clashBranchIndex, rec.civil.year);
 
   return (
-    <div className="card day-hero" style={{ padding: "18px 20px" }}>
+    <div className={quiet ? undefined : "card day-hero"} style={quiet ? { padding: "4px 0 0" } : { padding: "18px 20px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <span style={{ fontSize: 34, lineHeight: 1.1, fontFamily: "var(--serif-cjk)", color: "var(--ink)" }} title="Day pillar (日柱)">
+        <div style={{ display: "flex", alignItems: "center", gap: quiet ? 10 : 14 }}>
+          <span
+            style={{ fontSize: quiet ? 22 : 34, lineHeight: 1.1, fontFamily: "var(--serif-cjk)", color: "var(--ink)" }}
+            title="Day pillar (日柱)"
+          >
             {gz.hanzi}
           </span>
           <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <b style={{ fontSize: 14, color: "var(--ink)" }}>{gz.pinyin}</b>
+            <b style={{ fontSize: quiet ? 13 : 14, color: "var(--ink)" }}>{gz.pinyin}</b>
             <span style={{ fontSize: 12.5, color: "var(--muted)" }}>Day of the {animal}</span>
           </span>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-          <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-            <b style={{ fontSize: 17, color: scoreTextColor(rec.recommendationScore) }}>{band.label}</b>
-            <span
-              style={{ fontSize: 24, fontWeight: 700, color: scoreTextColor(rec.recommendationScore) }}
-              title="Recommendation score (0–100) — a ranking heuristic under this rule set, not a prediction."
-            >
-              {Math.round(rec.recommendationScore)}
+        {!quiet && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+            <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <b style={{ fontSize: 17, color: scoreTextColor(rec.recommendationScore) }}>{band.label}</b>
+              <span
+                style={{ fontSize: 24, fontWeight: 700, color: scoreTextColor(rec.recommendationScore) }}
+                title="Recommendation score (0–100) — a ranking heuristic under this rule set, not a prediction."
+              >
+                {Math.round(rec.recommendationScore)}
+              </span>
             </span>
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--faint)" }}>
-            <span className="dot" style={{ width: 8, height: 8, borderRadius: 8, background: scoreColor(rec.recommendationScore) }} />
-            {rec.personalized ? "your day rating" : "general day rating"}
-          </span>
-        </div>
+            <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--faint)" }}>
+              <span className="dot" style={{ width: 8, height: 8, borderRadius: 8, background: scoreColor(rec.recommendationScore) }} />
+              {rec.personalized ? "your day rating" : "general day rating"}
+            </span>
+          </div>
+        )}
       </div>
 
       <div

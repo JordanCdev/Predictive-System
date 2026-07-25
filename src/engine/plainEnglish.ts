@@ -16,7 +16,8 @@ import { ConfidenceBreakdown, ConflictRecord, DayRecommendation, HourPick,
   clashSeverityOf,
 } from "./decision.ts";
 import { McdaWeights, Objective } from "./objectives.ts";
-import { BranchInteraction, DaYun, DayMasterAnalysis, LuckPillar, SeasonalState } from "./bazi.ts";
+import { BaziChart, BranchInteraction, DaYun, DayMasterAnalysis, LuckPillar, SeasonalState } from "./bazi.ts";
+import { LifeAreaKey, LifeAreaScore, lifeAreaScores } from "./lifeAreas.ts";
 import { BRANCHES, FivePhase, GodGroup, STEMS, TenGod } from "./symbols.ts";
 
 // ── Verdict bands ──────────────────────────────────────────────────────────
@@ -858,6 +859,197 @@ export const GLOSSARY: GlossaryEntry[] = [
   { term: "神煞 (auxiliary stars)", plain: "Minor overlays like the Nobleman “helpful-people” day — kept below the main structure." },
   { term: "大運 (luck pillars)", plain: "Your life in 10-year chapters, each with its own flavour." },
 ];
+
+// ── The personal day reading — person-first daily prose ─────────────────────
+// The one composer that turns a day's already-computed facts into a short
+// reading addressed to the PERSON (their archetype first, the calendar second).
+// Strictly downstream of calculation: it reads `rec` / `chart` fields and the
+// existing life-area gauges, never recomputes a score. `leadArea` is plain data
+// passed in by the UI (the user's top-ranked priority area) — the engine never
+// imports the person layer.
+
+export interface PersonalDayReadingInput {
+  chart: BaziChart;
+  rec: DayRecommendation;
+  /** The user's top-ranked priority life area, passed IN as plain data. */
+  leadArea?: LifeAreaKey;
+}
+
+export interface PersonalDayReading {
+  headline: string;
+  paragraphs: string[];
+  cautions: string[];
+  bestHourLine: string | null;
+}
+
+function aAn(word: string): string {
+  return /^[AEIOU]/i.test(word) ? "an" : "a";
+}
+
+/** How the day's stem and branch elements EACH sit with the chart — read off
+ *  the rules the engine already fired (element_stem / element_branch), never
+ *  recomputed, and kept separate: netting them into one verdict made the prose
+ *  attribute the branch's strain to the stem's element (a review-confirmed
+ *  honesty bug on any day whose stem and branch differ in favourability).
+ *  Note: objectives with a non-empty godBias fold a favourable stem into the
+ *  ten_god_support rule instead of element_stem (decision.ts) — the daily view
+ *  uses general_day (godBias []), where both rules always fire when relevant. */
+function dayElementFit(rec: DayRecommendation): { stem: -1 | 0 | 1; branch: -1 | 0 | 1 } {
+  const signOf = (code: string): -1 | 0 | 1 => {
+    const r = rec.rulesFired.find((x) => x.code === code);
+    return r ? (r.effect > 0 ? 1 : r.effect < 0 ? -1 : 0) : 0;
+  };
+  return { stem: signOf("element_stem"), branch: signOf("element_branch") };
+}
+
+// The pinned honesty rule for the priority-area sentence (asserted in tests):
+// score < LEAD_AREA_POOR ("runs weak" copy, no upbeat words), score >=
+// LEAD_AREA_GOOD ("leans your way"), otherwise even-keeled. Thresholds align
+// with the verdict bands (45 = neutral floor, 58 = favourable floor).
+export const LEAD_AREA_POOR = 45;
+export const LEAD_AREA_GOOD = 58;
+
+function leadAreaSentence(lead: LifeAreaScore, isTop: boolean): string {
+  const name = lead.label.toLowerCase();
+  if (lead.score < LEAD_AREA_POOR) {
+    return isTop
+      ? "And that is the area you've said matters most right now — even as the day's best tilt it runs weak, so treat it as a routine day there, not one for a push."
+      : `In ${name} — the area you've said matters most right now — this day runs weak: better for routine there than for a push.`;
+  }
+  if (lead.score >= LEAD_AREA_GOOD) {
+    // No reason splice here: an area's reason text can carry its own cautionary
+    // tone ("go gently…"), which read absurd after "leans your way". The reason
+    // stays visible on the gauge itself.
+    return isTop
+      ? "That is also the area you've said matters most right now, and the day leans your way there."
+      : `In ${name} — the area you've said matters most right now — the day leans your way.`;
+  }
+  return isTop
+    ? "That is the area you've said matters most right now — an even-keeled day there, nothing pushing for or against."
+    : `In ${name} — the area you've said matters most right now — the day is even-keeled: nothing strongly for or against.`;
+}
+
+/**
+ * The person-first daily reading: who you are meets what the day brings.
+ * Deterministic — identical inputs, identical prose. Interpretation is drawn
+ * from the classical tradition and phrased as tilt/tendency, never prediction.
+ */
+export function personalDayReading({ chart, rec, leadArea }: PersonalDayReadingInput): PersonalDayReading {
+  const arch = dayMasterArchetype(chart.dayMaster.dayMaster.index);
+  const gz = rec.tongshu.dayGanzhi;
+  const elName = elementPlain(gz.stem.phase);
+
+  // ── Cautions (0–2) — reuse the engine's taboo / clash findings. ──
+  const cautions: string[] = [];
+  if (rec.rulesFired.some((r) => r.code === "year_break")) {
+    cautions.push("It's a 歲破 day — it clashes the year's 太歲, which tradition marks “諸事不宜”. Fine for routine, wrong for anything binding.");
+  }
+  const fb = rec.rulesFired.find((r) => r.code === "four_departure" || r.code === "four_severance");
+  if (fb) {
+    cautions.push(`It's a ${fb.code === "four_departure" ? "四離" : "四絕"} day — the eve of a season pivot, which tradition marks “大事勿用”. Keep anything major off it.`);
+  }
+  const severity = clashSeverityOf(rec.shenShaTags);
+  if (severity === "severe") {
+    cautions.push("This day pushes straight against your own chart (沖) — fine for routine, wrong for a signing or anything binding.");
+  } else if (severity === "moderate") {
+    cautions.push("It clashes your Month pillar (沖) — classically one to weigh rather than rule out; keep the biggest commitments elsewhere.");
+  } else if (severity === "mild") {
+    cautions.push("It clashes your birth-year animal — tradition still counts such days usable, just not a first pick for anything binding.");
+  }
+  // A taboo or a Day/Hour clash steers the whole reading; a Month/Year clash is
+  // weighed (the band verdict stands), matching the engine's own severity rules.
+  const tabooSteer = rec.rulesFired.some((r) => r.code === "year_break" || r.code === "four_departure" || r.code === "four_severance");
+  const steering = severity === "severe" || tabooSteer;
+
+  // ── Headline — the person first, no hanzi, valence matches the engine. ──
+  // Attribution matters: a 歲破/四離/四絕 day clashes the CALENDAR for everyone
+  // identically, so only a severe personal clash may say "your chart".
+  let headline: string;
+  if (severity === "severe") {
+    headline = `A day that pushes against your ${arch.name} chart — keep it light`;
+  } else if (tabooSteer) {
+    headline = `A day the calendar itself marks best avoided — keep it light`;
+  } else {
+    switch (verdictBand(rec.recommendationScore).key) {
+      case "excellent":
+        headline = `A strong day for your ${arch.name} chart`;
+        break;
+      case "favourable":
+        headline = `A good day for your ${arch.name} chart`;
+        break;
+      case "neutral":
+        headline = `A steady, workable day for your ${arch.name} chart`;
+        break;
+      case "caution":
+        headline = `A weak day for your ${arch.name} chart — keep it light`;
+        break;
+      default:
+        headline = `A day to sit out for your ${arch.name} chart`;
+    }
+  }
+
+  // ── Paragraph 1 — their identity meets the day. ──
+  const opening = rec.dayStemTenGod
+    ? `For ${aAn(arch.name)} ${arch.name} day-master, ${gz.hanzi} is a day of ${tenGodPlain(rec.dayStemTenGod)}`
+    : `For ${aAn(arch.name)} ${arch.name} day-master, ${gz.hanzi} is a ${elName} day`;
+  // Each element speaks for itself — the stem's favourability must never be
+  // phrased with the branch's element or vice versa.
+  const fit = dayElementFit(rec);
+  const branchElName = elementPlain(gz.branch.phase);
+  const sameElement = gz.stem.phase === gz.branch.phase;
+  let fitClause: string;
+  if (fit.stem > 0 && fit.branch > 0) {
+    fitClause = sameElement
+      ? `, and its ${elName} energy sits well with your chart`
+      : `, and both its ${elName} stem and ${branchElName} branch sit well with your chart`;
+  } else if (fit.stem < 0 && fit.branch < 0) {
+    fitClause = sameElement
+      ? `, but its ${elName} energy runs against your chart`
+      : `, but both its ${elName} stem and ${branchElName} branch run against your chart`;
+  } else if (fit.stem > 0 && fit.branch < 0) {
+    fitClause = `, and while its ${elName} stem sits well with you, its ${branchElName} branch runs against your chart`;
+  } else if (fit.stem < 0 && fit.branch > 0) {
+    fitClause = `, and while its ${elName} stem runs against your chart, its ${branchElName} branch sits well with you`;
+  } else if (fit.stem > 0) {
+    fitClause = `, and its ${elName} stem sits well with your chart`;
+  } else if (fit.stem < 0) {
+    fitClause = `, but its ${elName} stem runs against your chart`;
+  } else if (fit.branch > 0) {
+    fitClause = `, and its ${branchElName} branch sits well with your chart`;
+  } else if (fit.branch < 0) {
+    fitClause = `, but its ${branchElName} branch runs against your chart`;
+  } else {
+    fitClause = `, and its energy is broadly neutral for you`;
+  }
+
+  // ── Paragraph 2 — what the day serves: the strongest life-area tilt. ──
+  const reading = lifeAreaScores(chart, gz);
+  const top = reading.areas.reduce((best, a) => (a.score > best.score ? a : best), reading.areas[0]);
+  let serves = `Its strongest tilt for you is ${top.label.toLowerCase()}: ${top.reason}`;
+  if (leadArea) {
+    const lead = reading.areas.find((a) => a.key === leadArea);
+    if (lead) serves += ` ${leadAreaSentence(lead, lead.key === top.key)}`;
+  }
+
+  // ── Best hour — one line, never selling hours on a day we steer away from
+  // OR whose own band already says keep-it-light/sit-out (a "strongest
+  // workable window" under "A day to sit out" is a self-contradiction). ──
+  const ph = practicalBestHour(rec);
+  const bandKey = verdictBand(rec.recommendationScore).key;
+  const downbeat = steering || bandKey === "caution" || bandKey === "avoid";
+  const bestHourLine = ph
+    ? downbeat
+      ? `If it must be today, the least-bad window is ${humanHourRange(ph.rangeLabel)}.`
+      : `Your strongest workable window is ${humanHourRange(ph.rangeLabel)}.`
+    : null;
+
+  return {
+    headline,
+    paragraphs: [opening + fitClause + ".", serves],
+    cautions: cautions.slice(0, 2),
+    bestHourLine,
+  };
+}
 
 export function interactionPlain(it: BranchInteraction): string {
   const bs = it.branches.map(branchHz).join("");

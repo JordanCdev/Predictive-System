@@ -51,6 +51,13 @@ describe("migrate", () => {
     expect(s.people.map((p) => p.id)).toEqual(["a"]);
   });
 
+  it("keeps a custom label and relation intact — the daily greeting reads them", () => {
+    const stored = { people: [{ ...person(SELF_ID), label: "Mei", relation: "self" }], activeId: SELF_ID };
+    const s = migrate(stored, null);
+    expect(s.people[0].label).toBe("Mei");
+    expect(s.people[0].relation).toBe("self");
+  });
+
   it("repairs a dangling activeId", () => {
     expect(migrate(state(["a", "b"], "gone"), null).activeId).toBe("a");
   });

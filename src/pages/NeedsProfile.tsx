@@ -5,9 +5,10 @@ export function NeedsProfile({ what }: { what: string }) {
   return (
     <div className="card" style={{ padding: 24, marginTop: 18, textAlign: "center" }}>
       <div className="seal sm" aria-hidden="true" style={{ margin: "0 auto 10px" }}>命</div>
-      <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 600 }}>Add your birth details first</h3>
+      <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 600 }}>First, let's plot your chart</h3>
       <p style={{ margin: "0 auto 14px", fontSize: 14, color: "var(--muted)", maxWidth: 420, lineHeight: 1.55 }}>
-        To {what}, set up your chart once — date, time and place of birth. It's stored only in this browser.
+        To {what}, add your birth details once — date, time and place. It takes about two minutes, and everything stays
+        in your browser.
       </p>
       {/* ?start=1 opens the birth form straight away — someone who clicked
           "set up my profile" has already opted in; don't ask them twice. */}

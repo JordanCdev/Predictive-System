@@ -45,7 +45,7 @@ export function useRankedAreas(): PriorityProfile["areas"] {
  * its own number, and carries an expandable aside that spells out exactly what
  * this is and what it does not touch.
  */
-export function PriorityFitChip({ chart, rec }: { chart: BaziChart; rec: DayRecommendation }) {
+export function PriorityFitChip({ chart, rec, embedded }: { chart: BaziChart; rec: DayRecommendation; embedded?: boolean }) {
   const ranked = useRankedAreas();
   const [open, setOpen] = useState(false);
 
@@ -58,8 +58,13 @@ export function PriorityFitChip({ chart, rec }: { chart: BaziChart; rec: DayReco
 
   return (
     <div
-      className="card"
-      style={{ padding: "12px 16px", marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}
+      className={embedded ? undefined : "card"}
+      style={
+        embedded
+          ? // Inside PersonalDayCard: no card chrome, just a hairline seam above.
+            { borderTop: "1px solid var(--hairline)", paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }
+          : { padding: "12px 16px", marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }
+      }
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <span style={{ fontSize: 12.5, color: "var(--muted)" }}>

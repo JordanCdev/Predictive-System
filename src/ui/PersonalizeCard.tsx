@@ -56,6 +56,7 @@ export function PersonalizeCard({
   onApply,
   onClear,
   subject,
+  askName,
   startEditing = false,
   applyLabel,
   onCancel,
@@ -63,16 +64,29 @@ export function PersonalizeCard({
   person: Person | null;
   defaultTz: number;
   presets: ConventionSet[];
-  onApply: (p: Person) => void;
+  /** `name` is only passed when `askName` is set: the typed value (possibly "",
+   *  meaning "back to the default"). Callers that ignore it lose nothing —
+   *  an omitted second argument means "leave any stored label alone". */
+  onApply: (p: Person, name?: string) => void;
   onClear: () => void;
   /** When set, the form also captures a name + relation for this person. */
   subject?: NamedSubject;
+  /** Self flow only: also ask what to call the user (optional — a first name is
+   *  enough). Purely presentational; the value rides out via onApply's second
+   *  argument so the caller can store it wherever labels already live. */
+  askName?: { initial: string };
   /** Open straight into the form (adding someone new). */
   startEditing?: boolean;
   applyLabel?: string;
   onCancel?: () => void;
 }) {
   const [editing, setEditing] = useState(startEditing);
+  const [name, setName] = useState(askName?.initial ?? "");
+  // If the label is renamed elsewhere (PeoplePanel) while this card is mounted,
+  // follow it — otherwise the next Apply would silently revert the rename.
+  useEffect(() => {
+    if (askName) setName(askName.initial);
+  }, [askName?.initial]); // eslint-disable-line react-hooks/exhaustive-deps
   const [draft, setDraft] = useState<Person>(
     person ?? {
       birthDate: "",
@@ -226,6 +240,17 @@ export function PersonalizeCard({
             </label>
           </div>
         )}
+        {askName && !subject && (
+          <label className="field">
+            <span>What should we call you? (optional)</span>
+            <input
+              type="text"
+              placeholder="A first name is enough"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+        )}
         <div className="row-2">
           <label className="field">
             <span>Birth date</span>
@@ -357,7 +382,7 @@ export function PersonalizeCard({
           <button
             className="btn"
             disabled={!canApply || (subject !== undefined && !subject.label.trim())}
-            onClick={() => { onApply(draft); setEditing(false); }}
+            onClick={() => { onApply(draft, askName && !subject ? name : undefined); setEditing(false); }}
           >
             {applyLabel ?? "Apply to my reading"}
           </button>

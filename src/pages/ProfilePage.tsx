@@ -12,13 +12,14 @@ import { useAuth } from "../ui/profile/AuthContext.tsx";
 import { PeoplePanel } from "../ui/profile/PeoplePanel.tsx";
 import { PrioritiesPanel } from "../ui/priorities/PrioritiesPanel.tsx";
 import { BackupPanel } from "../ui/BackupPanel.tsx";
+import { SELF_ID } from "../ui/profile/peopleStore.ts";
 import { DEFAULT_TZ, TODAY_ISO } from "../ui/shared.ts";
 
 /** Profile home base — sign in (when Firebase is configured), set/replace the
  *  stored birth chart, then read the full chart, insights, fit ranking and luck
  *  timeline in one place. Without Firebase it's stored only in this browser. */
 export function ProfilePage() {
-  const { person, setPerson, chart, dayun, currentAge, warnings, people, boundary, primaryPillars, timeChain, birthCivil, evaluate, personalized } =
+  const { person, setPerson, savePerson, activeStored, chart, dayun, currentAge, warnings, people, boundary, primaryPillars, timeChain, birthCivil, evaluate, personalized } =
     useProfile();
   const { enabled, user, signIn, signOut, error } = useAuth();
   const [params] = useSearchParams();
@@ -29,13 +30,72 @@ export function ProfilePage() {
   // second "Add my birth details" upsell.
   const onboarding = params.get("start") === "1" && !person;
 
-  const applyPerson = (p: Person) => {
+  // "What should we call you?" is a SELF question. When the active person is
+  // someone else in the cast (a partner, a client), asking it here would let
+  // the user type their own name and silently rename that other person —
+  // their label already has a home in PeoplePanel.
+  const activeIsSelf = !activeStored || activeStored.id === SELF_ID;
+
+  const applyPerson = (p: Person, name?: string) => {
     const first = !person;
-    setPerson(p);
+    // The optional name rides the SAME save path PeoplePanel uses — one storage
+    // field, StoredPerson.label. An omitted name (convention switch from the
+    // summary card) leaves the stored label alone; a deliberately emptied field
+    // returns to the default "You". Never required — and ignored entirely when
+    // the active person isn't the self (belt to the askName brace below).
+    const label =
+      name === undefined || !activeIsSelf ? activeStored?.label ?? "You" : name.trim() || "You";
+    savePerson(p, { id: activeStored?.id ?? SELF_ID, label, relation: activeStored?.relation });
     // Deliver what the CTA promised: the first profile lands on the reading, not
     // back on a settings page.
     if (first) nav("/today");
   };
+
+  // The name field is seeded with the current label, so editing birth details
+  // doesn't quietly rename anyone. The default "You" reads as an empty field.
+  const askName = activeIsSelf
+    ? { initial: activeStored && activeStored.label !== "You" ? activeStored.label : "" }
+    : undefined;
+
+  // Focused setup: someone who clicked "Get my reading" and has no chart yet
+  // sees ONE warm card, not a settings page. The moment a chart exists, the
+  // full profile page below takes over. Presentation state only — no new route.
+  if (onboarding) {
+    return (
+      <div style={{ maxWidth: 620, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", margin: "22px 0 16px" }}>
+          <div className="seal sm" aria-hidden="true" style={{ margin: "0 auto 10px" }}>命</div>
+          <h2 className="page-title" style={{ marginBottom: 6 }}>Plot your chart</h2>
+          <p style={{ margin: "0 auto", fontSize: 14, color: "var(--muted)", maxWidth: 430, lineHeight: 1.55 }}>
+            About two minutes, free — and your birth details stay in this browser. This is the one step that turns the
+            almanac into your almanac.
+          </p>
+        </div>
+        <PersonalizeCard
+          key="onboarding"
+          person={person}
+          defaultTz={DEFAULT_TZ}
+          presets={CONVENTION_PRESETS}
+          startEditing
+          applyLabel="See my reading"
+          askName={askName}
+          onApply={applyPerson}
+          onClear={() => setPerson(null)}
+          // Backing out of onboarding shouldn't strand the user between a
+          // "plot your chart" header and the page's own setup upsell — return
+          // them to the almanac-first daily view instead.
+          onCancel={() => nav("/today")}
+        />
+        {enabled && !user && (
+          <p style={{ textAlign: "center", marginTop: 14, fontSize: 13, color: "var(--muted)" }}>
+            Already set up on another device?{" "}
+            <button className="btn-text" onClick={signIn}>Sign in</button>
+          </p>
+        )}
+        {error && <div className="warn" style={{ marginTop: 10 }}><span aria-hidden="true">⚠</span> {error}</div>}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -72,12 +132,11 @@ export function ProfilePage() {
         {person ? "" : " — nothing is set yet"}.
       </p>
       <PersonalizeCard
-        key={onboarding ? "onboarding" : "settings"}
+        key="settings"
         person={person}
         defaultTz={DEFAULT_TZ}
         presets={CONVENTION_PRESETS}
-        startEditing={onboarding}
-        applyLabel={onboarding ? "See my reading" : undefined}
+        askName={askName}
         onApply={applyPerson}
         onClear={() => setPerson(null)}
       />

@@ -3315,3 +3315,57 @@ button {
   }
 }
 /* ── end priority profile block ──────────────────────────────────────────── */
+
+/* ── daily view: the almanac fold (Agent B — person-first daily inversion) ──
+   The calendar-day material, demoted behind a native <details> so keyboard and
+   screen-reader semantics come for free. The summary row keeps the pillar,
+   animal and officer visible even when folded — demoted, never hidden. */
+.almanac-fold {
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  margin-top: 18px;
+  padding: 0;
+}
+.almanac-fold > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  cursor: pointer;
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: inherit;
+  list-style: none; /* we draw our own marker so the row stays tidy */
+}
+.almanac-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.almanac-fold > summary::before {
+  content: "›";
+  display: inline-block;
+  color: var(--faint);
+  transition: transform 0.15s ease;
+  transform: translateY(1px);
+}
+.almanac-fold[open] > summary::before {
+  transform: rotate(90deg) translateX(1px);
+}
+/* Keyboard focus comes from the global :focus-visible rule (jade outline). */
+.almanac-fold-meta {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.almanac-fold-body {
+  padding: 0 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* AlmanacPanel keeps its own card chrome inside the fold — fine, but pull its
+   top margin in so the fold doesn't double-space. */
+.almanac-fold-body > .card {
+  margin-top: 12px;
+}
+/* ── end almanac fold block ─────────────────────────────────────────────── */

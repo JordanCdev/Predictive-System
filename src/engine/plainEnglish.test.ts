@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { evaluateDecision } from "./decision.ts";
+import { clashSeverityOf, evaluateDecision } from "./decision.ts";
 import { ZIPING_DEFAULT } from "./conventions.ts";
 import { objectiveById } from "./objectives.ts";
 import {
+  elementPlain,
+  LEAD_AREA_POOR,
   actionGuidance,
   confidencePlain,
   dayMasterArchetype,
@@ -11,6 +13,7 @@ import {
   humanDate,
   humanHourRange,
   isDaytimeHour,
+  personalDayReading,
   pillarPalacePlain,
   relativeDay,
   strengthStructurePlain,
@@ -20,6 +23,7 @@ import {
 } from "./plainEnglish.ts";
 import { STEMS } from "./symbols.ts";
 import type { DayMasterAnalysis } from "./bazi.ts";
+import { type LifeAreaKey, lifeAreaScores } from "./lifeAreas.ts";
 
 const objective = objectiveById("contract_signing");
 
@@ -215,6 +219,225 @@ describe("pillar palaces (Zi Ping mapping, phrased honestly)", () => {
       // Honest framing: the note names the tradition rather than asserting fact.
       expect(pal.note).toMatch(/Zi Ping/);
       expect(pal.note).not.toMatch(FORBIDDEN_PREDICTIVE);
+    }
+  });
+});
+
+// ── The person-first daily reading ───────────────────────────────────────────
+
+describe("personalDayReading (person-first daily prose)", () => {
+  const reqFor = (birthDay: number, days: number) => ({
+    birth: { year: 1990, month: 6, day: birthDay, hour: 14, minute: 30, tzOffsetMinutes: 480, timeCertainty: "exact" as const },
+    sex: "male" as const,
+    convention: ZIPING_DEFAULT,
+    objective,
+    window: { start: { year: 2026, month: 7, day: 1 }, days, tzOffsetMinutes: 480 },
+    options: { sweeps: false },
+  });
+
+  // One personalized 60-day window (a full sexagenary cycle: every day 干支
+  // appears once), shared across the assertions below.
+  const res60 = evaluateDecision(reqFor(15, 60));
+  const chart = res60.subjectChart!;
+  const readingOf = (i: number, leadArea?: LifeAreaKey) =>
+    personalDayReading({ chart, rec: res60.allDays[i], leadArea });
+
+  it("all 10 day-master stems produce distinct openings", () => {
+    const openings = new Set<string>();
+    const stems = new Set<number>();
+    for (let i = 0; i < 10; i++) {
+      // Consecutive birth days → consecutive day stems (all 10 of 甲..癸).
+      const res = evaluateDecision(reqFor(15 + i, 1));
+      const dm = res.subjectChart!.dayMaster.dayMaster.index;
+      stems.add(dm);
+      const r = personalDayReading({ chart: res.subjectChart!, rec: res.allDays[0] });
+      expect(r.paragraphs[0]).toContain(dayMasterArchetype(dm).name);
+      // Calendar-taboo days deliberately do NOT name the chart in the headline
+      // (歲破/四離/四絕 clash the calendar for everyone — see the attribution
+      // fix); every other day leads with the person's archetype.
+      const taboo = res.allDays[0].rulesFired.some((x) =>
+        ["year_break", "four_departure", "four_severance"].includes(x.code),
+      );
+      if (taboo) expect(r.headline).toMatch(/calendar itself|pushes against/);
+      else expect(r.headline).toContain(dayMasterArchetype(dm).name);
+      expect(r.headline).not.toMatch(/[一-鿿]/); // no raw hanzi in the headline
+      openings.add(r.paragraphs[0]);
+    }
+    expect(stems.size).toBe(10);
+    expect(openings.size).toBe(10);
+  });
+
+  it("favourable vs unfavourable days read differently", () => {
+    const fitOf = (i: number) => {
+      const rules = res60.allDays[i].rulesFired;
+      const pos = rules.some((r) => (r.code === "element_stem" || r.code === "element_branch") && r.effect > 0);
+      const neg = rules.some((r) => (r.code === "element_stem" || r.code === "element_branch") && r.effect < 0);
+      return pos && neg ? "mixed" : pos ? "helps" : neg ? "strains" : "neutral";
+    };
+    const helpsIdx = res60.allDays.findIndex((_, i) => fitOf(i) === "helps");
+    const strainsIdx = res60.allDays.findIndex((_, i) => fitOf(i) === "strains");
+    expect(helpsIdx).toBeGreaterThanOrEqual(0);
+    expect(strainsIdx).toBeGreaterThanOrEqual(0);
+    const good = readingOf(helpsIdx);
+    const bad = readingOf(strainsIdx);
+    // "sit(s) well" — the split phrasing says "both … sit well" when the stem
+    // and branch elements differ but both favour the chart.
+    expect(good.paragraphs[0]).toMatch(/sits? well with your chart/);
+    expect(bad.paragraphs[0]).toMatch(/runs? against your chart/);
+    expect(good.paragraphs[0]).not.toBe(bad.paragraphs[0]);
+  });
+
+  it("names each element with ITS OWN direction on split days — never the branch's strain under the stem's name", () => {
+    // Find a day where the stem and branch element rules disagree in sign.
+    const signOf = (i: number, code: string) => {
+      const r = res60.allDays[i].rulesFired.find((x) => x.code === code);
+      return r ? Math.sign(r.effect) : 0;
+    };
+    const mixedIdx = res60.allDays.findIndex(
+      (_, i) => signOf(i, "element_stem") * signOf(i, "element_branch") === -1,
+    );
+    expect(mixedIdx).toBeGreaterThanOrEqual(0);
+    const rec = res60.allDays[mixedIdx];
+    const p0 = readingOf(mixedIdx).paragraphs[0];
+    const stemEl = elementPlain(rec.tongshu.dayGanzhi.stem.phase);
+    const branchEl = elementPlain(rec.tongshu.dayGanzhi.branch.phase);
+    // Both elements are named, each with its own direction, and the old netted
+    // "cuts both ways" (which blamed one element for both) is gone.
+    expect(p0).toContain(`${signOf(mixedIdx, "element_stem") > 0 ? stemEl + " stem sits well" : stemEl + " stem runs against"}`);
+    expect(p0).toContain(branchEl);
+    expect(p0).not.toMatch(/cuts both ways/);
+  });
+
+  it("taboo-only days blame the calendar, severe personal clashes blame the chart", () => {
+    const isTaboo = (i: number) =>
+      res60.allDays[i].rulesFired.some((x) => ["year_break", "four_departure", "four_severance"].includes(x.code));
+    const severityOf = (i: number) => clashSeverityOf(res60.allDays[i].shenShaTags);
+    const tabooOnly = res60.allDays.findIndex((_, i) => isTaboo(i) && severityOf(i) !== "severe");
+    const severeOnly = res60.allDays.findIndex((_, i) => !isTaboo(i) && severityOf(i) === "severe");
+    expect(tabooOnly).toBeGreaterThanOrEqual(0);
+    expect(severeOnly).toBeGreaterThanOrEqual(0);
+    // 歲破/四離/四絕 apply to everyone — the headline must not personalize them.
+    expect(readingOf(tabooOnly).headline).toContain("calendar itself");
+    expect(readingOf(tabooOnly).headline).not.toContain("pushes against your");
+    expect(readingOf(severeOnly).headline).toContain("pushes against your");
+  });
+
+  it("never sells a 'strongest workable window' under a keep-it-light or sit-out headline", () => {
+    for (let i = 0; i < res60.allDays.length; i++) {
+      const r = readingOf(i);
+      if (!r.bestHourLine) continue;
+      const downbeatHeadline = /keep it light|sit out|best avoided/.test(r.headline);
+      if (downbeatHeadline) expect(r.bestHourLine).toContain("least-bad");
+      else expect(r.bestHourLine).toContain("strongest workable");
+    }
+  });
+
+  it("the leans-your-way priority sentence never splices an area reason after it", () => {
+    for (let i = 0; i < res60.allDays.length; i++) {
+      for (const area of ["career", "wealth", "relationship", "health"] as LifeAreaKey[]) {
+        const r = personalDayReading({ chart, rec: res60.allDays[i], leadArea: area });
+        const m = r.paragraphs[1]?.match(/the day leans your way[^.]*\./);
+        if (m) expect(m[0]).toMatch(/the day leans your way( there)?\./);
+      }
+    }
+  });
+
+  it("a clash day always carries a caution", () => {
+    const clashDays = res60.allDays
+      .map((d, i) => ({ d, i }))
+      .filter(({ d }) => d.shenShaTags.some((t) => t.code.startsWith("clash_")));
+    expect(clashDays.length).toBeGreaterThan(0);
+    for (const { d, i } of clashDays) {
+      const r = readingOf(i);
+      expect(r.cautions.length).toBeGreaterThanOrEqual(1);
+      expect(r.cautions.length).toBeLessThanOrEqual(2);
+      // When no stronger calendar taboo shares the day, the clash itself is named.
+      const taboo = d.rulesFired.some((x) => x.code === "year_break" || x.code === "four_departure" || x.code === "four_severance");
+      if (!taboo) expect(r.cautions.join(" ")).toMatch(/沖|birth-year animal/);
+    }
+  });
+
+  it("leadArea present vs absent changes exactly the priority sentence", () => {
+    for (const area of ["career", "wealth", "relationship", "health"] as const) {
+      const base = readingOf(0);
+      const led = readingOf(0, area);
+      expect(led.headline).toBe(base.headline);
+      expect(led.cautions).toEqual(base.cautions);
+      expect(led.bestHourLine).toBe(base.bestHourLine);
+      expect(led.paragraphs[0]).toBe(base.paragraphs[0]);
+      expect(led.paragraphs[1].startsWith(base.paragraphs[1])).toBe(true);
+      expect(led.paragraphs[1].length).toBeGreaterThan(base.paragraphs[1].length);
+      expect(led.paragraphs[1]).toMatch(/the area you've said matters most right now/);
+    }
+  });
+
+  it("a poor day in the leadArea is stated as poor — no upbeat words (pinned rule)", () => {
+    // Pinned rule: leadArea score < LEAD_AREA_POOR (45) → the priority sentence
+    // says "runs weak" and carries none of the upbeat vocabulary.
+    const UPBEAT = /leans your way|good|strong|favourable|flows?|serves|opens?/i;
+    let checked = 0;
+    for (let i = 0; i < res60.allDays.length; i++) {
+      const areas = lifeAreaScores(chart, res60.allDays[i].tongshu.dayGanzhi).areas;
+      for (const a of areas) {
+        if (a.score >= LEAD_AREA_POOR) continue;
+        const base = readingOf(i);
+        const led = readingOf(i, a.key);
+        const leadSentence = led.paragraphs[1].slice(base.paragraphs[1].length).trim();
+        expect(leadSentence).toMatch(/runs weak/);
+        expect(leadSentence).not.toMatch(UPBEAT);
+        checked++;
+      }
+    }
+    // The 60-day cycle must contain at least one genuinely poor area-day
+    // (e.g. a day-branch clash shaking the spouse palace).
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it("never uses predictive phrasing, in any composition", () => {
+    for (let i = 0; i < res60.allDays.length; i++) {
+      for (const area of [undefined, "career", "wealth", "relationship", "health"] as const) {
+        const r = readingOf(i, area);
+        const all = [r.headline, ...r.paragraphs, ...r.cautions, r.bestHourLine ?? ""].join(" ");
+        expect(all).not.toMatch(FORBIDDEN_PREDICTIVE);
+      }
+    }
+  });
+
+  it("keeps the reading short: 2 paragraphs, ≤2 cautions, one hour line", () => {
+    for (let i = 0; i < res60.allDays.length; i++) {
+      const r = readingOf(i, "career");
+      expect(r.paragraphs.length).toBeLessThanOrEqual(3);
+      expect(r.paragraphs.length).toBeGreaterThanOrEqual(2);
+      expect(r.cautions.length).toBeLessThanOrEqual(2);
+      if (r.bestHourLine) expect(r.bestHourLine).toMatch(/window is \d/);
+    }
+  });
+
+  it("the hour line never sells hours on a taboo / severe-clash day", () => {
+    const steered = res60.allDays
+      .map((d, i) => ({ d, i }))
+      .filter(
+        ({ d }) =>
+          d.rulesFired.some((x) => x.code === "year_break" || x.code === "four_departure" || x.code === "four_severance") ||
+          d.shenShaTags.some((t) => t.code === "clash_day" || t.code === "clash_hour"),
+      );
+    expect(steered.length).toBeGreaterThan(0);
+    for (const { i } of steered) {
+      const r = readingOf(i);
+      if (r.bestHourLine) {
+        expect(r.bestHourLine).toMatch(/least-bad window/);
+        expect(r.bestHourLine).not.toMatch(/strongest workable/);
+      }
+      expect(r.headline).toMatch(/pushes against|keep it light|sit out/);
+    }
+  });
+
+  it("is deterministic — identical inputs, identical prose", () => {
+    const again = evaluateDecision(reqFor(15, 60));
+    for (const i of [0, 7, 23, 41, 59]) {
+      const a = personalDayReading({ chart, rec: res60.allDays[i], leadArea: "wealth" });
+      const b = personalDayReading({ chart: again.subjectChart!, rec: again.allDays[i], leadArea: "wealth" });
+      expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     }
   });
 });
