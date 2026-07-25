@@ -10,6 +10,8 @@ import { PeriodsPanel } from "../ui/PeriodsPanel.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { useAuth } from "../ui/profile/AuthContext.tsx";
 import { PeoplePanel } from "../ui/profile/PeoplePanel.tsx";
+import { PrioritiesPanel } from "../ui/priorities/PrioritiesPanel.tsx";
+import { BackupPanel } from "../ui/BackupPanel.tsx";
 import { DEFAULT_TZ, TODAY_ISO } from "../ui/shared.ts";
 
 /** Profile home base — sign in (when Firebase is configured), set/replace the
@@ -80,6 +82,12 @@ export function ProfilePage() {
         onClear={() => setPerson(null)}
       />
 
+      {/* The other half of "who you are": the chart is fixed at birth, this is
+          what you're working on now. High on the page because it's a profile
+          fact, not a setting — and harmless when left empty. It only ever
+          reorders what's surfaced; no day's classical score depends on it. */}
+      <PrioritiesPanel />
+
       {/* Adding *other* people only makes sense once there's a "you" to compare
           against — offering it first reads as a confusing second empty slot. */}
       {people.length > 0 && <PeoplePanel />}
@@ -126,6 +134,9 @@ export function ProfilePage() {
 
       {/* The most-disputed calculation in this field, shown as working. */}
       {chart && timeChain && <TimeChain {...timeChain} />}
+
+      {/* Your data, in your hands — take a copy out, put one back. */}
+      <BackupPanel />
 
       <HowItWorks />
     </>

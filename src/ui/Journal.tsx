@@ -1,13 +1,37 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { relativeDay, shortDate } from "../engine/index.ts";
 import { EventOutcome, JournalEntry, feedbackSummary } from "./journalStore.ts";
 import { scoreColor, scoreTextColor } from "./format.ts";
+import { AreaSignal, deriveSignals } from "./priorities/deriveSignals.ts";
+import { areaSignalId, dismissSignal, loadDismissed } from "./priorities/dismissedSignals.ts";
+import {
+  MAX_INTENTIONS,
+  MAX_INTENTION_CHARS,
+  PRIORITY_AREAS,
+  PriorityProfile,
+  acceptSignal,
+  addArea,
+  hasAcceptedSignal,
+  loadPriorities,
+  savePriorities,
+  setIntention,
+} from "./priorities/prioritiesStore.ts";
 
 const RATINGS: EventOutcome["rating"][] = ["great", "good", "mixed", "poor"];
 const RATING_LABEL: Record<EventOutcome["rating"], string> = { great: "Great", good: "Good", mixed: "Mixed", poor: "Poor" };
 
-/** The saved-decisions log with outcome logging (Phase 7). */
+/** The wording the user sees on the card — and, if they accept, exactly what is
+ *  stored as the accepted signal's label. No re-phrasing after the fact. */
+const signalLabel = (s: AreaSignal) => `${s.label} is a priority right now`;
+
+/** The saved-decisions log with outcome logging (Phase 7), plus the forward-looking
+ *  half of the loop (Phase 10): what the journal SUGGESTS you care about, and what
+ *  you say you're working on.
+ *
+ *  Suggestions are suggestions. Nothing is written to the priority profile without
+ *  an explicit press of Add — the app never infers a durable fact about someone
+ *  from their behaviour and quietly keeps it. */
 export function Journal({
   entries,
   todayIso,
@@ -27,6 +51,42 @@ export function Journal({
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [outcomeFor, setOutcomeFor] = useState<string | null>(null);
+  // Priorities are the user's own data, edited on the profile page too; this panel
+  // reads a snapshot and writes through the same store.
+  const [priorities, setPriorities] = useState<PriorityProfile>(() => loadPriorities());
+  const [dismissed, setDismissed] = useState<string[]>(() => loadDismissed());
+  const [intentDraft, setIntentDraft] = useState("");
+
+  // Everything the app must not ask about again: areas already ranked, areas the
+  // user dismissed, and areas already accepted from a suggestion. Excluding them
+  // INSIDE deriveSignals matters — filtering afterwards would drop cards that had
+  // already used up the two-card cap, so a qualifying third area could never
+  // surface however much evidence it had.
+  const excluded = useMemo(() => {
+    const settled = PRIORITY_AREAS.map((a) => a.key).filter(
+      (k) => dismissed.includes(areaSignalId(k)) || hasAcceptedSignal(priorities, areaSignalId(k)),
+    );
+    return [...priorities.areas, ...settled];
+  }, [priorities, dismissed]);
+  // Pure derivation — same entries in, same suggestions out.
+  const signals = useMemo(() => deriveSignals(entries, { exclude: excluded }), [entries, excluded]);
+  const cards = signals.suggestions;
+  const intentionsFull = priorities.intentions.length >= MAX_INTENTIONS;
+
+  const addPriority = (s: AreaSignal) => {
+    const now = Date.now(); // UI wall clock — never read by the engine
+    const next = acceptSignal(addArea(priorities, s.area), { id: areaSignalId(s.area), label: signalLabel(s), source: "journal" }, now);
+    setPriorities(savePriorities(next, now));
+  };
+  const dismissCard = (s: AreaSignal) => setDismissed(dismissSignal(areaSignalId(s.area)));
+  const saveIntention = () => {
+    const t = intentDraft.trim();
+    if (!t || intentionsFull) return;
+    setPriorities(savePriorities(setIntention(priorities, priorities.intentions.length, t), Date.now()));
+    setIntentDraft("");
+  };
+  const clearIntention = (i: number) => setPriorities(savePriorities(setIntention(priorities, i, ""), Date.now()));
+
   if (entries.length === 0) return null;
 
   const civilOf = (iso: string) => {
@@ -57,6 +117,77 @@ export function Journal({
           <div style={{ fontSize: 11.5, color: "var(--faint)", marginTop: 5, lineHeight: 1.45 }}>{summary.disclaimer}</div>
         </div>
       )}
+
+      {/* ── What your journal SUGGESTS you care about (suggestion, never inference) ── */}
+      {cards.length > 0 && (
+        <section aria-label="Suggested priorities from your journal" style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+          {cards.map((s) => (
+            <div key={s.area} style={{ border: "1px dashed var(--hairline)", borderRadius: 10, padding: "10px 12px", background: "var(--surface-1)" }}>
+              <div style={{ fontSize: 13.5, color: "var(--ink)", lineHeight: 1.5 }}>
+                Your journal suggests <b>{s.label.toLowerCase()}</b> matters most right now — add it to your priorities?
+              </div>
+              <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>{s.evidence}</div>
+              <div style={{ display: "flex", gap: 12, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <button className="btn" style={{ maxWidth: 200, padding: "6px 14px" }} onClick={() => addPriority(s)}>
+                  Add {s.label.toLowerCase()} to my priorities
+                </button>
+                <button className="btn-text" onClick={() => dismissCard(s)}>Not right now</button>
+              </div>
+            </div>
+          ))}
+          <div style={{ fontSize: 11.5, color: "var(--faint)", lineHeight: 1.45 }}>{signals.note}</div>
+        </section>
+      )}
+
+      {/* ── The forward-looking counterpart to the outcome log ── */}
+      <section aria-label="What you're working on" style={{ border: "1px solid var(--hairline)", borderRadius: 10, padding: "10px 12px", marginBottom: 12 }}>
+        <div style={{ fontSize: 13.5, color: "var(--ink)", fontWeight: 600 }}>What are you working on?</div>
+        <p style={{ margin: "4px 0 8px", fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>
+          The outcome log looks back. This looks forward — one line about what you're pushing on now. It changes what the
+          app puts in front of you first, and never a day's classical score.
+        </p>
+        <p style={{ margin: "0 0 8px", fontSize: 11.5, color: "var(--faint)", lineHeight: 1.45 }}>
+          Worth knowing: what you write here is stored in this browser, and — unlike the rest of your journal — it is
+          sent word-for-word to the AI advisor if you use it, because sharing intentions is on by default.{" "}
+          <Link className="btn-text" style={{ padding: 0 }} to="/settings/profile">
+            Change what the advisor may see ›
+          </Link>
+        </p>
+        {priorities.intentions.length > 0 && (
+          <ul style={{ listStyle: "none", margin: "0 0 8px", padding: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            {priorities.intentions.map((it, i) => (
+              <li key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink)" }}>
+                <span aria-hidden="true" style={{ color: "var(--faint)" }}>→</span>
+                <span style={{ flex: 1 }}>{it}</span>
+                <button className="btn-text" style={{ color: "var(--cinnabar)" }} aria-label={`Remove intention: ${it}`} onClick={() => clearIntention(i)}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {intentionsFull ? (
+          <div style={{ fontSize: 11.5, color: "var(--faint)", lineHeight: 1.45 }}>
+            Two at a time — remove one to add another. More than that stops being an intention and starts being a diary.
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              className="qa-input"
+              style={{ flex: 1 }}
+              value={intentDraft}
+              maxLength={MAX_INTENTION_CHARS}
+              placeholder="e.g. raising a seed round before the autumn"
+              aria-label="What are you working on right now?"
+              onChange={(ev) => setIntentDraft(ev.target.value)}
+              onKeyDown={(ev) => ev.key === "Enter" && saveIntention()}
+            />
+            <button className="btn-ghost" style={{ width: "auto", padding: "4px 12px" }} disabled={!intentDraft.trim()} onClick={saveIntention}>
+              Save
+            </button>
+          </div>
+        )}
+      </section>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {entries.map((e) => {

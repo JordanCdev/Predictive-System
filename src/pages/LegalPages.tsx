@@ -1,10 +1,13 @@
 /**
  * Privacy notice and terms of use.
  *
- * These describe what the app actually does — client-side computation, optional
- * account sync, Stripe-handled payments, and a chat feature that sends a derived
- * chart summary to Anthropic. Keep them accurate: if the data flows change, these
- * change with them.
+ * These describe what the app actually does — client-side computation, local-only
+ * storage (accounts and cloud sync are implemented but not configured, so they are
+ * described in the conditional), Stripe-handled payments, free data export/import,
+ * and a chat feature that sends a derived chart summary plus per-field-consented
+ * priority context to Anthropic. Keep them accurate: if the data flows change,
+ * these change with them. In particular: raw journal note text is never sent to
+ * the model, there is no toggle for it, and no wording here may imply otherwise.
  *
  * NOTE FOR THE OPERATOR: this is plain-English, accurate documentation of the
  * product's behaviour, not legal advice. Before taking payments in a given
@@ -17,7 +20,7 @@ import { Link } from "react-router-dom";
 const CONTACT = {
   service: "Wéi",
   email: "support@example.com",
-  updated: "19 July 2026",
+  updated: "25 July 2026",
 };
 
 function LegalShell({ title, children }: { title: string; children: React.ReactNode }) {
@@ -40,23 +43,26 @@ export function PrivacyPage() {
   return (
     <LegalShell title="Privacy">
       <p className="legal-lede">
-        The short version: the calculations happen in your browser. Your birth details stay on your device unless you
-        create an account, and we never sell anything to anyone.
+        The short version: the calculations happen in your browser, your data stays on your device, and we never sell
+        anything to anyone.
       </p>
 
       <h3>What we store, and where</h3>
       <ul>
         <li>
-          <b>Without an account.</b> Your birth details, saved people and decision journal live in your browser's local
-          storage. They are not transmitted to us, and clearing your browser data deletes them.
+          <b>Today, everything is local.</b> Your birth details, saved people, life priorities and decision journal live
+          in your browser's local storage. They are not transmitted to us, and clearing your browser data deletes them.
+          Accounts and cloud sync are built but <b>not switched on</b>: there is currently no sign-in on this site and
+          no copy of your data on our servers.
         </li>
         <li>
-          <b>With an account.</b> If you sign in with Google, the same records sync to your private area of our database
-          so you can use them on another device. Only you can read them; access is enforced by per-user security rules.
+          <b>If we do turn accounts on,</b> signing in would sync the same records to your private area of our database
+          so you could use them on another device, readable only by you and enforced by per-user security rules. We'd
+          say so here, and in the app, before that happens.
         </li>
         <li>
-          <b>From Google sign-in</b> we receive your name, email address and profile picture. We use them to identify
-          your account and for nothing else.
+          <b>From Google sign-in</b> — once accounts exist — we would receive your name, email address and profile
+          picture, and use them to identify your account and for nothing else.
         </li>
       </ul>
 
@@ -67,6 +73,31 @@ export function PrivacyPage() {
         Anthropic to be turned into prose. Your birth date, birth time and birth city are not part of that summary. The
         model never calculates anything; it explains numbers the engine produced on your device. Anthropic processes the
         request under their own terms as our processor.
+      </p>
+      <p>
+        If you have filled in a priority profile, four further fields can travel with that summary — but each one{" "}
+        <b>only to the extent you have enabled it</b> on the profile page, where you can see and change every switch:
+      </p>
+      <ul>
+        <li>
+          <b>Your ranked life areas</b> — the areas you told the app matter to you, in your order. <i>On by default.</i>
+        </li>
+        <li>
+          <b>Your stated intentions</b> — sent <b>word-for-word, as you wrote them</b>. <i>On by default.</i>
+        </li>
+        <li>
+          <b>Your optional life context</b> — the free-text note about your situation, sent as written.{" "}
+          <i>Off by default.</i>
+        </li>
+        <li>
+          <b>Aggregate journal counts</b> — how many decisions you've saved, how many fall in each life area, how many
+          you followed up. Numbers only. <i>Off by default.</i>
+        </li>
+      </ul>
+      <p>
+        <b>The text of your journal notes is never sent to the model under any setting.</b> There is no switch that
+        turns it on, because it never leaves your device. A field you haven't enabled is simply absent from what we
+        send, and the model is told it was withheld so it doesn't guess.
       </p>
 
       <h3>Payments</h3>
@@ -80,14 +111,26 @@ export function PrivacyPage() {
       <ul>
         <li>No advertising, no ad tracking, no third-party analytics that profile you across sites.</li>
         <li>No selling, renting or sharing of personal data.</li>
-        <li>No use of your birth details or journal to train any model.</li>
+        <li>No use of your birth details, priorities or journal to train any model.</li>
       </ul>
 
       <h3>Your control</h3>
       <ul>
-        <li>Remove any stored person, or your whole profile, from the profile page at any time.</li>
-        <li>Deleting your account removes the records held against it. Ask us by email and we'll action it.</li>
-        <li>You can export a reading as a report at any time, and use the app entirely offline without an account.</li>
+        <li>Remove any stored person, your priority profile, or any journal entry, from the profile page at any time.</li>
+        <li>
+          <b>Take your data with you.</b> The profile page has a free export that downloads everything the app holds —
+          people, priorities and journal — as a single JSON file you keep. You can restore it on any device, merging it
+          into what's there or replacing it outright. Your API key is deliberately excluded from the file.
+        </li>
+        <li>
+          Every AI-sharing switch described above is on that same page, and turning one off takes effect on your next
+          question.
+        </li>
+        <li>The app works entirely offline, and there is no account to create.</li>
+        <li>
+          If we later enable accounts, deleting yours would remove the records held against it; email us and we'll
+          action it.
+        </li>
         <li>
           Depending on where you live you may have rights to access, correct, export or erase your data. Email us and
           we'll help.
@@ -96,8 +139,9 @@ export function PrivacyPage() {
 
       <h3>Retention</h3>
       <p>
-        Account records are kept while your account exists. Billing records are kept as long as tax and accounting law
-        requires. Local-only data is kept until you clear it.
+        Your data is local-only today, so it is kept until you clear it — by us, not at all. Billing records are kept as
+        long as tax and accounting law requires. If accounts are enabled later, account records would be kept while the
+        account exists.
       </p>
     </LegalShell>
   );

@@ -10,20 +10,36 @@ import {
   practicalBestHour,
 } from "../engine/index.ts";
 import { scoreColor, scoreTextColor, valenceColor, valenceOfScore } from "./format.ts";
+import { useRankedAreas } from "./PriorityFitChip.tsx";
 
 // ── Life-area gauges (career / wealth / relationship / health) ───────────────
 
 const AREA_ICON: Record<string, string> = { career: "💼", wealth: "💰", relationship: "❤", health: "☯" };
 
+/**
+ * Put the areas the user ranked first, in their order, then everything else in
+ * the engine's fixed order. ORDERING ONLY — no gauge's score or reason text is
+ * touched, and a user with no priorities sees exactly the previous layout.
+ */
+function orderByPriority(areas: LifeAreaScore[], ranked: readonly string[]): LifeAreaScore[] {
+  if (ranked.length === 0) return areas;
+  const first = ranked.map((k) => areas.find((a) => a.key === k)).filter((a): a is LifeAreaScore => Boolean(a));
+  return [...first, ...areas.filter((a) => !first.includes(a))];
+}
+
 export function LifeAreaGauges({ chart, dayGz, compact }: { chart: BaziChart; dayGz: DayRecommendation["tongshu"]["dayGanzhi"]; compact?: boolean }) {
   const reading = useMemo(() => lifeAreaScores(chart, dayGz), [chart, dayGz]);
+  const ranked = useRankedAreas();
+  const ordered = useMemo(() => orderByPriority(reading.areas, ranked), [reading, ranked]);
+  const topKey = ranked.length > 0 ? ordered[0]?.key : null;
   const [open, setOpen] = useState<string | null>(null);
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8 }}>
-        {reading.areas.map((a: LifeAreaScore) => {
+        {ordered.map((a: LifeAreaScore) => {
           const col = valenceColor(valenceOfScore(a.score));
           const isOpen = open === a.key;
+          const isTop = a.key === topKey;
           return (
             <button
               key={a.key}
@@ -32,7 +48,7 @@ export function LifeAreaGauges({ chart, dayGz, compact }: { chart: BaziChart; da
               style={{
                 textAlign: "left",
                 cursor: "pointer",
-                border: `1px solid ${isOpen ? col : "var(--hairline)"}`,
+                border: `1px solid ${isOpen ? col : isTop ? "var(--gold)" : "var(--hairline)"}`,
                 background: "var(--surface-2)",
                 borderRadius: 10,
                 padding: compact ? "7px 9px" : "9px 11px",
@@ -40,10 +56,14 @@ export function LifeAreaGauges({ chart, dayGz, compact }: { chart: BaziChart; da
                 flexDirection: "column",
                 gap: 5,
               }}
-              title={a.reason}
+              title={isTop ? `${a.reason} — this is the area you ranked first; only the order changes, not the score.` : a.reason}
             >
               <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12.5, color: "var(--ink)" }}>
-                <span><span aria-hidden="true" style={{ marginRight: 5 }}>{AREA_ICON[a.key]}</span>{a.label} <span style={{ color: "var(--faint)", fontSize: 11 }}>{a.hanzi}</span></span>
+                <span>
+                  <span aria-hidden="true" style={{ marginRight: 5 }}>{AREA_ICON[a.key]}</span>{a.label}{" "}
+                  <span style={{ color: "var(--faint)", fontSize: 11 }}>{a.hanzi}</span>
+                  {isTop && <span style={{ color: "var(--gold-text)", fontSize: 10.5, marginLeft: 4 }}>· your #1</span>}
+                </span>
                 <b style={{ color: scoreTextColor(a.score), fontSize: 13 }}>{a.score}</b>
               </span>
               <span style={{ height: 5, borderRadius: 5, background: "var(--hairline)", overflow: "hidden", display: "block" }}>
@@ -54,6 +74,11 @@ export function LifeAreaGauges({ chart, dayGz, compact }: { chart: BaziChart; da
           );
         })}
       </div>
+      {ranked.length > 0 && (
+        <div style={{ marginTop: 7, fontSize: 11.5, color: "var(--faint)", lineHeight: 1.45 }}>
+          Ordered by the priorities you set, your #1 marked.{!compact && " Ordering is a preference of yours, not classical doctrine — every gauge's score and reading is exactly what it would be otherwise."}
+        </div>
+      )}
       <div className="disclaimer" style={{ marginTop: 8 }}>{reading.disclaimer}</div>
     </div>
   );

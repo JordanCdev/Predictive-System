@@ -256,5 +256,137 @@ The disclaimer is **baked in, not optional** (`plainEnglish.ts`, surfaced by `co
 
 ---
 
+## 10. The person layer — priorities, and what they may and may not touch (2026-07-25)
+
+Phase 12 adds a **person** around the chart: stated priorities, journal-derived
+suggestions, and a portable copy of everything. That introduces a new class of input —
+things the *user asserts about themselves* — into an app whose entire credibility rests on
+the score being a function of doctrine. This section records how that was resolved and why.
+
+### 10.1 Stated priorities NEVER alter the classical day score
+
+**Decision.** `recommendationScore` remains a strict function of **chart + date +
+objective + doctrine**. Nothing a user says about their priorities enters it. Priorities may
+only (a) change what is **surfaced** and in what order, (b) appear as a **separate,
+visibly-labelled "priority fit" axis** shown alongside the classical score, and (c) be
+passed to the advisor as context.
+
+**Reasoning.** This is the deep-research report's headline recommendation, and it follows
+directly from §6 and §9 of this document. The 0–100 score is already an admitted heuristic
+(§6); its one remaining virtue is that it is *the same heuristic for everyone*. Fold
+priorities into it and three things break at once:
+
+1. **Comparability dies.** A "72" would no longer mean the same thing between two users, or
+   for the same user before and after editing their priorities. Every claim in §9 about
+   reproducibility survives literally (the hash still binds inputs to outputs) while becoming
+   useless in practice — the number would move because the user's mood about their career
+   moved, not because the day changed.
+2. **The doctrine story becomes unfalsifiable.** §4 exists so a skeptical reader can trace a
+   disagreement with another BaZi site to a named convention. A preference-weighted score has
+   no such audit trail: "your number differs because of you" is not a convention, it is noise.
+3. **It reads as gamed.** Users who discover that stating "I care about wealth" raises wealth
+   days correctly conclude the app is agreeing with them rather than reading the day. The
+   feature would destroy the thing it was meant to personalize.
+
+The separate axis gets the same value without the cost: the classical number says what the
+tradition marks, the priority-fit number says how well that maps to what you said matters,
+and the user sees both and does the reconciling. **The priority-fit axis is explicitly a
+modern product feature and is labelled as such in the UI — it is not classical doctrine and
+no text is permitted to imply that it is.** Ordering the list by fit is fine; changing the
+number is not.
+
+*Enforcement:* `src/engine/decision.ts` scoring takes no priorities input. If a future change
+adds one, this decision has been reversed, and §6/§9 above are no longer accurate.
+
+### 10.2 Tier placement — the person layer is FREE
+
+**Decision.** Data export/import, the priority profile, the priority-fit axis, and
+journal-derived suggestions are all **Free**. No existing Pro gate was removed (horizon
+length, `year_forecast`, `luck_pillars`, `reasoning_dossier`, `.ics`/HTML report export,
+`multi_profile`, `group` are unchanged).
+
+**Reasoning.** The settled rule (Phase 9) is *paid tiers buy range, breadth and storage —
+never the correctness, transparency or honesty of a reading*, and each of these falls on the
+free side of it:
+
+- **Export/import** is portability, which is a right, not a product. Charging to leave — or
+  worse, charging to *not lose your data* — is the same category error Phase 10 corrected
+  when the reasoning dossier's honesty half was moved out from behind the paywall. It also
+  has to ship *before* accounts, precisely so nobody is ever forced to sign up to keep their
+  own data.
+- **The priority profile** is basic personalization, the ante for the app being about you at
+  all. Gating it would mean the free app knows your birth chart but refuses to know what you
+  are trying to do with it.
+- **The priority-fit axis** is transparency — it is the visible alternative to the thing we
+  refused to do in §10.1. Hiding it behind Pro would leave free users with only the opaque
+  option and would make the honest design look like an upsell.
+- **Journal-derived suggestions** are free because the correct lever is already pulled
+  elsewhere: journal **volume** is plan-capped. Capping the *insight* as well would charge
+  twice for one resource, and would gate the reflective feedback loop that makes the journal
+  worth keeping.
+
+Accounts themselves are likewise not a paid feature, and are not planned to become one.
+
+### 10.3 Journal-derived signals are suggest-and-confirm, never silent inference
+
+**Decision.** The engine may notice patterns in journal entries ("most of your saved
+decisions are career-shaped") and may **suggest** a corresponding priority. It must never
+write a durable fact about the user without the user accepting it. Every derived item is
+shown as a proposal, is attributable to the entries that produced it, and is declinable and
+reversible.
+
+**Reasoning.** The report is explicit on this and it matches the app's existing posture. §7
+of this document refuses to claim predictive accuracy; quietly inferring durable traits from
+behaviour would be the same overreach one layer up — asserting something about the *person*
+on evidence far weaker than the pillars. It is also the specific mechanic that makes
+personalization feel surveillant rather than attentive: users tolerate a system that asks and
+resent one that concludes. Suggest-and-confirm keeps the profile something the user authored,
+which is also what makes it safe to show them in plain text and export.
+
+### 10.4 AI consent is field-level, and raw journal text is never sent at all
+
+**Decision.** Consent to send profile context to the AI advisor is **per field**, not one
+global switch. There are exactly four fields, each with its own flag:
+
+| field | what leaves the device | default |
+| --- | --- | --- |
+| `areas` | the ranked life areas, in the user's order | **on** |
+| `intentions` | the stated intentions, word-for-word as written | **on** |
+| `context` | the optional free-text life-context note, as written | **off** |
+| `journal` | aggregate journal *counts* — saved decisions, per-area totals, follow-ups | **off** |
+
+**Raw journal note text is never sent, under any setting.** There is no toggle for it and
+there must not be one: it is excluded at the source, not gated. The `journal` flag governs
+only the derived counts. Anything a flag withholds is *absent* from the payload and named in
+`withheld`, so a missing field cannot be quietly hallucinated back in.
+
+**Reasoning.** The advisor is a Claude tool-loop; anything injected as context leaves the
+device. The fields are not equivalent in sensitivity — a derived chart summary is
+categorically different from free-text entries that may mention illness, a relationship, or
+money. A single all-or-nothing toggle forces the user to choose between a useful advisor and
+disclosing their most sensitive field, so most will either over-share or switch the advisor
+off. Field-level consent lets the useful, low-sensitivity context flow while the sensitive
+material stays put, and it makes the disclosure specific enough to actually be informed.
+Defaults carry the weight: `context` is prose the user wrote about their circumstances, and
+journal counts are *inferred behaviour* rather than something the user said — both require an
+affirmative act. The two on-by-default fields are things the user deliberately typed into a
+priority profile whose stated purpose is to inform the advisor.
+
+The note text itself gets a stronger guarantee than a default, because a default is only ever
+one mis-click from being reversed. A user writing "the biopsy is on Thursday" into a private
+journal has not consented to anything by the act of writing it, and no switch on a settings
+page can make that consent informed. So the design removes the choice: the counts are the
+maximum the model can ever see.
+
+*Enforcement:* asserted by test — [`tests/aiTools.test.ts`](../tests/aiTools.test.ts) checks
+the journal block carries counts only and that a note's text never appears anywhere in the
+tool payload. If a future change adds a raw-text path, this decision has been reversed.
+
+This is a client-side control over what is *sent*, and is separate from — and does not
+substitute for — the DPIA that gates expanding **cloud storage** of these fields
+(docs/FIREBASE_SETUP.md §8, docs/ROADMAP.md Phase 12).
+
+---
+
 ### File reference index
 `src/engine/astronomy.ts` · `sexagenary.ts` · `conventions.ts` · `symbols.ts` · `bazi.ts` · `tongshu.ts` · `objectives.ts` · `decision.ts` · `plainEnglish.ts` · `advisor.ts` · `version.ts` · `hash.ts`

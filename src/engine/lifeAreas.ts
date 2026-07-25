@@ -39,7 +39,11 @@ export interface LifeAreaReading {
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
-const AREA_META: Record<LifeAreaKey, { label: string; hanzi: string }> = {
+/** The canonical label + hanzi for each life area. Exported because the UI's
+ *  priority profile, its journal-derived suggestions and the advisor all name
+ *  these areas back to the user — three restatements that would silently drift
+ *  from the gauges if each kept its own copy. */
+export const AREA_META: Record<LifeAreaKey, { label: string; hanzi: string }> = {
   career: { label: "Career", hanzi: "事業" },
   wealth: { label: "Wealth", hanzi: "財富" },
   relationship: { label: "Relationship", hanzi: "感情" },

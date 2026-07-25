@@ -43,6 +43,7 @@ The tools ([`src/ai/tools.ts`](../src/ai/tools.ts)), each a deterministic engine
 | `get_chart_summary` | `analyzeProfile` + chart | Day Master, strength, 用神/忌神 — **no birth data** |
 | `get_natal_chart` | `BaziChart` table lookups | the full chart: four pillars (hanzi + pinyin + animals), hidden stems (藏干) with Ten Gods, Na Yin, palaces, five-element balance, functional element map, seasonal state + rooting, personal stars (天乙貴人/桃花/驛馬) — **free: transparency is never gated** |
 | `get_profile_fits` | `analyzeProfile` | the full ranking of all 11 objectives, best and worst fits with reasons — **free** |
+| `get_priorities` | `sharedForAi` + `deriveSignals` | what the user SAID matters: ranked life areas, stated intentions, optional context, aggregate journal counts — **free**, and field-level consent-gated (below) |
 | `get_luck_pillars` | `buildPeriodsReport` | 大運 decades with theme, valence, which is active (Pro) |
 | `get_period_summary` | `buildPeriodsReport` | 流年 (+ optional 流月): theme, valence, 太歲, tendencies (non-current year: Pro) |
 | `find_best_days` | `evaluateDecision` | ranked days with score, verdict, best hour |
@@ -56,6 +57,52 @@ transparency**: everything about the user's own natal chart is free.
 the streaming loop is tested with a stubbed SSE transport
 ([`tests/aiChatClient.test.ts`](../tests/aiChatClient.test.ts)); the chat-UI helpers
 (date tokens, suggested chips) in [`tests/chatUiHelpers.test.ts`](../tests/chatUiHelpers.test.ts).
+
+## The priority layer — stated goals, field-level consent
+
+The app has always known the user's *chart*. `get_priorities`
+([`src/ui/priorities/prioritiesStore.ts`](../src/ui/priorities/prioritiesStore.ts)) is how it
+learns what they actually **want** — and the guardrails around it are as strict as the
+never-compute rule:
+
+- **Priorities are stated goals, never chart facts.** The system prompt requires the model to
+  attribute them to the user ("you told the app…"), never to the tradition.
+- **Priorities never change a day's score.** `recommendationScore` stays a strict function of
+  chart + date + objective + doctrine. What priorities change is *what gets surfaced first*, plus
+  a separate, clearly-labelled **priority fit** axis shown alongside the classical score. The
+  prompt forbids the model from ever claiming a day rated higher "because it matters to you".
+- **Consent is per field.** `areas`, `intentions`, `context` and `journal` each have their own
+  flag — areas + intentions **on** by default, **context off**, **journal off**. `sharedForAi` is
+  the single gate; the tool never reads the raw profile for output. A field the user hasn't shared
+  is **absent** from the result and named in `withheld`, with an explicit instruction not to guess
+  at it — so a missing field can't be quietly hallucinated back in. `notSet` is reported
+  separately, so "hasn't said" and "won't share" are never conflated.
+- **Raw journal text never leaves the device — and there is no toggle for it.** The `journal` flag
+  gates *aggregate counts only* (`savedDecisions`, per-area totals, how many were followed up),
+  derived by `deriveSignals`; it is off by default because it is *inferred behaviour* rather than
+  something the user said. The notes themselves are excluded at the source, not gated: no setting
+  puts them in the payload. Asserted by test. See [DECISIONS.md §10.4](DECISIONS.md) for why the
+  note text gets a hard exclusion rather than a default.
+- **Suggested chips respect consent too**: a chip naming a withheld field would put it in the
+  transcript by another route, so `ChatPanel` gates the priority chips on the same flags.
+
+### Journal → suggestions (suggest-and-confirm)
+
+[`src/ui/priorities/deriveSignals.ts`](../src/ui/priorities/deriveSignals.ts) is a pure function
+from journal entries to *suggestions*: which life areas someone's saved decisions imply they care
+about. The objective → life-area mapping is **derived from the engine's own metadata** (an
+objective's `godBias`, routed through `lifeAreas.ts`'s Ten-God → area routing, led by its
+`primaryTag` where the almanac activity names a domain the bias can't) rather than being a second
+opinion hardcoded alongside the engine. `general_day` contributes nothing — reading a day says
+nothing about what the reader cares about.
+
+Suggestions need real evidence (≥3 saved decisions overall, ≥3 touching the area, ≥2 whole
+decisions of weight) and always travel with that evidence — *"3 saved decisions point here — 3 ×
+Start a job / accept a role"*. **Nothing is ever written to the profile without an explicit press
+of Add**; "Not right now" is remembered in a separate store
+([`dismissedSignals.ts`](../src/ui/priorities/dismissedSignals.ts)) so a declined suggestion is
+never mistaken for an answer. Tested in
+[`tests/deriveSignals.test.ts`](../tests/deriveSignals.test.ts).
 
 ## Tappable dates
 
@@ -73,6 +120,10 @@ The empty-thread suggestions are built from the user's **actual chart**
 fit (or chart caution), hidden stems, today's reading. A free user is never handed a chip
 whose answer is a paywall — the one Pro-flavoured chip (luck decade) appears for Pro
 users only, marked "Pro".
+
+When priorities are set, `ChatPanel` prepends chips for the user's **top-ranked area** and their
+first **intention** (both free, both consent-gated, list still capped at six), so the panel opens
+on what they said they're working on rather than on what their chart happens to be good at.
 
 ## No key? The chat is never a dead end
 

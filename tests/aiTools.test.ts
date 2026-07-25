@@ -5,6 +5,9 @@ import { ZIPING_DEFAULT } from "../src/engine/conventions.ts";
 import { evaluateDecision } from "../src/engine/decision.ts";
 import { objectiveById } from "../src/engine/objectives.ts";
 import { AI_TOOLS, AiToolContext, executeTool } from "../src/ai/tools.ts";
+import { EMPTY_PRIORITIES, PriorityProfile } from "../src/ui/priorities/prioritiesStore.ts";
+import { deriveSignals } from "../src/ui/priorities/deriveSignals.ts";
+import type { JournalEntry } from "../src/ui/journalStore.ts";
 
 const birth: MomentInput = { year: 1990, month: 6, day: 15, hour: 14, minute: 30, tzOffsetMinutes: 480 };
 const fp = buildFourPillars(birth, ZIPING_DEFAULT);
@@ -33,7 +36,7 @@ const ctx: AiToolContext = {
 };
 
 describe("AI tool definitions", () => {
-  it("exposes the eight documented tools with input schemas", () => {
+  it("exposes the nine documented tools with input schemas", () => {
     const names = AI_TOOLS.map((t) => t.name).sort();
     expect(names).toEqual(
       [
@@ -43,6 +46,7 @@ describe("AI tool definitions", () => {
         "get_luck_pillars",
         "get_natal_chart",
         "get_period_summary",
+        "get_priorities",
         "get_profile_fits",
         "list_objectives",
       ].sort(),
@@ -159,6 +163,16 @@ describe("executeTool — the deterministic engine bridge", () => {
     expect(bad.error).toMatch(/unknown objectiveId/);
   });
 
+  it("get_priorities says plainly when the user has set nothing", () => {
+    const r = executeTool("get_priorities", {}, ctx) as any;
+    expect(r.hasSharedPriorities).toBe(false);
+    expect(r.notSet.sort()).toEqual(["areas", "context", "intentions", "journal"]);
+    expect(r.withheld).toEqual([]);
+    expect(r.areas).toBeUndefined();
+    expect(r.journal).toBeNull();
+    expect(r.note).toMatch(/NEVER change a day's score/);
+  });
+
   it("returns an error for an unknown tool", () => {
     expect((executeTool("nope", {}, ctx) as any).error).toMatch(/unknown tool/);
   });
@@ -167,5 +181,130 @@ describe("executeTool — the deterministic engine bridge", () => {
     const a = JSON.stringify(executeTool("find_best_days", { objectiveId: "open_business", windowDays: 92 }, ctx));
     const b = JSON.stringify(executeTool("find_best_days", { objectiveId: "open_business", windowDays: 92 }, ctx));
     expect(a).toBe(b);
+  });
+});
+
+// ── get_priorities: field-level consent, and no raw journal text, ever ────────
+
+const priorities = (over: Partial<PriorityProfile> = {}): PriorityProfile => ({
+  ...EMPTY_PRIORITIES,
+  areas: ["career", "wealth"],
+  intentions: ["ship the new pricing page"],
+  context: { occupation: "founder" },
+  aiConsent: { areas: true, intentions: true, context: false, journal: false },
+  updatedAt: Date.UTC(2026, 6, 1),
+  ...over,
+});
+
+const journalEntry = (objectiveId: string, n: number): JournalEntry => ({
+  id: `${objectiveId}:${n}`,
+  objectiveId,
+  objectiveLabel: "Start a job / accept a role / career move",
+  isoDate: `2026-07-0${n}`,
+  weekday: "Monday",
+  score: 61,
+  band: "Good",
+  verdict: "A workable day.",
+  bestHour: null,
+  note: "SECRET-JOURNAL-NOTE",
+  savedAt: 1_700_000_000_000,
+});
+
+const withPriorities = (p: PriorityProfile | undefined, entries: JournalEntry[] = []): AiToolContext => ({
+  ...ctx,
+  priorities: p,
+  journalSignals: () => deriveSignals(entries),
+});
+
+describe("get_priorities — the consent gate", () => {
+  it("returns the fields the user consented to, and only those", () => {
+    const r = executeTool("get_priorities", {}, withPriorities(priorities())) as any;
+    expect(r.hasSharedPriorities).toBe(true);
+    expect(r.areas).toEqual([
+      { rank: 1, key: "career", label: "Career" },
+      { rank: 2, key: "wealth", label: "Wealth" },
+    ]);
+    expect(r.intentions).toEqual(["ship the new pricing page"]);
+    // Context is set but consent for it is off — absent, and flagged.
+    expect(r.context).toBeUndefined();
+    expect(r.withheld).toEqual(["context"]);
+    expect(r.consentNote).toMatch(/NOT consented to share: context/);
+    expect(JSON.stringify(r)).not.toContain("founder");
+  });
+
+  it("withholds every field the user turned off, and never says why it was withheld", () => {
+    const p = priorities({ aiConsent: { areas: false, intentions: false, context: false, journal: false } });
+    const r = executeTool("get_priorities", {}, withPriorities(p)) as any;
+    expect(r.hasSharedPriorities).toBe(false);
+    expect(r.areas).toBeUndefined();
+    expect(r.intentions).toBeUndefined();
+    expect(r.withheld.sort()).toEqual(["areas", "context", "intentions"]);
+    const json = JSON.stringify(r);
+    expect(json).not.toContain("pricing page");
+    expect(json).not.toContain("founder");
+    expect(r.journal).toBeNull();
+  });
+
+  it("distinguishes 'not set' from 'withheld' so the model cannot conflate them", () => {
+    const p = priorities({
+      intentions: [],
+      context: {},
+      aiConsent: { areas: false, intentions: true, context: true, journal: true },
+    });
+    const r = executeTool("get_priorities", {}, withPriorities(p)) as any;
+    expect(r.withheld).toEqual(["areas"]);
+    // Consented to but with an empty journal: "not set", never "withheld".
+    expect(r.notSet.sort()).toEqual(["context", "intentions", "journal"]);
+  });
+
+  it("reports the journal as aggregate counts and NEVER the notes, once consented", () => {
+    const entries = [journalEntry("career_move", 1), journalEntry("career_move", 2), journalEntry("career_move", 3)];
+    const p = priorities({ aiConsent: { areas: true, intentions: true, context: false, journal: true } });
+    const r = executeTool("get_priorities", {}, withPriorities(p, entries)) as any;
+    expect(r.journal.savedDecisions).toBe(3);
+    expect(r.journal.byArea[0]).toEqual({ area: "Career", savedDecisions: 3, withLoggedOutcome: 0 });
+    expect(r.withheld).toEqual(["context"]);
+    expect(JSON.stringify(r)).not.toContain("SECRET-JOURNAL-NOTE");
+  });
+
+  it("never ships the journal aggregate off the DEFAULT profile — the proven leak", () => {
+    // A user who has never opened the priorities panel: loadPriorities() gives
+    // exactly EMPTY_PRIORITIES. Their behaviour must not travel with a payload
+    // that simultaneously reports they shared nothing.
+    const entries = [journalEntry("career_move", 1), journalEntry("career_move", 2), journalEntry("career_move", 3)];
+    const r = executeTool("get_priorities", {}, withPriorities({ ...EMPTY_PRIORITIES }, entries)) as any;
+    expect(r.hasSharedPriorities).toBe(false);
+    expect(r.journal).toBeNull();
+    // It exists but was not consented to — reported as withheld, not as "not set".
+    expect(r.withheld).toEqual(["journal"]);
+    expect(r.notSet.sort()).toEqual(["areas", "context", "intentions"]);
+    const json = JSON.stringify(r);
+    expect(json).not.toContain("SECRET-JOURNAL-NOTE");
+    expect(json).not.toContain("savedDecisions");
+  });
+
+  it("does not let the areas flag stand in for journal consent", () => {
+    const entries = [journalEntry("career_move", 1), journalEntry("career_move", 2)];
+    const areasOnly = priorities({ aiConsent: { areas: true, intentions: true, context: false, journal: false } });
+    expect((executeTool("get_priorities", {}, withPriorities(areasOnly, entries)) as any).journal).toBeNull();
+    // …and the journal flag alone is not the user having STATED anything.
+    const journalOnly = { ...EMPTY_PRIORITIES, aiConsent: { ...EMPTY_PRIORITIES.aiConsent, journal: true } };
+    const r = executeTool("get_priorities", {}, withPriorities(journalOnly, entries)) as any;
+    expect(r.hasSharedPriorities).toBe(false);
+    expect(r.journal.savedDecisions).toBe(2);
+  });
+
+  it("surfaces staleness from the ISO date, with no wall-clock read", () => {
+    const p = priorities({ updatedAt: Date.UTC(2024, 0, 1) }); // ctx.todayIso is 2026-07-08
+    const r = executeTool("get_priorities", {}, withPriorities(p)) as any;
+    expect(r.lastUpdated.needsReview).toBe(true);
+    expect(r.lastUpdated.monthsAgo).toBeGreaterThan(24);
+    const fresh = executeTool("get_priorities", {}, withPriorities(priorities())) as any;
+    expect(fresh.lastUpdated.needsReview).toBe(false);
+  });
+
+  it("is deterministic — identical calls yield identical JSON", () => {
+    const c = withPriorities(priorities(), [journalEntry("career_move", 1)]);
+    expect(JSON.stringify(executeTool("get_priorities", {}, c))).toBe(JSON.stringify(executeTool("get_priorities", {}, c)));
   });
 });

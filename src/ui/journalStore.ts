@@ -32,10 +32,32 @@ export interface JournalEntry {
   verdict: string;
   bestHour: string | null;
   note: string;
-  /** Epoch ms when saved (UI wall-clock — never used by the engine). */
+  /** Epoch ms when first saved (UI wall-clock — never used by the engine).
+   *  This is a CREATION stamp and is deliberately never bumped, so the journal
+   *  keeps its original ordering. For "which copy is newer?" use `updatedAt`. */
   savedAt: number;
+  /**
+   * Epoch ms of the last edit to this entry — a note change, or an outcome being
+   * logged, changed or removed. Absent on entries that have never been edited
+   * (and on everything written by builds before this field existed), so readers
+   * must fall back to `savedAt`.
+   *
+   * This exists because backup/restore has to decide which of two copies of the
+   * same entry is the more recent one. Without a real last-modified stamp,
+   * restoring an older backup would silently overwrite notes edited since.
+   * UI wall-clock only — never an engine input.
+   */
+  updatedAt?: number;
   /** Set once the user records how the decision turned out (Phase 7). */
   outcome?: EventOutcome;
+}
+
+/** When was this entry last meaningfully changed? Falls back to the creation
+ *  stamp for entries written before `updatedAt` existed. */
+export function lastModified(e: JournalEntry): number {
+  const updated = typeof e.updatedAt === "number" && Number.isFinite(e.updatedAt) ? e.updatedAt : 0;
+  const saved = typeof e.savedAt === "number" && Number.isFinite(e.savedAt) ? e.savedAt : 0;
+  return Math.max(updated, saved);
 }
 
 const STORE = "wei_journal_v1";
@@ -86,13 +108,23 @@ export function removeEntry(id: string): JournalEntry[] {
   return persist(loadJournal().filter((e) => e.id !== id));
 }
 
-export function updateNote(id: string, note: string): JournalEntry[] {
-  return persist(loadJournal().map((e) => (e.id === id ? { ...e, note } : e)));
+/** Edit an entry's note. Stamps `updatedAt` so a later restore can tell this
+ *  copy is newer than the one sitting in an old backup file. The clock is a
+ *  parameter so tests stay deterministic. */
+export function updateNote(id: string, note: string, now: number = Date.now()): JournalEntry[] {
+  return persist(loadJournal().map((e) => (e.id === id ? { ...e, note, updatedAt: now } : e)));
 }
 
-export function recordOutcome(id: string, outcome: EventOutcome | null): JournalEntry[] {
+/** Log, change or clear how a decision turned out. Also stamps `updatedAt` —
+ *  in particular a REMOVAL needs a stamp, otherwise restoring an old backup
+ *  would resurrect the outcome the user just deleted. */
+export function recordOutcome(
+  id: string,
+  outcome: EventOutcome | null,
+  now: number = Date.now(),
+): JournalEntry[] {
   return persist(
-    loadJournal().map((e) => (e.id === id ? { ...e, outcome: outcome ?? undefined } : e)),
+    loadJournal().map((e) => (e.id === id ? { ...e, outcome: outcome ?? undefined, updatedAt: now } : e)),
   );
 }
 

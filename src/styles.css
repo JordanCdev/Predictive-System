@@ -3049,3 +3049,269 @@ button {
   opacity: 0.6;
 }
 /* ── end Tong Shu calendar block ─────────────────────────────────────────── */
+
+/* ── priority profile block ("what matters to you right now") ──────────────
+   The one card that carries user *intent* rather than chart data. Visually it
+   sits between the chart cards and the plain forms: card chrome, form controls,
+   no new colour language — priorities must never look like a scoring input,
+   because they never touch a score. ------------------------------------------ */
+.pri-panel {
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.pri-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.pri-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.pri-lede {
+  margin: 5px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 52ch;
+}
+/* The promise the whole feature rests on — quiet, but never hidden. */
+.pri-rule {
+  margin: 12px 0 0;
+  padding: 8px 11px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--gold);
+  border-radius: 8px;
+}
+.pri-nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--warn-ink);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+}
+.pri-nudge span {
+  max-width: 46ch;
+}
+.pri-nudge-btn {
+  width: auto;
+  padding: 6px 14px;
+  flex: none;
+}
+.pri-sub {
+  margin: 20px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pri-help {
+  margin: 4px 0 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 56ch;
+}
+.pri-empty {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--faint);
+  line-height: 1.5;
+}
+.pri-rank {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pri-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 2px;
+  border-top: 1px solid var(--hairline);
+}
+.pri-row:first-child {
+  border-top: none;
+}
+.pri-num {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--hairline-strong);
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--muted);
+}
+.pri-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+.pri-hz {
+  font-family: var(--serif-cjk);
+  font-size: 12.5px;
+  color: var(--faint);
+  margin-left: 7px;
+}
+.pri-move {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.pri-move-btn {
+  width: 34px;
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--hairline-strong);
+  background: var(--surface-1);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1;
+}
+.pri-move-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.pri-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pri-add-row .chip {
+  min-height: 36px;
+  padding: 7px 13px;
+  font-size: 13px;
+}
+/* Reorder feedback for screen readers — the visual change is its own feedback. */
+.pri-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.pri-intentions {
+  display: grid;
+  gap: 11px;
+}
+.pri-context {
+  margin-top: 18px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 8px;
+}
+.pri-context > summary {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+/* The shared .advanced rule hides the native marker, and this summary is bold
+   enough to read as a heading — so give it back an explicit affordance. */
+.pri-context > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 14px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.pri-context[open] > summary::before {
+  content: "▾";
+}
+.pri-sig-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pri-sig {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 6px 2px;
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+  color: var(--ink);
+}
+.pri-sig:first-child {
+  border-top: none;
+}
+.pri-consent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+.pri-consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.pri-consent-row input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--jade-btn);
+}
+.pri-consent-row b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pri-consent-blurb {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 56ch;
+  margin-top: 2px;
+}
+.pri-foot {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+.pri-foot p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--faint);
+  line-height: 1.55;
+}
+/* Its own line, so the 44px tap target doesn't stretch the paragraph's leading. */
+.pri-clear {
+  padding-left: 0;
+  font-size: 12.5px;
+}
+@media (max-width: 420px) {
+  .pri-row {
+    flex-wrap: wrap;
+  }
+  .pri-move {
+    margin-left: auto;
+  }
+}
+/* ── end priority profile block ──────────────────────────────────────────── */

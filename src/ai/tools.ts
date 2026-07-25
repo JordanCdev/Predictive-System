@@ -32,12 +32,24 @@ import {
   verdictBand,
 } from "../engine/index.ts";
 import type { BoundaryAlternative, DayRecommendation, PeriodSummary, PillarReading } from "../engine/index.ts";
+import { areaLabel, freshness, hasStatedSharedContent, sharedForAi } from "../ui/priorities/prioritiesStore.ts";
+import type { PriorityProfile } from "../ui/priorities/prioritiesStore.ts";
+import type { JournalSignals } from "../ui/priorities/deriveSignals.ts";
 
 /** Everything a tool needs to answer, all deterministic and client-side. */
 export interface AiToolContext {
   /** Feature gate, so a tool cannot hand back Pro-only content the UI paywalls.
    *  Defaults to permissive when absent (tests, non-billing deployments). */
   can?: (feature: "luck_pillars" | "year_forecast") => boolean;
+  /** The user's STATED priorities, if they've set any. Never read raw for output:
+   *  `get_priorities` projects it through `sharedForAi`, the store's single
+   *  consent gate. Absent = the user hasn't set any. */
+  priorities?: PriorityProfile;
+  /** Aggregate journal signals, read lazily at tool-call time so the advisor sees
+   *  the current journal. Emitted ONLY under the profile's `journal` consent flag
+   *  (off by default), and then as COUNTS only — the user's journal notes are raw
+   *  personal text and never leave the device under any flag. */
+  journalSignals?: () => JournalSignals;
   /** Both candidate charts when the birth sits on a pillar boundary; empty
    *  otherwise. Surfaced so the advisor cannot narrate an ambiguous chart as if
    *  it were settled. */
@@ -81,6 +93,12 @@ export const AI_TOOLS: AiToolDef[] = [
     name: "get_profile_fits",
     description:
       "How well this chart statically fits EVERY objective the engine can time, ranked best to worst, each with a 0–100 fit and a plain reason. Use for 'what suits me', 'what am I good at', and 'what would be hardest for me'. Fit is about the KIND of move, not a date — pair with find_best_days for timing.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "get_priorities",
+    description:
+      "What the user has SAID matters to them right now: their ranked life areas, one or two stated intentions, and optional life context — plus, only if they have separately opted in, aggregate counts of the decisions they've saved. These are the user's own stated goals, NOT facts about their chart and NOT part of the classical reading. They never change any day's score. Every field has its own consent switch; anything set but not consented to is listed in `withheld` and is absent from the result — never guess what it contains. Call this before giving personal guidance so your advice is aimed at what they actually want.",
     input_schema: { type: "object", properties: {} },
   },
   {
@@ -296,6 +314,63 @@ export function executeTool(name: string, rawInput: unknown, ctx: AiToolContext)
           bestFit: fits[0] ?? null,
           mostDemanding: fits[fits.length - 1] ?? null,
           note: "Fit is a static 0–100 suitability of this chart for each KIND of move — not a date. The chosen day still matters: use find_best_days for timing.",
+        };
+      }
+
+      case "get_priorities": {
+        // FREE, by settled tier decision: knowing what the user wants is not a
+        // paid feature. Consent is enforced by `sharedForAi` — the one gate.
+        const p = ctx.priorities ?? null;
+        const shared = p ? sharedForAi(p) : null;
+        // Derived LOCALLY (deriveSignals is pure and client-side) so "is there a
+        // journal at all" can be reported honestly. Nothing from it is emitted
+        // unless `shared.journal` — the consent flag — says it may be.
+        const sig = ctx.journalSignals ? ctx.journalSignals() : null;
+        const hasJournal = Boolean(sig && sig.totalEntries > 0);
+        const withheld: string[] = [];
+        const notSet: string[] = [];
+        const hasContext = Boolean(p && (p.context.lifeStage || p.context.occupation || p.context.comingUp));
+        const fields: [string, boolean, boolean][] = [
+          ["areas", Boolean(p && p.areas.length > 0), Boolean(p?.aiConsent.areas)],
+          ["intentions", Boolean(p && p.intentions.length > 0), Boolean(p?.aiConsent.intentions)],
+          ["context", hasContext, Boolean(p?.aiConsent.context)],
+          ["journal", hasJournal, Boolean(p?.aiConsent.journal)],
+        ];
+        for (const [name, isSet, consented] of fields) {
+          if (!isSet) notSet.push(name);
+          else if (!consented) withheld.push(name);
+        }
+        // The journal aggregate is DERIVED from behaviour rather than stated, so it
+        // has its OWN consent flag (off by default) — it never rides on the stated
+        // area ranking — and carries counts only. `sharedForAi` remains the one gate.
+        const journal =
+          shared?.journal && sig && hasJournal
+            ? {
+                savedDecisions: sig.totalEntries,
+                byArea: sig.ranked.map((r) => ({ area: r.label, savedDecisions: r.entries, withLoggedOutcome: r.withOutcome })),
+                note: "Aggregate counts only, derived from what the user saved and shared under its own consent switch — their journal notes never leave their device. This is behaviour, not something they told you.",
+              }
+            : null;
+        const [y, m, d] = ctx.todayIso.split("-").map(Number);
+        const age = p ? freshness(p, Date.UTC(y, (m || 1) - 1, d || 1)) : null;
+        return {
+          /** True only when the user has STATED something AND consented to share it.
+           *  The journal flag is a permission over derived behaviour, so it alone
+           *  never makes this true. */
+          hasSharedPriorities: hasStatedSharedContent(shared),
+          areas: shared?.areas ? shared.areas.map((k, i) => ({ rank: i + 1, key: k, label: areaLabel(k) })) : undefined,
+          intentions: shared?.intentions,
+          context: shared?.context,
+          withheld,
+          notSet,
+          consentNote:
+            withheld.length > 0
+              ? `The user has NOT consented to share: ${withheld.join(", ")}. Those fields exist but are deliberately absent — do not guess, infer or ask the engine for them.`
+              : "Nothing the user has set is being withheld.",
+          lastUpdated: age && age.state !== "unset" ? { monthsAgo: age.ageMonths, needsReview: age.needsReview } : null,
+          journal,
+          note:
+            "These are the user's STATED goals, not facts about their chart and not classical doctrine. Priorities NEVER change a day's score — the score stays a strict function of chart, date, objective and doctrine. The app shows a separate, clearly-labelled 'priority fit' axis alongside the classical score; if the user asks whether their priorities changed a rating, say plainly that they did not.",
         };
       }
 

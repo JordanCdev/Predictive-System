@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BaziChart,
@@ -16,7 +16,12 @@ import type { AdvisorAnswer, BoundaryAlternative } from "../engine/index.ts";
 import { useAuth } from "./profile/AuthContext.tsx";
 import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import { buildChatChips } from "./chatChips.ts";
+import type { ChatChip } from "./chatChips.ts";
 import { splitDateTokens } from "./chatDates.ts";
+import { loadJournal } from "./journalStore.ts";
+import { deriveSignals } from "./priorities/deriveSignals.ts";
+import { areaLabel, loadPriorities } from "./priorities/prioritiesStore.ts";
+import type { PriorityProfile } from "./priorities/prioritiesStore.ts";
 import type { AiToolContext } from "../ai/tools.ts";
 import type { ChatMessage, ChatSettings } from "../ai/chatClient.ts";
 
@@ -45,6 +50,7 @@ const TOOL_LABEL: Record<string, string> = {
   get_period_summary: "Looking at that period",
   find_best_days: "Finding your best days",
   evaluate_specific_day: "Checking that day",
+  get_priorities: "Checking what matters to you",
 };
 
 /** Search horizon for the offline (no-key) deterministic advisor. */
@@ -121,15 +127,88 @@ export function ChatPanel({
 
   const settings: ChatSettings = useMemo(() => ({ model, apiKey: apiKey || undefined, proxyUrl: PROXY_URL }), [model, apiKey]);
 
+  // The user's stated priorities. Edited on the profile page and in the journal,
+  // so re-read when this tab regains focus (and on cross-tab writes) rather than
+  // trusting a mount-time snapshot. Storage reads only — nothing here is engine input.
+  const [priorities, setPriorities] = useState<PriorityProfile>(() => loadPriorities());
+  useEffect(() => {
+    const reread = () => setPriorities(loadPriorities());
+    window.addEventListener("focus", reread);
+    window.addEventListener("storage", reread);
+    return () => {
+      window.removeEventListener("focus", reread);
+      window.removeEventListener("storage", reread);
+    };
+  }, []);
+
   const ctx: AiToolContext = useMemo(
-    () => ({ chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary, can }),
-    [chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary, can],
+    () => ({
+      chart,
+      dayun,
+      birth,
+      todayIso,
+      evaluate,
+      evaluateDay,
+      boundary,
+      can,
+      priorities,
+      // Read lazily at tool-call time so the advisor sees the current journal.
+      // Deriving is local and pure; get_priorities only EMITS anything from it
+      // under the profile's own `journal` consent flag, and then counts only —
+      // journal notes never leave the device under any setting.
+      journalSignals: () => deriveSignals(loadJournal()),
+    }),
+    [chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary, can, priorities],
   );
+
+  /**
+   * Exactly what leaves the device when the AI advisor is used, in the user's own
+   * terms. Derived from what they have actually SET and actually CONSENTED to, so
+   * the pre-chat box can't promise "everything else stays on your device" while
+   * `get_priorities` ships their profile off it. Order matches the tool payload.
+   */
+  const sharedWithModel = useMemo(() => {
+    const items: string[] = [];
+    if (priorities.areas.length > 0 && priorities.aiConsent.areas) {
+      items.push(`your ranked life areas (${priorities.areas.map((a) => areaLabel(a)).join(", ")})`);
+    }
+    if (priorities.intentions.length > 0 && priorities.aiConsent.intentions) {
+      items.push("the intentions you wrote, word for word");
+    }
+    const hasContext = Boolean(priorities.context.lifeStage || priorities.context.occupation || priorities.context.comingUp);
+    if (hasContext && priorities.aiConsent.context) {
+      items.push("the optional context you filled in — life stage, occupation, what's coming up");
+    }
+    if (priorities.aiConsent.journal) {
+      items.push("how many decisions you've saved in each life area — counts only, never what they were about");
+    }
+    return items;
+  }, [priorities]);
 
   // Suggested chips come from the user's ACTUAL chart (their top fit, their
   // weakest fit) — and a free user is never handed a chip that paywalls.
   const isPro = can("luck_pillars");
-  const chips = useMemo(() => buildChatChips(chart, isPro), [chart, isPro]);
+  const chips = useMemo(() => {
+    const base = buildChatChips(chart, isPro);
+    // Fold in what they've told us they care about. Free-tier safe by
+    // construction: these route to get_priorities + find_best_days, both free.
+    const mine: ChatChip[] = [];
+    // Consent-gated: a chip that names a field the user chose not to share would
+    // put it in the transcript anyway, which is the same leak by another route.
+    const top = priorities.aiConsent.areas ? priorities.areas[0] : undefined;
+    if (top) {
+      const label = areaLabel(top).toLowerCase();
+      mine.push({
+        label: `What should I watch for ${label}?`,
+        prompt: `${areaLabel(top)} is my top priority right now — what should I be watching for over the next few weeks?`,
+      });
+    }
+    const intention = priorities.intentions[0];
+    if (intention && priorities.aiConsent.intentions) {
+      mine.push({ label: "Timing for what I'm working on", prompt: `I'm working on: ${intention}. When are the supportive windows for that?` });
+    }
+    return [...mine, ...base].slice(0, 6);
+  }, [chart, isPro, priorities]);
 
   // ── Offline deterministic advisor (no key, no proxy — never a dead end) ────
   const profile = useMemo(() => analyzeProfile(chart), [chart]);
@@ -335,8 +414,26 @@ export function ChatPanel({
               <b> never calculates</b>; it calls the same deterministic tools you see here and cites what they return.
             </p>
             <div style={{ margin: "12px 0", padding: "10px 12px", background: "var(--warn-bg)", border: "1px solid var(--warn-border)", borderRadius: 10, fontSize: 12.5, color: "var(--warn-ink)", lineHeight: 1.5 }}>
-              <b>Before you start:</b> chatting sends your question and your <i>derived chart summary</i> (Day Master, elements —
-              not your birth date, time or city) to Anthropic's Claude to explain it. Everything else stays on your device.
+              <b>Before you start:</b> chatting sends the following to Anthropic's Claude so it can explain your reading:
+              <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                <li>your question, and the earlier messages in that chat;</li>
+                <li>
+                  your <i>derived chart summary</i> — Day Master, elements, pillars and the scores this app already
+                  computed on your device. <b>Never</b> your birth date, time or city;
+                </li>
+                {sharedWithModel.map((s) => (
+                  <li key={s}>{s};</li>
+                ))}
+              </ul>
+              <div style={{ marginTop: 6 }}>
+                {sharedWithModel.length === 0
+                  ? "You haven't set anything else the advisor would receive — nothing from your profile or journal is included."
+                  : "Those last items come from your profile and its consent switches — turn any of them off and they stop being sent."}{" "}
+                The text of your journal notes is <b>never</b> sent, under any setting.{" "}
+                <Link className="btn-text" style={{ padding: 0 }} to="/settings/profile">
+                  Review what the advisor may see ›
+                </Link>
+              </div>
             </div>
 
             {!PROXY_URL && (

@@ -240,6 +240,59 @@ Many are partly built already; this is the prioritized backlog.
 > is free; get_natal_chart/get_profile_fits are free; luck_pillars/year_forecast/dossier gates
 > unchanged.
 >
+> **Phase 12 — the person layer (2026-07-25).** Driven by an external deep-research run
+> (`docs/RESEARCH_ACCOUNTS_AND_PERSON_PROFILE.md`) on the gap between a birth *chart* and a
+> *person*: the app knew everything about your pillars and nothing about what you were trying
+> to do with your life. Shipped: a **priority profile** (what actually matters to you, asked
+> rather than inferred); a separate, visibly-labelled **priority-fit axis** shown alongside the
+> classical score; **priority-aware surfacing and ordering** of recommendations; **journal-derived
+> suggestions** offered as proposals you accept or decline; **field-level AI consent** over four
+> fields — areas and intentions on by default, life context and aggregate journal counts off,
+> with raw journal note text never sent under any setting and no toggle offered for it; and
+> **full data export/import** so nobody's data is hostage
+> to one browser. **The central architectural rule:** stated priorities NEVER alter the classical
+> day score — `recommendationScore` stays a strict function of chart + date + objective +
+> doctrine. Priorities may change what is surfaced, add a labelled parallel axis, and inform the
+> advisor; they may not move the number. A preference-weighted score would make a "72"
+> incomparable between users and untraceable to any named convention, which is the one thing
+> §4 of DECISIONS.md exists to prevent. Reasoning in
+> [DECISIONS.md §10](DECISIONS.md). **Tier decisions:** export/import, the priority profile,
+> the priority-fit axis and journal-derived suggestions are all **free** — portability is a
+> right, personalization is the ante, and journal *volume* is already the correct plan-capped
+> lever. No existing Pro gate was removed (horizon length, year_forecast, luck_pillars,
+> reasoning_dossier, .ics/HTML report export, multi_profile, group all unchanged).
+>
+> **Deferred out of Phase 12, and why:**
+> - **Turning accounts on.** Firebase auth, per-user Firestore sync and the ID-token-authenticated
+>   AI proxy are fully implemented and dormant — no `VITE_FIREBASE_*` values are configured and
+>   the repo has no Actions secrets, so the live site has no sign-in at all. **Blocked on the
+>   owner creating a Firebase project**; nobody but a human with Google Cloud console access can
+>   unblock it. Checklist ready in [FIREBASE_SETUP.md](FIREBASE_SETUP.md). Sequencing is
+>   deliberate: export/import shipped *first* so accounts can arrive as an optional
+>   "keep this across devices" upgrade rather than a signup wall.
+> - **The auth ladder beyond Google.** The client implements Google sign-in only, which is fine
+>   for a private beta and **too narrow for a global consumer audience** (uneven Google
+>   penetration across the UK / SE Asia / Chinese-diaspora target markets; inaccessible in
+>   mainland China). Recommended order: guest → **email link (passwordless)** → Google →
+>   passkeys, with **Apple deferred until there is a native app** — the requirement to offer it
+>   bites on native third-party sign-in, not on a web PWA, so it currently costs a developer
+>   membership for no reach email link doesn't already give us. Rationale table in
+>   FIREBASE_SETUP.md §3.
+> - **Calendar sync.** `.ics` export already exists (Pro). One-click **Google Calendar insert** is
+>   the near-term follow-up — it is an OAuth scope and an API call, not new metaphysics, and it
+>   is the single most requested "make this actually usable" affordance in the category.
+>   Deferred here only because it lands naturally with accounts.
+> - **A DPIA.** The research flags a Data Protection Impact Assessment as **required before
+>   cloud storage of sensitive profile/journal fields expands** — birth date/time/place combined
+>   with life priorities, journal text and outcome ratings plausibly reaches special-category
+>   data under UK/EU GDPR. This is a **gate on enabling cloud sync, not on this phase**: Phase 12
+>   is local-only and processes nothing on our servers. Field-level AI consent (above) is a
+>   separate, client-side control over what is *sent* and does not substitute for it.
+> - **Pricing.** The report observes that comparable consumer apps in this category sit around
+>   **£9–£15/month** against our current **£7** Pro. Recorded as an observation and an **OWNER
+>   decision** — no price was changed, and none should be changed as a side effect of an
+>   engineering phase.
+>
 > > **Phase 9 — commercial readiness:** Free/Pro plans with a shared, drift-guarded catalogue
 > (`src/billing/plans.ts`), Stripe Checkout + customer portal + webhook-driven entitlements,
 > server-side AI quota metering, a public landing/pricing surface, privacy & terms, PWA

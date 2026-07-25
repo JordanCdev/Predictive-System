@@ -13,6 +13,7 @@ import {
 import { AlmanacPanel } from "../ui/AlmanacPanel.tsx";
 import { DayHero } from "../ui/DayHero.tsx";
 import { DayInsights, HourGrid } from "../ui/DayInsights.tsx";
+import { PriorityFitChip } from "../ui/PriorityFitChip.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { TODAY_ISO, addDaysIso, buildRequest, civilOfIso, isValidIso } from "../ui/shared.ts";
@@ -89,6 +90,11 @@ export function DailyPage() {
       {primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} compact />}
 
       <DayHero rec={rec} />
+
+      {/* A SEPARATE axis, never a modifier: what the user says they care about
+          changes what we surface and in what order, never the classical score.
+          Renders nothing at all when no priorities are set. */}
+      {chart && <PriorityFitChip chart={chart} rec={rec} />}
 
       <div style={{ display: "flex", gap: 14, margin: "10px 2px 12px", fontSize: 13 }}>
         <Link className="btn-text" to={`/week/${iso}`}>This week ›</Link>
