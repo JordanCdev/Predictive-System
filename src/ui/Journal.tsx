@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { relativeDay, shortDate } from "../engine/index.ts";
 import { EventOutcome, JournalEntry, feedbackSummary } from "./journalStore.ts";
 import { scoreColor, scoreTextColor } from "./format.ts";
@@ -17,7 +18,8 @@ export function Journal({
 }: {
   entries: JournalEntry[];
   todayIso: string;
-  onOpen: (objectiveId: string) => void;
+  /** Reopen the reading this entry was saved from, landing on its saved day. */
+  onOpen: (objectiveId: string, isoDate: string) => void;
   onRemove: (id: string) => void;
   onNote: (id: string, note: string) => void;
   onOutcome: (id: string, outcome: EventOutcome | null) => void;
@@ -97,7 +99,8 @@ export function Journal({
                 <OutcomeForm entry={e} onCancel={() => setOutcomeFor(null)} onSave={(o) => { onOutcome(e.id, o); setOutcomeFor(null); }} />
               ) : (
                 <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
-                  <button className="btn-text" style={{ paddingLeft: 0 }} onClick={() => onOpen(e.objectiveId)}>Open reading ›</button>
+                  <button className="btn-text" style={{ paddingLeft: 0 }} onClick={() => onOpen(e.objectiveId, e.isoDate)}>Open reading ›</button>
+                  <Link className="btn-text" style={{ textDecoration: "none" }} to={`/day/${e.isoDate}`}>View day ›</Link>
                   <button className="btn-text" onClick={() => { setEditing(e.id); setDraft(e.note); }}>{e.note ? "Edit note" : "Add note"}</button>
                   {past && <button className="btn-text" onClick={() => setOutcomeFor(e.id)}>{e.outcome ? "Edit outcome" : "How did it go?"}</button>}
                   <button className="btn-text" style={{ color: "var(--cinnabar)", marginLeft: "auto" }} onClick={() => onRemove(e.id)}>Remove</button>

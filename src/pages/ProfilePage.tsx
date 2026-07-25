@@ -1,19 +1,23 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CONVENTION_PRESETS } from "../engine/index.ts";
+import { CONVENTION_PRESETS, objectivePlain } from "../engine/index.ts";
 import { Person, PersonalizeCard } from "../ui/PersonalizeCard.tsx";
 import { YourChart } from "../ui/YourChart.tsx";
 import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { TimeChain } from "../ui/TimeChain.tsx";
 import { HowItWorks } from "../ui/HowItWorks.tsx";
+import { ProfilePanel } from "../ui/ProfilePanel.tsx";
+import { PeriodsPanel } from "../ui/PeriodsPanel.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { useAuth } from "../ui/profile/AuthContext.tsx";
 import { PeoplePanel } from "../ui/profile/PeoplePanel.tsx";
-import { DEFAULT_TZ } from "../ui/shared.ts";
+import { DEFAULT_TZ, TODAY_ISO } from "../ui/shared.ts";
 
-/** Profile & settings — sign in (when Firebase is configured), then set/replace the
- *  stored birth chart. Without Firebase it's stored only in this browser. */
+/** Profile home base — sign in (when Firebase is configured), set/replace the
+ *  stored birth chart, then read the full chart, insights, fit ranking and luck
+ *  timeline in one place. Without Firebase it's stored only in this browser. */
 export function ProfilePage() {
-  const { person, setPerson, chart, dayun, currentAge, warnings, people, boundary, primaryPillars, timeChain } = useProfile();
+  const { person, setPerson, chart, dayun, currentAge, warnings, people, boundary, primaryPillars, timeChain, birthCivil, evaluate, personalized } =
+    useProfile();
   const { enabled, user, signIn, signOut, error } = useAuth();
   const [params] = useSearchParams();
   const nav = useNavigate();
@@ -85,6 +89,40 @@ export function ProfilePage() {
       {chart && primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} />}
 
       {chart && <YourChart chart={chart} dayun={dayun} currentAge={currentAge} boundaryWarnings={warnings} />}
+
+      {/* Profile insights — headline, traits, top moves, full fit ranking and Q&A.
+          Opening a reading hands the objective to the date-finder via its ?q= search
+          hook (free text the advisor parser resolves deterministically). */}
+      {chart && (
+        <div style={{ marginTop: 18 }}>
+          <ProfilePanel
+            chart={chart}
+            evaluate={evaluate}
+            defaultWindowDays={31}
+            todayIso={TODAY_ISO}
+            personalized={personalized}
+            onOpenReading={(id) => nav(`/date-finder?q=${encodeURIComponent(objectivePlain(id).verb)}`)}
+          />
+        </div>
+      )}
+
+      {/* Luck cycle & outlook — the LuckTimeline scrubber keeps its existing
+          luck_pillars gate, and non-current years their year_forecast gate. */}
+      {chart && birthCivil && <PeriodsPanel chart={chart} dayun={dayun} birth={birthCivil} todayIso={TODAY_ISO} />}
+
+      {chart && (
+        <div className="card" style={{ padding: 18, marginTop: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <b style={{ fontSize: 15 }}>Ask the advisor about your chart</b>
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)", lineHeight: 1.5, maxWidth: 460 }}>
+              Free-text questions, answered deterministically from this chart — timing, fit, and the reasoning behind both.
+            </p>
+          </div>
+          <button className="btn" style={{ maxWidth: 260 }} onClick={() => nav("/chat")}>
+            Ask the advisor about your chart ›
+          </button>
+        </div>
+      )}
 
       {/* The most-disputed calculation in this field, shown as working. */}
       {chart && timeChain && <TimeChain {...timeChain} />}

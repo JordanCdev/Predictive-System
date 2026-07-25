@@ -33,12 +33,26 @@ const ctx: AiToolContext = {
 };
 
 describe("AI tool definitions", () => {
-  it("exposes the six documented tools with input schemas", () => {
+  it("exposes the eight documented tools with input schemas", () => {
     const names = AI_TOOLS.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["evaluate_specific_day", "find_best_days", "get_chart_summary", "get_luck_pillars", "get_period_summary", "list_objectives"].sort(),
+      [
+        "evaluate_specific_day",
+        "find_best_days",
+        "get_chart_summary",
+        "get_luck_pillars",
+        "get_natal_chart",
+        "get_period_summary",
+        "get_profile_fits",
+        "list_objectives",
+      ].sort(),
     );
     for (const t of AI_TOOLS) expect(t.input_schema.type).toBe("object");
+  });
+
+  it("evaluate_specific_day requires only the date — objectiveId is optional", () => {
+    const def = AI_TOOLS.find((t) => t.name === "evaluate_specific_day")!;
+    expect(def.input_schema.required).toEqual(["isoDate"]);
   });
 });
 
@@ -55,6 +69,43 @@ describe("executeTool — the deterministic engine bridge", () => {
     expect(Array.isArray(r.favourableElements)).toBe(true);
     const json = JSON.stringify(r);
     expect(json).not.toMatch(/1990|14:30|birth/i);
+  });
+
+  it("get_natal_chart returns four pillars with hidden stems, Na Yin, stars and palaces — no birth data", () => {
+    const r = executeTool("get_natal_chart", {}, ctx) as any;
+    expect(r.pillars.map((p: any) => p.position)).toEqual(["year", "month", "day", "hour"]);
+    for (const p of r.pillars) {
+      expect(p.palace.length).toBeGreaterThan(0);
+      expect(p.stem.hanzi.length).toBeGreaterThan(0);
+      expect(p.branch.animal.length).toBeGreaterThan(0);
+      expect(p.hiddenStems.length).toBeGreaterThanOrEqual(1);
+      expect(p.hiddenStems[0].tenGod.length).toBeGreaterThan(0);
+      expect(p.naYin.zh.length).toBeGreaterThan(0);
+    }
+    // The day pillar's stem is the self, not a Ten God.
+    expect(r.pillars[2].stemTenGod).toMatch(/Day Master/);
+    // Functional map covers all five roles.
+    for (const role of ["wealth", "officer", "resource", "output", "companion"]) {
+      expect(["wood", "fire", "earth", "metal", "water"]).toContain(r.functionalElements[role]);
+    }
+    // Personal stars: 1990-06-15 is a 己(earth) day master → 子/申 nobleman.
+    expect(r.personalStars.nobleman.length).toBeGreaterThan(0);
+    expect(r.personalStars.peachBlossom.length).toBe(1);
+    expect(r.personalStars.travellingHorse.length).toBe(1);
+    expect(r.dayMaster.strength).toMatch(/strong|balanced|weak/);
+    expect(r.fiveElementBalance.dominant).not.toBe(undefined);
+    const json = JSON.stringify(r);
+    expect(json).not.toMatch(/1990|14:30|birth/i);
+  });
+
+  it("get_profile_fits ranks all 11 objectives best-first with reasons", () => {
+    const r = executeTool("get_profile_fits", {}, ctx) as any;
+    expect(r.fits.length).toBeGreaterThanOrEqual(11);
+    for (let i = 1; i < r.fits.length; i++) expect(r.fits[i - 1].fit).toBeGreaterThanOrEqual(r.fits[i].fit);
+    expect(r.fits[0].reason.length).toBeGreaterThan(0);
+    expect(r.bestFit.objectiveId).toBe(r.fits[0].objectiveId);
+    expect(r.mostDemanding.objectiveId).toBe(r.fits[r.fits.length - 1].objectiveId);
+    expect(r.headline.length).toBeGreaterThan(0);
   });
 
   it("get_luck_pillars flags exactly one active decade", () => {
@@ -95,6 +146,17 @@ describe("executeTool — the deterministic engine bridge", () => {
     expect(r.lifeAreas.length).toBe(4);
     const bad = executeTool("evaluate_specific_day", { objectiveId: "wedding_marriage", isoDate: "16-07-2026" }, ctx) as any;
     expect(bad.error).toMatch(/YYYY-MM-DD/);
+  });
+
+  it("evaluate_specific_day without an objective falls back to the general day reading", () => {
+    const r = executeTool("evaluate_specific_day", { isoDate: "2026-07-16" }, ctx) as any;
+    expect(r.error).toBeUndefined();
+    expect(r.date).toBe("2026-07-16");
+    expect(r.objective).toBe("General day reading");
+    expect(typeof r.score).toBe("number");
+    // Still rejects a WRONG objective id rather than silently defaulting.
+    const bad = executeTool("evaluate_specific_day", { objectiveId: "nope", isoDate: "2026-07-16" }, ctx) as any;
+    expect(bad.error).toMatch(/unknown objectiveId/);
   });
 
   it("returns an error for an unknown tool", () => {

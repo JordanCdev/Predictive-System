@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  BRANCHES,
   GENERAL_DAY_OBJECTIVE,
   DayRecommendation,
   LifeAreaKey,
@@ -9,9 +10,11 @@ import {
   lifeAreaScores,
 } from "../engine/index.ts";
 import { PeriodSummaryBlock } from "../ui/PeriodSummaryBlock.tsx";
-import { scoreColor } from "../ui/format.ts";
+import { scoreColor, scoreTextColor } from "../ui/format.ts";
 import { loadJournal } from "../ui/journalStore.ts";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
+import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
+import { UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
 import { TODAY_ISO } from "../ui/shared.ts";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -40,6 +43,11 @@ export function MonthlyPage() {
   const nav = useNavigate();
   const { year, month } = parseYm(params.ym);
   const { chart, dayun, birthCivil, personalized, evaluateWindow } = useProfile();
+  const { can } = useEntitlements();
+  // Same rule as PeriodsPanel/YearlyPage: 流月 forecasts outside the current
+  // year are the year_forecast feature. (The civil year is the gate key — the
+  // card describes the solar month containing mid-month, same year.)
+  const monthLocked = year !== Number(TODAY_ISO.slice(0, 4)) && !can("year_forecast");
 
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const days = useMemo(
@@ -48,6 +56,25 @@ export function MonthlyPage() {
   );
   const byDay = new Map(days.map((d) => [d.civil.day, d]));
   const firstDow = (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7; // Monday-based
+
+  // Lunar day labels for the cells (a real Tong Shu shows the 農曆 date). Lazy:
+  // the lunar-javascript chunk loads after first paint and never blocks it;
+  // offline the cells simply omit the label.
+  const [lunarLabels, setLunarLabels] = useState<Record<string, string> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setLunarLabels(null);
+    import("../engine/verification/lunarAlmanac.ts")
+      .then((m) => {
+        if (!cancelled) setLunarLabels(m.buildLunarDayLabels({ start: { year, month, day: 1 }, days: daysInMonth }));
+      })
+      .catch(() => {
+        /* offline — cells render without lunar labels */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [year, month, daysInMonth]);
 
   // Solar-month pillar covering mid-month (personalised 10-Gods energy).
   const monthSummary: PeriodSummary | null = useMemo(() => {
@@ -87,11 +114,22 @@ export function MonthlyPage() {
         <div className="stepper">
           <button className="btn-ghost" style={{ width: "auto", padding: "4px 12px" }} aria-label="Previous month" onClick={() => nav(`/month/${stepYm(year, month, -1)}`)}>‹</button>
           <button className="btn-ghost" style={{ width: "auto", padding: "4px 12px" }} aria-label="Next month" onClick={() => nav(`/month/${stepYm(year, month, 1)}`)}>›</button>
+          <input
+            type="month"
+            className="jump-input"
+            value={`${year}-${p2(month)}`}
+            aria-label="Jump to a month"
+            onChange={(e) => {
+              if (/^\d{4}-\d{2}$/.test(e.target.value)) nav(`/month/${e.target.value}`);
+            }}
+          />
           <Link className="btn-text" to={`/month/${TODAY_ISO.slice(0, 7)}`}>This month</Link>
         </div>
       </div>
 
-      {/* Calendar grid coloured by general day rating; saved decisions dotted. */}
+      {/* Calendar grid, Tong Shu style: each cell carries the day pillar, its
+          zodiac animal, the score (band-coloured), the lunar date when the lazy
+          almanac chunk has loaded, plus taboo/clash and saved-decision markers. */}
       <div className="card" style={{ padding: 16 }}>
         <div className="cal-grid" style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
           {DOW.map((d, i) => <div className="cal-dow" key={i}>{d}</div>)}
@@ -101,23 +139,49 @@ export function MonthlyPage() {
             const rec = byDay.get(day);
             const iso = `${year}-${p2(month)}-${p2(day)}`;
             const isToday = iso === TODAY_ISO;
+            const danger = rec ? rec.hardReject || isClash(rec) || isTaboo(rec) : false;
+            const animal = rec ? BRANCHES[rec.tongshu.dayGanzhi.branch.index].animal : "";
             return (
-              <button key={day} className={`cal-cell ${isToday ? "sel" : ""}`} onClick={() => nav(`/day/${iso}`)} title={rec ? `Score ${rec.recommendationScore}` : ""}>
-                <span className="cd">{day}</span>
-                {rec && <span className="qdot" style={{ background: rec.hardReject || isClash(rec) || isTaboo(rec) ? "var(--cinnabar)" : scoreColor(rec.recommendationScore) }} />}
-                {savedDays.has(day) && <span className="qdot" style={{ background: "var(--gold)", marginTop: 2 }} title="You saved a decision on this day" />}
+              <button
+                key={day}
+                className={`cal-cell rich ${isToday ? "sel" : ""}`}
+                onClick={() => nav(`/day/${iso}`)}
+                title={rec ? `${rec.tongshu.dayGanzhi.hanzi} — ${animal} day · score ${Math.round(rec.recommendationScore)}${danger ? " · caution" : ""}` : ""}
+              >
+                <span className="cal-top">
+                  <span className="cd">{day}</span>
+                  {rec && <span className="cal-score" style={{ color: scoreTextColor(rec.recommendationScore) }}>{Math.round(rec.recommendationScore)}</span>}
+                </span>
+                {rec && <span className="cal-gz">{rec.tongshu.dayGanzhi.hanzi}</span>}
+                {rec && <span className="cal-animal">{danger ? "⚠ " : ""}{animal}</span>}
+                {lunarLabels?.[iso] && <span className="cal-lunar">{lunarLabels[iso]}</span>}
+                <span className="cal-top">
+                  {rec && <span className="qdot" style={{ background: danger ? "var(--cinnabar)" : scoreColor(rec.recommendationScore) }} />}
+                  {savedDays.has(day) && <span className="qdot" style={{ background: "var(--gold)" }} title="You saved a decision on this day" />}
+                </span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Month's 10-Gods energy (solar-month pillar vs your chart). */}
+      {/* Month's 10-Gods energy (solar-month pillar vs your chart). Months
+          outside the current year sit behind the same year_forecast gate as
+          YearlyPage — the month jump input must not become a free side door to
+          the identical 流月 content one route over. The CALENDAR above stays
+          free for any month: day placement is deliberately ungated. */}
       {monthSummary ? (
+        monthLocked ? (
+          <div className="card" style={{ padding: 20, marginTop: 12 }}>
+            <div className="section-title" style={{ marginBottom: 2 }}>This month's energy (流月)</div>
+            <UpgradePrompt feature="year_forecast" compact />
+          </div>
+        ) : (
         <div className="card" style={{ padding: 20, marginTop: 12 }}>
           <div className="section-title" style={{ marginBottom: 2 }}>This month's energy (流月)</div>
           <PeriodSummaryBlock s={monthSummary} />
         </div>
+        )
       ) : (
         !personalized && (
           <div className="card" style={{ padding: 16, marginTop: 12 }}>

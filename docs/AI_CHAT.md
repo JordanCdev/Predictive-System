@@ -41,14 +41,47 @@ The tools ([`src/ai/tools.ts`](../src/ai/tools.ts)), each a deterministic engine
 |---|---|---|
 | `list_objectives` | `OBJECTIVES` | the 11 timeable decisions |
 | `get_chart_summary` | `analyzeProfile` + chart | Day Master, strength, 用神/忌神 — **no birth data** |
-| `get_luck_pillars` | `buildPeriodsReport` | 大運 decades with theme, valence, which is active |
-| `get_period_summary` | `buildPeriodsReport` | 流年 (+ optional 流月): theme, valence, 太歲, tendencies |
+| `get_natal_chart` | `BaziChart` table lookups | the full chart: four pillars (hanzi + pinyin + animals), hidden stems (藏干) with Ten Gods, Na Yin, palaces, five-element balance, functional element map, seasonal state + rooting, personal stars (天乙貴人/桃花/驛馬) — **free: transparency is never gated** |
+| `get_profile_fits` | `analyzeProfile` | the full ranking of all 11 objectives, best and worst fits with reasons — **free** |
+| `get_luck_pillars` | `buildPeriodsReport` | 大運 decades with theme, valence, which is active (Pro) |
+| `get_period_summary` | `buildPeriodsReport` | 流年 (+ optional 流月): theme, valence, 太歲, tendencies (non-current year: Pro) |
 | `find_best_days` | `evaluateDecision` | ranked days with score, verdict, best hour |
-| `evaluate_specific_day` | `evaluateDecision` (1-day window) | one day's pillar, officer, day-god, sub-scores, life areas |
+| `evaluate_specific_day` | `evaluateDecision` (1-day window) | one day's pillar, officer, day-god, sub-scores, life areas. `objectiveId` is optional — omitted, it falls back to the neutral `general_day` reading, so "how is 14 Oct 2027 for me?" just works |
+
+Tier note: the Pro gates above mirror the UI exactly (the advisor can't route around a
+paywall), and per the settled tier rule, paid buys **range/breadth/storage — never
+transparency**: everything about the user's own natal chart is free.
 
 `executeTool` is pure and unit-tested ([`tests/aiTools.test.ts`](../tests/aiTools.test.ts));
 the streaming loop is tested with a stubbed SSE transport
-([`tests/aiChatClient.test.ts`](../tests/aiChatClient.test.ts)).
+([`tests/aiChatClient.test.ts`](../tests/aiChatClient.test.ts)); the chat-UI helpers
+(date tokens, suggested chips) in [`tests/chatUiHelpers.test.ts`](../tests/chatUiHelpers.test.ts).
+
+## Tappable dates
+
+The system prompt requires every date the model names to be written as `[YYYY-MM-DD]`.
+`ChatPanel`'s renderer ([`src/ui/chatDates.ts`](../src/ui/chatDates.ts)) turns those tokens
+(and bare ISO dates, as a fallback) into readable chips linking to `#/day/<date>` — any
+date the advisor cites is one tap from the deterministic evidence behind it. Personality
+questions are answered from `get_natal_chart` facts, with the reading explicitly labelled
+as interpretation, never prediction.
+
+## Suggested chips — profile-aware
+
+The empty-thread suggestions are built from the user's **actual chart**
+([`src/ui/chatChips.ts`](../src/ui/chatChips.ts)): their top objective fit, their weakest
+fit (or chart caution), hidden stems, today's reading. A free user is never handed a chip
+whose answer is a paywall — the one Pro-flavoured chip (luck decade) appears for Pro
+users only, marked "Pro".
+
+## No key? The chat is never a dead end
+
+With neither a key nor a proxy configured, the panel runs an **offline advisor** instead
+of showing a key wall: the same input box routes each question through the deterministic
+advisor (`parseAdvisorQuery` → `composeTimingAnswer` / `composeProfileAnswer` /
+`composeUnknownAnswer` in [`src/engine/advisor.ts`](../src/engine/advisor.ts)), with every
+answer labelled *"Offline advisor — deterministic, no AI"* and nothing leaving the device.
+The AI setup (consent + key + model) lives in a collapsible underneath.
 
 ## Deployment: GitHub Pages (static) → BYOK
 

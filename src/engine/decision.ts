@@ -409,7 +409,9 @@ function scoreHours(
     if (f < 0) { score -= 8; reasons.push(`Hour branch element ${PHASE_LABEL[branch.phase]} is unfavourable to you.`); }
 
     if (clashBranch(dayGz.branch.index) === bi) {
-      score -= 15;
+      // The clash overrides everything else the hour has going for it: an hour
+      // whose reason line says "avoid" must not band as neutral-or-better.
+      score = Math.min(score - 15, 40);
       reasons.push(`Hour clashes the day branch (時沖日) — avoid.`);
     }
     if (isNoblemanDay(bi, subjectDayStem)) {

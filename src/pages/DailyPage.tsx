@@ -3,13 +3,16 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   DecisionResult,
   GENERAL_DAY_OBJECTIVE,
+  classicalHoursOfDay,
   dayGodPlain,
   evaluateDecision,
   humanDate,
   officerPlain,
   shenShaPlain,
 } from "../engine/index.ts";
-import { DayInsights } from "../ui/DayInsights.tsx";
+import { AlmanacPanel } from "../ui/AlmanacPanel.tsx";
+import { DayHero } from "../ui/DayHero.tsx";
+import { DayInsights, HourGrid } from "../ui/DayInsights.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { TODAY_ISO, addDaysIso, buildRequest, civilOfIso, isValidIso } from "../ui/shared.ts";
@@ -70,16 +73,32 @@ export function DailyPage() {
           <button className="btn-ghost" style={{ width: "auto", padding: "4px 12px" }} aria-label="Previous day" onClick={() => nav(`/day/${addDaysIso(iso, -1)}`)}>‹</button>
           <b style={{ minWidth: 150, textAlign: "center", fontSize: 14 }}>{humanDate(rec.civil)}</b>
           <button className="btn-ghost" style={{ width: "auto", padding: "4px 12px" }} aria-label="Next day" onClick={() => nav(`/day/${addDaysIso(iso, 1)}`)}>›</button>
+          <input
+            type="date"
+            className="jump-input"
+            value={iso}
+            aria-label="Jump to a date"
+            onChange={(e) => {
+              if (isValidIso(e.target.value)) nav(`/day/${e.target.value}`);
+            }}
+          />
           {!isToday && <Link className="btn-text" to="/today">Today</Link>}
         </div>
       </div>
 
       {primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} compact />}
 
+      <DayHero rec={rec} />
+
+      <div style={{ display: "flex", gap: 14, margin: "10px 2px 12px", fontSize: 13 }}>
+        <Link className="btn-text" to={`/week/${iso}`}>This week ›</Link>
+        <Link className="btn-text" to={`/month/${iso.slice(0, 7)}`}>This month ›</Link>
+        <Link className="btn-text" to={`/year/${iso.slice(0, 4)}`}>This year ›</Link>
+      </div>
+
       <div className="card" style={{ padding: 18 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
           <b style={{ fontSize: 15 }}>The day at a glance</b>
-          <span style={{ fontSize: 20, fontFamily: "var(--serif-cjk)", color: "var(--ink)" }} title="Day pillar (日柱)">{rec.tongshu.dayGanzhi.hanzi}</span>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
           <span className="pill" title={officer.blurb}>{officer.label} <span className="faint">· {officer.secondary}</span></span>
@@ -116,8 +135,23 @@ export function DailyPage() {
       {chart ? (
         <DayInsights chart={chart} rec={rec} />
       ) : (
-        <NeedsProfile what="see how this day tilts your career, wealth, relationships and wellbeing, plus your best hours" />
+        <>
+          {/* No profile → the classical Tong Shu hour read: the 黃道/黑道 hour gods
+              (時辰吉凶), seeded by the day branch. The same for every visitor —
+              honest about being impersonal, free of charge, never gated. */}
+          <div className="card" style={{ padding: 20, marginTop: 18 }}>
+            <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 600 }}>Hour by hour (時辰吉凶)</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
+              The classical almanac's hour gods (黃道/黑道) for this day — the traditional Tong Shu read, identical for
+              everyone. Add your birth details for hours weighed against your own chart.
+            </p>
+            <HourGrid hours={classicalHoursOfDay(rec.tongshu.dayGanzhi)} bestBranch={null} />
+          </div>
+          <NeedsProfile what="see how this day tilts your career, wealth, relationships and wellbeing, plus your best hours" />
+        </>
       )}
+
+      <AlmanacPanel civil={rec.civil} />
 
       {/* /today is where onboarding lands and where the nav's first tab points,
           but it only ever described the day — it never offered the product's

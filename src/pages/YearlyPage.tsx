@@ -116,7 +116,14 @@ export function YearlyPage() {
                   opportunities.map((m) => (
                     <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, fontSize: 13.5 }}>
                       <span className="dot" style={{ width: 9, height: 9, borderRadius: 9, background: valenceColor("supportive") }} />
-                      <b>{m.label.split(" ")[0]}</b> <span style={{ color: "var(--muted)" }}>· {m.theme.domain}{m.span ? ` · ${m.span.startIso.slice(5)}→${m.span.endIso.slice(5)}` : ""}</span>
+                      {m.span ? (
+                        <Link to={`/month/${m.span.startIso.slice(0, 7)}`} style={{ color: "inherit" }} title="Open this month day-by-day">
+                          <b>{m.label.split(" ")[0]}</b>
+                        </Link>
+                      ) : (
+                        <b>{m.label.split(" ")[0]}</b>
+                      )}{" "}
+                      <span style={{ color: "var(--muted)" }}>· {m.theme.domain}{m.span ? ` · ${m.span.startIso.slice(5)}→${m.span.endIso.slice(5)}` : ""}</span>
                     </div>
                   ))}
               </div>
@@ -126,7 +133,14 @@ export function YearlyPage() {
                   risks.map((m) => (
                     <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, fontSize: 13.5 }}>
                       <span className="dot" style={{ width: 9, height: 9, borderRadius: 9, background: valenceColor("challenging") }} />
-                      <b>{m.label.split(" ")[0]}</b> <span style={{ color: "var(--muted)" }}>· {m.theme.domain}{m.span ? ` · ${m.span.startIso.slice(5)}→${m.span.endIso.slice(5)}` : ""}</span>
+                      {m.span ? (
+                        <Link to={`/month/${m.span.startIso.slice(0, 7)}`} style={{ color: "inherit" }} title="Open this month day-by-day">
+                          <b>{m.label.split(" ")[0]}</b>
+                        </Link>
+                      ) : (
+                        <b>{m.label.split(" ")[0]}</b>
+                      )}{" "}
+                      <span style={{ color: "var(--muted)" }}>· {m.theme.domain}{m.span ? ` · ${m.span.startIso.slice(5)}→${m.span.endIso.slice(5)}` : ""}</span>
                     </div>
                   ))}
               </div>
@@ -144,7 +158,19 @@ export function YearlyPage() {
           </div>
           {openMonth && (() => {
             const m = report.months.find((x) => x.label === openMonth);
-            return m ? <PeriodSummaryBlock s={m} /> : null;
+            return m ? (
+              <>
+                <PeriodSummaryBlock s={m} />
+                {m.span && (
+                  <p className="ask-note" style={{ marginTop: 6 }}>
+                    {/* The solar month opens at the 節 — link to the civil month it starts in. */}
+                    <Link className="btn-text" style={{ padding: 0 }} to={`/month/${m.span.startIso.slice(0, 7)}`}>
+                      Open {m.label.split(" ")[0]} in the calendar, day by day ›
+                    </Link>
+                  </p>
+                )}
+              </>
+            ) : null;
           })()}
         </>
       ) : (

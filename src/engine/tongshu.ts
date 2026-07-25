@@ -20,7 +20,7 @@ import {
   ganZhiFromIndex,
   mod,
 } from "./symbols.ts";
-import { dayGanzhiIndexFromCivilDate } from "./sexagenary.ts";
+import { combineStemBranch, dayGanzhiIndexFromCivilDate } from "./sexagenary.ts";
 import { lichunMillis, monthBranchIndexFromLongitude, solarLongitudeAtMillis } from "./astronomy.ts";
 
 export type ActivityTag =
@@ -166,6 +166,83 @@ export function computeTongShuDay(
     fourBoundary: fourBoundaryOfNextDay(solarInstantUtc),
     yearBreak,
   };
+}
+
+// --- 黃道黑道 hour gods (時辰吉凶) -------------------------------------------
+//
+// The same 12 celestial gods that grade DAYS (seeded by the month branch, above)
+// also cycle through the 12 double-hours of each day, seeded by the DAY branch.
+// The classical seed is the mnemonic 「子午青龍起於申，卯酉之日又居寅，寅申須從
+// 子上起，巳亥在午不須論，唯有辰戌龍位上，丑未原從戌上尋」 — i.e. 青龍 falls on
+// hour 申 for 子/午 days, 寅 for 卯/酉, 子 for 寅/申, 午 for 巳/亥, 辰 for 辰/戌
+// and 戌 for 丑/未, which is exactly seed = day-branch × 2 + 8 (mod 12) — the
+// same arithmetic as the day-god cycle. The mapping is cross-checked against
+// lunar-javascript's per-hour 天神 in tests/hourGods.test.ts.
+
+/** Per-god 0–100 quality used for the impersonal hour read (mirrors the
+ *  day-god scale in decision.ts: Yellow-road gods high, Black-road low). */
+const HOUR_GOD_SCORE = [88, 80, 28, 30, 82, 90, 22, 84, 30, 26, 78, 34];
+
+/** The hour-god (時辰吉凶 天神) governing a given double-hour of a given day. */
+export function hourGodOf(
+  dayBranchIndex: number,
+  hourBranchIndex: number,
+): { nameZh: string; nameEn: string; yellow: boolean; index: number } {
+  const seed = mod(dayBranchIndex * 2 + 8, 12); // the hour branch carrying 青龍
+  const index = mod(hourBranchIndex - seed, 12);
+  return { ...DAY_GODS[index], index };
+}
+
+/** One double-hour of the classical (impersonal) Tong Shu hour read.
+ *  Structurally compatible with the decision engine's HourPick so the same
+ *  hour-grid UI can render either. */
+export interface ClassicalHourRead {
+  branchIndex: number;
+  ganzhi: GanZhi;
+  rangeLabel: string;
+  score: number;
+  reasons: string[];
+  god: { nameZh: string; nameEn: string; yellow: boolean; index: number };
+  /** 時沖日 — this hour's branch clashes the day branch (日破時, always poor). */
+  clashesDay: boolean;
+}
+
+/**
+ * The classical Tong Shu quality of all 12 double-hours of a day — no birth
+ * chart involved, so every visitor gets the same deterministic read. Hour
+ * stems follow the five-rats rule from the day stem; quality is the 黃道/黑道
+ * hour god, except the 日破 hour (hour-clashes-day), which the tradition the
+ * codebase cites (時沖日大凶) treats as unusable regardless of the hour god —
+ * so its score is CAPPED below every favourable band, not merely docked.
+ * Ordered for display by clock start (丑 01:00 first, 子 23:00 last), matching
+ * the personalized hour grid.
+ */
+export function classicalHoursOfDay(dayGz: GanZhi): ClassicalHourRead[] {
+  const out: ClassicalHourRead[] = [];
+  for (let bi = 0; bi < 12; bi++) {
+    const branch = BRANCHES[bi];
+    const ganzhi = combineStemBranch(mod(dayGz.stem.index * 2 + bi, 10), bi);
+    const god = hourGodOf(dayGz.branch.index, bi);
+    const clashesDay = clashBranch(dayGz.branch.index) === bi;
+    let score = HOUR_GOD_SCORE[god.index];
+    const reasons: string[] = [
+      `${god.nameZh} ${god.nameEn} — ${god.yellow ? "a 黃道 (Yellow-road) hour; tradition marks it auspicious" : "a 黑道 (Black-road) hour; tradition marks it inauspicious"}.`,
+    ];
+    if (clashesDay) {
+      // The clash overrides the hour god: 40 sits in the caution band, so a
+      // 日破 hour can never render as neutral-or-better next to a reason line
+      // that says tradition avoids it.
+      score = Math.max(0, Math.min(score - 15, 40));
+      reasons.push(`日破時 — this hour clashes the day branch (時沖日); tradition avoids it regardless of the hour god.`);
+    }
+    if (bi === 0) {
+      reasons.push("The 23:00–23:59 half of the 子 hour is read against the next day in some schools (晚子時).");
+    }
+    const hourLabel = `${String(branch.hourStart).padStart(2, "0")}:00–${String(mod(branch.hourStart + 2, 24)).padStart(2, "0")}:00`;
+    out.push({ branchIndex: bi, ganzhi, rangeLabel: `${branch.hanzi} ${hourLabel}`, score, reasons, god, clashesDay });
+  }
+  out.sort((a, b) => BRANCHES[a.branchIndex].hourStart - BRANCHES[b.branchIndex].hourStart);
+  return out;
 }
 
 // --- Personal Shen Sha overlay ---------------------------------------------

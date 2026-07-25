@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   BaziChart,
   DayRecommendation,
@@ -9,7 +10,8 @@ import { LifeAreaGauges } from "./DayInsights.tsx";
 
 /** A persistent "now" snapshot: today's pillar, day-officer, day-god and — once
  *  personalized — how the day tilts each life area for you (ROADMAP §A3). Built
- *  from the already-computed window day, so it never recomputes the calendar. */
+ *  from the already-computed window day, so it never recomputes the calendar.
+ *  The whole card links to the full day view — it's a doorway, not a dead end. */
 export function TodayCard({ chart, today }: { chart: BaziChart | null; today: DayRecommendation }) {
   const officer = officerPlain(today.tongshu.officer);
   const god = dayGodPlain(today.tongshu.dayGod);
@@ -19,17 +21,27 @@ export function TodayCard({ chart, today }: { chart: BaziChart | null; today: Da
     : today.rulesFired.some((r) => r.code === "four_severance") ? "四絕 — a season-pivot eve (大事勿用)"
     : null;
 
+  // NOT a <Link> wrapper: LifeAreaGauges renders its own expand buttons, and
+  // nesting those inside an anchor makes every gauge tap a navigation (and is
+  // invalid markup). The header row is the doorway instead.
   return (
     <div className="card" style={{ padding: 18, marginTop: 14 }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+      <Link
+        to={`/day/${today.isoDate}`}
+        title="Open today's full day view"
+        style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, textDecoration: "none", color: "inherit" }}
+      >
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, color: "var(--gold-text)" }}>TODAY</span>
           <b style={{ fontSize: 15 }}>{humanDate(today.civil)}</b>
         </div>
-        <span style={{ fontSize: 15, fontFamily: "var(--serif-cjk)", color: "var(--ink)" }} title="Today's day pillar (日柱)">
-          {today.tongshu.dayGanzhi.hanzi}
+        <span style={{ display: "inline-flex", alignItems: "baseline", gap: 10 }}>
+          <span style={{ fontSize: 15, fontFamily: "var(--serif-cjk)", color: "var(--ink)" }} title="Today's day pillar (日柱)">
+            {today.tongshu.dayGanzhi.hanzi}
+          </span>
+          <span style={{ fontSize: 12, color: "var(--gold-text)" }}>Full day view ›</span>
         </span>
-      </div>
+      </Link>
 
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
         <span style={{ fontSize: 12, border: "1px solid var(--hairline)", borderRadius: 999, padding: "2px 9px", color: "var(--ink)" }} title={officer.blurb}>

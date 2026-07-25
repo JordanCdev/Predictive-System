@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Objective, objectivePlain, parseActivity } from "../engine/index.ts";
 import { UpgradePrompt } from "./billing/UpgradePrompt.tsx";
 import { useEntitlements } from "./profile/EntitlementsContext.tsx";
+import { TODAY_ISO, isValidIso } from "./shared.ts";
 
 const metaChipStyle = { fontSize: 11.5, color: "var(--muted)", border: "1px solid var(--hairline)", borderRadius: 999, padding: "1px 9px", textTransform: "capitalize" as const };
 
@@ -19,19 +20,28 @@ export function AskStep({
   objectives,
   objectiveId,
   windowDays,
+  startIso,
   unmatchedQuery,
   onObjective,
   onWindow,
+  onStart,
   onSubmit,
+  onReadDayAnyway,
 }: {
   objectives: Objective[];
   objectiveId: string | null;
   windowDays: number;
+  /** Search from this date instead of today (null = from today). Placement is
+   *  free on every plan — only the window LENGTH is a plan limit. */
+  startIso?: string | null;
   /** A search we could not map to an objective — told plainly rather than ignored. */
   unmatchedQuery?: string | null;
   onObjective: (id: string) => void;
   onWindow: (days: number) => void;
+  onStart?: (iso: string | null) => void;
   onSubmit: () => void;
+  /** Escape hatch for an unmatched search: open a general day reading instead of dead-ending. */
+  onReadDayAnyway?: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [showHorizonPrompt, setShowHorizonPrompt] = useState(false);
@@ -52,6 +62,14 @@ export function AskStep({
         <div className="warn" style={{ marginBottom: 14 }}>
           <span aria-hidden="true">⚠</span> We couldn't work out what kind of decision “{unmatchedQuery}” is, so we
           haven't guessed. Pick the closest one below — the engine only times the activities listed here.
+          {onReadDayAnyway && (
+            <div style={{ marginTop: 6 }}>
+              <button className="btn-text" style={{ paddingLeft: 0 }} onClick={onReadDayAnyway}>
+                Read the day anyway ›
+              </button>{" "}
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>— a general day reading, with no activity bias.</span>
+            </div>
+          )}
         </div>
       )}
       <h1>What are you trying to time?</h1>
@@ -140,6 +158,38 @@ export function AskStep({
       </div>
 
       <div className="obj-desc">{chosen ? objectivePlain(chosen.id).desc : "Pick a decision above to continue."}</div>
+
+      {onStart && (
+        <>
+          <div className="field-label" id="start-label">
+            Around when?
+          </div>
+          <div className="when-chips" role="group" aria-labelledby="start-label">
+            <button
+              className={`chip ${!startIso ? "on" : ""}`}
+              aria-pressed={!startIso}
+              onClick={() => onStart(null)}
+            >
+              From today
+            </button>
+            <label className={`chip ${startIso ? "on" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              From a date
+              <input
+                type="date"
+                value={startIso ?? ""}
+                aria-label="Search starting from this date"
+                onChange={(e) => onStart(e.target.value && isValidIso(e.target.value) ? e.target.value : null)}
+                style={{ border: "none", background: "transparent", color: "inherit", font: "inherit", padding: 0 }}
+              />
+            </label>
+          </div>
+          {startIso && startIso < TODAY_ISO && (
+            <div className="ask-note" style={{ marginTop: 6 }}>
+              That start is in the past — fine for checking how a window read, but the days it finds may already be gone.
+            </div>
+          )}
+        </>
+      )}
 
       <div className="field-label" id="when-label">
         How far ahead should we look?

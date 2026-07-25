@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { DayRecommendation } from "../engine/index.ts";
-import { scoreColor } from "./format.ts";
+import { BRANCHES, DayRecommendation } from "../engine/index.ts";
+import { scoreColor, scoreTextColor } from "./format.ts";
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -83,7 +83,8 @@ export function CalendarMonth({
             );
           }
           const isPick = rec.isoDate === pickIso;
-          const cls = `cal-cell ${rec.hardReject ? "rej" : ""} ${isPick ? "pick" : ""} ${
+          const animal = BRANCHES[rec.tongshu.dayGanzhi.branch.index].animal;
+          const cls = `cal-cell rich ${rec.hardReject ? "rej" : ""} ${isPick ? "pick" : ""} ${
             rec.isoDate === selectedIso ? "sel" : ""
           }`;
           return (
@@ -92,10 +93,17 @@ export function CalendarMonth({
               key={day}
               onClick={() => onSelect(rec.isoDate)}
               aria-current={rec.isoDate === selectedIso ? "date" : undefined}
-              aria-label={`${MONTHS[m.month - 1]} ${day} — ${rec.hardReject ? "ruled out" : `score ${rec.recommendationScore}`}${isPick ? ", our pick" : ""}`}
-              title={rec.hardReject ? "Ruled out" : `Score ${rec.recommendationScore}`}
+              aria-label={`${MONTHS[m.month - 1]} ${day} — ${rec.tongshu.dayGanzhi.hanzi}, ${animal} day, ${rec.hardReject ? "ruled out" : `score ${Math.round(rec.recommendationScore)}`}${isPick ? ", our pick" : ""}`}
+              title={`${rec.tongshu.dayGanzhi.hanzi} — ${animal} day · ${rec.hardReject ? "ruled out" : `score ${Math.round(rec.recommendationScore)}`}`}
             >
-              <span className="cd">{day}</span>
+              <span className="cal-top">
+                <span className="cd">{day}</span>
+                {!rec.hardReject && (
+                  <span className="cal-score" style={{ color: scoreTextColor(rec.recommendationScore) }}>{Math.round(rec.recommendationScore)}</span>
+                )}
+              </span>
+              <span className="cal-gz">{rec.tongshu.dayGanzhi.hanzi}</span>
+              <span className="cal-animal">{animal}</span>
               {!rec.hardReject && <span className="qdot" style={{ background: scoreColor(rec.recommendationScore) }} />}
             </button>
           );

@@ -26,8 +26,10 @@ const isClash = (d: DayRecommendation) => d.shenShaTags.some((t) => t.code === "
 export function WeeklyPage() {
   const params = useParams();
   const nav = useNavigate();
-  const base = isValidIso(params.date) ? params.date : TODAY_ISO;
+  const requested = isValidIso(params.date) ? params.date : null;
+  const base = requested ?? TODAY_ISO;
   const weekStart = mondayOf(base);
+  const snapped = requested !== null && requested !== weekStart;
   const { evaluateWindow, personalized } = useProfile();
 
   const days = useMemo(() => evaluateWindow(GENERAL_DAY_OBJECTIVE.id, civilOfIso(weekStart), 7).allDays, [evaluateWindow, weekStart]);
@@ -54,6 +56,13 @@ export function WeeklyPage() {
           <Link className="btn-text" to={`/week/${mondayOf(TODAY_ISO)}`}>This week</Link>
         </div>
       </div>
+
+      {snapped && (
+        <p style={{ margin: "0 0 10px", fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>
+          Weeks start on Monday, so this shows the week containing your date —{" "}
+          <Link to={`/day/${requested}`}>{shortDate(civilOfIso(requested!))} ›</Link>
+        </p>
+      )}
 
       <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ink)", lineHeight: 1.55 }}>{theme}</p>
 

@@ -219,6 +219,27 @@ Many are partly built already; this is the prioritized backlog.
 > charging to see where the traditions disagree, after telling the user they do, was the category's
 > worst trust failure reproduced inside the product.
 >
+> **Phase 11 — the Tong Shu planner (2026-07-25).** Driven by a six-lens audit (UX restrictiveness,
+> calendar gaps vs Joey Yap's TongShu Power Planner, chat capability, profile depth, competitor
+> research, and a 349-case accuracy battery vs lunar-javascript). The battery confirmed the engine
+> arithmetic is clean — every sect-matched pillar comparison agreed — and located the real "my DOB
+> gives wrong predictions" causes in the INPUT path: the birth form seeded the device's *current*
+> UTC offset as the birth offset (winter births entered in summer flipped year/month pillars near
+> 立春), and the true-solar default silently diverges from the civil-clock charts most other apps
+> show. Fixes: device-IANA-zone seeding + birth-date offset resolution, one-time healing of stored
+> profiles, and a free ConventionCompare panel (true solar vs civil clock side by side, one-tap
+> switch). Features: Tong Shu month cells (day pillar, zodiac animal, lunar date, personal score);
+> DayHero with clash-animal years; full 通勝 宜/忌 + 28-mansion almanac panel; classical 黃道黑道
+> hour gods so visitors without a profile get hour ratings (cross-checked against lunar-javascript,
+> 144/144); arbitrary-start date search with URL-addressable readings; context-aware nav + date
+> jumps everywhere; chat tools get_natal_chart & get_profile_fits + objective-less day evaluation,
+> tappable date chips, profile-aware suggestion chips, and a deterministic offline advisor when no
+> AI key is configured; profile home base with hidden stems, palaces, Na Yin, day-master archetypes,
+> functional element map and lucky keys (天乙貴人/桃花/驛馬). **Tier decisions:** window PLACEMENT is
+> free (length stays plan-clamped); single-day transparency (hero verdict, hours, almanac, clash)
+> is free; get_natal_chart/get_profile_fits are free; luck_pillars/year_forecast/dossier gates
+> unchanged.
+>
 > > **Phase 9 — commercial readiness:** Free/Pro plans with a shared, drift-guarded catalogue
 > (`src/billing/plans.ts`), Stripe Checkout + customer portal + webhook-driven entitlements,
 > server-side AI quota metering, a public landing/pricing surface, privacy & terms, PWA

@@ -4,7 +4,8 @@ import { ProfileProvider, useProfile } from "./ui/profile/ProfileContext.tsx";
 import { AuthProvider } from "./ui/profile/AuthContext.tsx";
 import { EntitlementsProvider } from "./ui/profile/EntitlementsContext.tsx";
 import { ErrorBoundary } from "./ui/ErrorBoundary.tsx";
-import { TODAY_ISO } from "./ui/shared.ts";
+import { TODAY_ISO, isValidIso } from "./ui/shared.ts";
+import { parseAbsoluteDateQuery } from "./ui/dateQuery.ts";
 import { elementPlain } from "./engine/index.ts";
 import { DailyPage } from "./pages/DailyPage.tsx";
 import { WeeklyPage } from "./pages/WeeklyPage.tsx";
@@ -20,18 +21,29 @@ import { BillingPage } from "./pages/BillingPage.tsx";
 import { PrivacyPage, TermsPage } from "./pages/LegalPages.tsx";
 import { PlanBadge } from "./ui/billing/UpgradePrompt.tsx";
 
-const TODAY_YM = TODAY_ISO.slice(0, 7);
-const TODAY_YEAR = TODAY_ISO.slice(0, 4);
-
-const NAV = [
-  { to: "/today", label: "Today" },
-  { to: `/week/${TODAY_ISO}`, label: "Week", match: "/week" },
-  { to: `/month/${TODAY_YM}`, label: "Month", match: "/month" },
-  { to: `/year/${TODAY_YEAR}`, label: "Year", match: "/year" },
-  { to: "/date-finder", label: "Find a date" },
-  { to: "/group", label: "For a group" },
-  { to: "/chat", label: "Advisor" },
-];
+/** Week/Month/Year nav targets follow the date currently on screen — on
+ *  /day/2026-12-25 the Month tab means December 2026, not whatever month the app
+ *  happened to load in. Falls back to today when the route carries no date. */
+function navItems(pathname: string) {
+  let ctx = TODAY_ISO;
+  const day = pathname.match(/^\/(?:day|week)\/(\d{4}-\d{2}-\d{2})/);
+  const month = pathname.match(/^\/month\/(\d{4}-\d{2})/);
+  const year = pathname.match(/^\/year\/(\d{4})/);
+  if (day && isValidIso(day[1])) ctx = day[1];
+  // A month/year route pins Week to the period's first day — unless it's the
+  // current period, where "this week" is the honest reading of the tab.
+  else if (month && isValidIso(`${month[1]}-01`)) ctx = TODAY_ISO.startsWith(month[1]) ? TODAY_ISO : `${month[1]}-01`;
+  else if (year) ctx = TODAY_ISO.startsWith(year[1]) ? TODAY_ISO : `${year[1]}-01-01`;
+  return [
+    { to: "/today", label: "Today" },
+    { to: `/week/${ctx}`, label: "Week", match: "/week" },
+    { to: `/month/${ctx.slice(0, 7)}`, label: "Month", match: "/month" },
+    { to: `/year/${ctx.slice(0, 4)}`, label: "Year", match: "/year" },
+    { to: "/date-finder", label: "Find a date" },
+    { to: "/group", label: "For a group" },
+    { to: "/chat", label: "Advisor" },
+  ];
+}
 
 /** Every route change starts at the top. Without this, clicking a nav item from
  *  a scrolled page lands mid-content with the heading off-screen, which reads as
@@ -58,7 +70,11 @@ function GlobalSearch() {
   const submit = () => {
     const query = q.trim();
     if (!query) return;
-    nav(`/date-finder?q=${encodeURIComponent(query)}`);
+    // An unambiguous absolute date ("2027-10-14", "14 Oct 2027") is a request to
+    // read that day, not to match a decision — go straight to the day view.
+    const dayIso = parseAbsoluteDateQuery(query);
+    if (dayIso) nav(`/day/${dayIso}`);
+    else nav(`/date-finder?q=${encodeURIComponent(query)}`);
     setQ("");
   };
   return (
@@ -77,6 +93,8 @@ function GlobalSearch() {
 
 function NavBar() {
   const { chart, person } = useProfile();
+  const { pathname } = useLocation();
+  const items = navItems(pathname);
   return (
     <header className="nav">
       <NavLink to="/today" className="nav-brand">
@@ -84,7 +102,7 @@ function NavBar() {
         <span className="nav-word">Wéi</span>
       </NavLink>
       <nav className="nav-links">
-        {NAV.map((n) => (
+        {items.map((n) => (
           <NavLink
             key={n.to}
             to={n.to}

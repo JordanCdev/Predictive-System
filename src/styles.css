@@ -2972,3 +2972,80 @@ button {
   flex: 0 0 auto;
   flex-wrap: wrap;
 }
+
+/* ── Tong Shu calendar cells + free date-jump controls (DailyPage/MonthlyPage/
+   CalendarMonth). One block, appended by the calendar/day-view work: rich month
+   cells (day pillar hanzi, zodiac animal, score, lazy lunar date) and the native
+   date/month jump inputs in the page steppers. ─────────────────────────────── */
+.cal-cell.rich {
+  aspect-ratio: auto;
+  min-height: 66px;
+  padding: 5px 2px 4px;
+  gap: 1px;
+  justify-content: flex-start;
+}
+.cal-cell .cal-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  min-height: 8px;
+}
+.cal-cell.rich .cd {
+  font-size: 11.5px;
+}
+.cal-cell .cal-score {
+  font-size: 10px;
+  font-weight: 650;
+}
+.cal-cell .cal-gz {
+  font-family: var(--serif-cjk);
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.cal-cell.rej .cal-gz {
+  color: var(--muted);
+}
+.cal-cell .cal-animal {
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-cell .cal-lunar {
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--faint);
+  font-family: var(--serif-cjk);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .cal-cell.rich {
+    min-height: 58px;
+  }
+  .cal-cell .cal-animal {
+    display: none; /* the tooltip and the day page still carry the animal */
+  }
+}
+.jump-input {
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12.5px;
+  font-family: inherit;
+  max-width: 150px;
+}
+.jump-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+}
+/* ── end Tong Shu calendar block ─────────────────────────────────────────── */

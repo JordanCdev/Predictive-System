@@ -35,6 +35,7 @@ export function GroupPage() {
   const [objectiveId, setObjectiveId] = useState(OBJECTIVES[0].id);
   const [windowDays, setWindowDays] = useState(92);
   const [selected, setSelected] = useState<string[]>(() => usablePeople.map((p) => p.id));
+  const [showAll, setShowAll] = useState(false);
 
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -56,7 +57,7 @@ export function GroupPage() {
       result: evaluateFor(p, objectiveId, effectiveWindow),
     }));
     const all = combineGroupDays(members);
-    return { all, best: rankGroupDays(all).slice(0, 12) };
+    return { all, best: rankGroupDays(all) };
   }, [party, objectiveId, effectiveWindow, evaluateFor]);
 
   if (usablePeople.length === 0) return <NeedsProfile what="find a date for a group" />;
@@ -148,10 +149,15 @@ export function GroupPage() {
             Best for all {party.length} · {objectivePlain(objectiveId).gerund.toLowerCase()}
           </div>
           <ul className="group-days">
-            {ranked.best.map((day) => (
+            {(showAll ? ranked.best : ranked.best.slice(0, 12)).map((day) => (
               <GroupDayRow key={day.isoDate} day={day} />
             ))}
           </ul>
+          {ranked.best.length > 12 && (
+            <button className="btn-text" style={{ paddingLeft: 0 }} onClick={() => setShowAll((v) => !v)}>
+              {showAll ? "Show the top 12 only" : `Show all ${ranked.best.length} workable days ›`}
+            </button>
+          )}
           {ruledOutCount > 0 && (
             <p className="ask-note" style={{ marginTop: 10 }}>
               {ruledOutCount} {ruledOutCount === 1 ? "day was" : "days were"} removed because the day is vetoed for
@@ -184,7 +190,11 @@ function GroupDayRow({ day }: { day: GroupDay }) {
     <li className={`group-day consensus-${day.consensus}`}>
       <div className="group-day-head">
         <div>
-          <b className="group-day-date">{shortDate(day.civil)}</b>
+          {/* The date opens the full single-day reading — the group row is a
+              summary, not the whole story for any one person. */}
+          <Link to={`/day/${day.isoDate}`} style={{ color: "inherit" }} title="Open this day's full reading">
+            <b className="group-day-date">{shortDate(day.civil)}</b>
+          </Link>
           <span className="group-day-verdict">{groupVerdictLine(day)}</span>
         </div>
         <div className="group-day-score" title="The lowest score in the party">

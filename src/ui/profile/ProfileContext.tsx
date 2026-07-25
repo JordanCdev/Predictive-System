@@ -13,6 +13,7 @@ import {
 import type { BoundaryAlternative } from "../../engine/index.ts";
 import type { TimeChainInput } from "../TimeChain.tsx";
 import { Person } from "../PersonalizeCard.tsx";
+import { healBirthTimezone } from "../birthZoneDefaults.ts";
 import { DEFAULT_TZ, TODAY_CIVIL, ageOn, birthCivilOf, buildRequest, canonicalFor } from "../shared.ts";
 import { useAuth } from "./AuthContext.tsx";
 import { useEntitlements } from "./EntitlementsContext.tsx";
@@ -47,6 +48,29 @@ function readJson(key: string): unknown {
 
 function loadPeople(): PeopleState {
   return migrate(readJson(PEOPLE_STORE), readJson(PERSON_STORE));
+}
+
+/**
+ * Heal stale birth tz offsets on load.
+ *
+ *  - `birthZone` set, not manual → re-resolve the offset for the birth DATE
+ *    (rule changes, or records saved before the resolver existed).
+ *  - NO `birthZone`, not manual → a legacy profile seeded with the device's
+ *    then-current offset (the corrupted population): adopt the device zone and
+ *    resolve properly.
+ *  - `tzManual` profiles are never touched.
+ *
+ * Returns the same state object when nothing changed, so callers persist the
+ * healed record only when there is actually something to heal.
+ */
+function healPeopleState(state: PeopleState, fallbackZone?: string | null): { state: PeopleState; changed: boolean } {
+  let changed = false;
+  const people = state.people.map((p) => {
+    const healed = fallbackZone === undefined ? healBirthTimezone(p) : healBirthTimezone(p, fallbackZone);
+    if (healed !== p) changed = true;
+    return healed;
+  });
+  return { state: changed ? { ...state, people } : state, changed };
 }
 
 function persist(state: PeopleState) {
@@ -110,7 +134,14 @@ export interface ProfileValue {
 const ProfileCtx = createContext<ProfileValue | null>(null);
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PeopleState>(() => loadPeople());
+  // Heal once per mount; `boot.changed` says whether the stored record needed it.
+  const [boot] = useState(() => healPeopleState(loadPeople()));
+  const [state, setState] = useState<PeopleState>(boot.state);
+  // Persist the healed offsets so the correction sticks (and older tabs reading
+  // the legacy key see it too). Only when something actually changed.
+  useEffect(() => {
+    if (boot.changed) persist(boot.state);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { enabled, user } = useAuth();
   const { entitlement, clamp } = useEntitlements();
 
@@ -140,7 +171,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         const m = await import("../../firebase/client.ts");
         const cloud = await m.loadPeople(user.uid);
         if (cancelled) return;
-        const merged = migrate(cloud, null);
+        // Cloud records can carry the same stale offsets local ones did — heal
+        // them through the identical path before they become the active cast.
+        // NO device fallback here: a cloud record is opened on many devices, and
+        // baking whichever device loads it first into the shared record would
+        // give the same profile different pillars per device. Only records that
+        // carry their own zone (or a known city) heal deterministically.
+        const merged = healPeopleState(migrate(cloud, null), null).state;
         if (merged.people.length > 0) {
           setState(merged);
           persist(merged);

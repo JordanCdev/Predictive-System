@@ -5,15 +5,21 @@ import { objectiveById } from "./objectives.ts";
 import {
   actionGuidance,
   confidencePlain,
+  dayMasterArchetype,
+  functionalElementsPlain,
   headlineVerdict,
   humanDate,
   humanHourRange,
   isDaytimeHour,
+  pillarPalacePlain,
   relativeDay,
+  strengthStructurePlain,
   subScoreNarrative,
   verdictBand,
   whyThisDay,
 } from "./plainEnglish.ts";
+import { STEMS } from "./symbols.ts";
+import type { DayMasterAnalysis } from "./bazi.ts";
 
 const objective = objectiveById("contract_signing");
 
@@ -139,5 +145,96 @@ describe("plainEnglish (deterministic explanation layer)", () => {
     const h = headlineVerdict(res.recommendations[0], objective);
     expect(h).toMatch(/day to sign and close deals|avoid/i);
     expect(h).not.toMatch(/[一-鿿]/); // no raw hanzi in the headline
+  });
+});
+
+// Doctrine tests for the chart-depth copy: interpretation from the classical
+// tradition, never prediction. "will happen"-style phrasing is forbidden.
+const FORBIDDEN_PREDICTIVE = /\bwill\b|will happen|going to happen|guarantee|predicts?\b|destined|fated to/i;
+
+describe("day-master archetypes (classical imagery, non-predictive)", () => {
+  it("all 10 stems produce distinct, non-empty copy without predictive phrasing", () => {
+    const paragraphs = new Set<string>();
+    const names = new Set<string>();
+    for (let i = 0; i < 10; i++) {
+      const a = dayMasterArchetype(i);
+      expect(a.paragraph.length).toBeGreaterThan(80);
+      expect(a.name.length).toBeGreaterThan(0);
+      expect(a.hanzi).toBe(STEMS[i].hanzi);
+      expect(a.title).toContain(STEMS[i].hanzi);
+      // Honest framing: labelled as imagery/tradition, and never predictive.
+      expect(a.paragraph).toMatch(/classical imagery|tradition/i);
+      expect(a.paragraph).not.toMatch(FORBIDDEN_PREDICTIVE);
+      paragraphs.add(a.paragraph);
+      names.add(a.name);
+    }
+    expect(paragraphs.size).toBe(10);
+    expect(names.size).toBe(10);
+  });
+
+  it("is deterministic — identical inputs, identical strings", () => {
+    expect(dayMasterArchetype(4)).toEqual(dayMasterArchetype(4));
+  });
+});
+
+describe("strength + structure line", () => {
+  const dmOf = (structure: DayMasterAnalysis["structure"], strength: DayMasterAnalysis["strength"]) =>
+    ({ structure, strength }) as DayMasterAnalysis;
+
+  it("covers all strengths and structures with distinct, honest, non-predictive lines", () => {
+    const lines = [
+      strengthStructurePlain(dmOf("normal", "strong")),
+      strengthStructurePlain(dmOf("normal", "balanced")),
+      strengthStructurePlain(dmOf("normal", "weak")),
+      strengthStructurePlain(dmOf("follow", "weak")),
+      strengthStructurePlain(dmOf("dominant", "strong")),
+    ];
+    expect(new Set(lines).size).toBe(5);
+    for (const l of lines) {
+      expect(l.length).toBeGreaterThan(40);
+      expect(l).not.toMatch(FORBIDDEN_PREDICTIVE);
+    }
+    // Special structures get their own honest lines, named and flagged as school-dependent.
+    expect(lines[3]).toMatch(/從格/);
+    expect(lines[3]).toMatch(/school-dependent/);
+    expect(lines[4]).toMatch(/專旺/);
+    expect(lines[4]).toMatch(/school-dependent/);
+  });
+});
+
+describe("pillar palaces (Zi Ping mapping, phrased honestly)", () => {
+  it("maps the four positions to the standard palaces with distinct labels", () => {
+    expect(pillarPalacePlain("year").label).toMatch(/ancestry|roots/i);
+    expect(pillarPalacePlain("month").label).toMatch(/parents|career/i);
+    expect(pillarPalacePlain("day").label).toMatch(/self|spouse/i);
+    expect(pillarPalacePlain("hour").label).toMatch(/children|later life/i);
+    const labels = (["year", "month", "day", "hour"] as const).map((p) => pillarPalacePlain(p).label);
+    expect(new Set(labels).size).toBe(4);
+    for (const p of ["year", "month", "day", "hour"] as const) {
+      const pal = pillarPalacePlain(p);
+      // Honest framing: the note names the tradition rather than asserting fact.
+      expect(pal.note).toMatch(/Zi Ping/);
+      expect(pal.note).not.toMatch(FORBIDDEN_PREDICTIVE);
+    }
+  });
+});
+
+describe("functional element map", () => {
+  it("narrates all five functional roles for a real chart, elements matching the engine", () => {
+    const res = evaluateDecision(personalReq());
+    const dm = res.subjectChart!.dayMaster;
+    const map = functionalElementsPlain(dm);
+    expect(map).toHaveLength(5);
+    expect(map.map((f) => f.group)).toEqual(["wealth", "officer", "output", "resource", "companion"]);
+    for (const f of map) {
+      expect(f.element).toBe(dm.functional[f.group]);
+      expect(f.sentence).toMatch(new RegExp(`for you is ${f.element[0].toUpperCase()}${f.element.slice(1)}`));
+      expect(f.sentence).not.toMatch(FORBIDDEN_PREDICTIVE);
+      // Valence agrees with the useful-element sets — never contradicts them.
+      if (f.valence === "helps") expect(dm.favorableElements).toContain(f.element);
+      if (f.valence === "strains") expect(dm.unfavorableElements).toContain(f.element);
+    }
+    const wealth = map.find((f) => f.group === "wealth")!;
+    expect(wealth.sentence).toMatch(/money themes/);
   });
 });

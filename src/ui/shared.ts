@@ -16,6 +16,10 @@ const NOW = new Date();
 const pad = (n: number) => String(n).padStart(2, "0");
 export const TODAY_CIVIL = { year: NOW.getFullYear(), month: NOW.getMonth() + 1, day: NOW.getDate() };
 export const TODAY_ISO = `${TODAY_CIVIL.year}-${pad(TODAY_CIVIL.month)}-${pad(TODAY_CIVIL.day)}`;
+/** The device's CURRENT offset. Correct for evaluation windows anchored on
+ *  today; NOT a valid birth offset — the birth form seeds the device's IANA
+ *  zone (see birthZoneDefaults.ts) and resolves the offset for the birth date,
+ *  so this is only ever a placeholder until a date is entered. */
 export const DEFAULT_TZ = -NOW.getTimezoneOffset();
 
 export const isoOf = (c: { year: number; month: number; day: number }) => `${c.year}-${pad(c.month)}-${pad(c.day)}`;

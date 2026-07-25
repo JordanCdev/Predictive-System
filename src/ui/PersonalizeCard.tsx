@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { ConventionSet } from "../engine/index.ts";
 import { labelFor, resolveOffset } from "../engine/timezone.ts";
+import { DEVICE_ZONE } from "./birthZoneDefaults.ts";
+import { ConventionCompare } from "./ConventionCompare.tsx";
 import { CITIES, CITY_REGIONS, cityByName } from "./cities.ts";
 
 export interface Person {
@@ -77,7 +79,12 @@ export function PersonalizeCard({
       birthTime: "12:00",
       sex: "male",
       timeCertainty: "exact",
+      // `defaultTz` (the device's CURRENT offset) is only a placeholder: seeding
+      // the device's IANA zone below means the offset is re-resolved FOR THE
+      // BIRTH DATE the moment one is entered — a January birth typed during
+      // summer time must not inherit the summer offset.
       tzOffset: defaultTz,
+      birthZone: DEVICE_ZONE ?? undefined,
       conventionId: presets.some((p) => p.id === DEFAULT_CONVENTION_ID) ? DEFAULT_CONVENTION_ID : presets[0].id,
     },
   );
@@ -90,7 +97,11 @@ export function PersonalizeCard({
     setDraft((d) =>
       c
         ? { ...d, birthCity: c.name, birthZone: c.zone, longitudeEast: c.lon, tzOffset: c.tz, tzManual: false }
-        : { ...d, birthCity: undefined, birthZone: undefined },
+        : // No city → fall back to the device zone, so the offset keeps being
+          // resolved for the birth date instead of freezing at a stale value.
+          // The longitude goes with the city: keeping the old city's meridian
+          // while adopting the device zone would mix two places in one chart.
+          { ...d, birthCity: undefined, longitudeEast: undefined, birthZone: DEVICE_ZONE ?? undefined },
     );
   };
 
@@ -157,6 +168,10 @@ export function PersonalizeCard({
             Remove personalization
           </button>
         </div>
+        {/* Free for everyone: shows this chart under true solar AND civil clock,
+            so a cross-check against a mainstream app reads as a school
+            difference, not an error. */}
+        <ConventionCompare person={person} onSwitchConvention={(id) => onApply({ ...person, conventionId: id })} />
       </div>
     );
   }
@@ -267,7 +282,10 @@ export function PersonalizeCard({
           <div className={resolvedZone.certainty === "exact" ? "note-soft tz-note" : "warn tz-note"}>
             {resolvedZone.certainty !== "exact" && <span aria-hidden="true">⚠ </span>}
             <b>Clocks read {labelFor(draft.tzOffset)}</b>
-            {draft.tzManual ? " (set by you)." : ` in ${draft.birthCity} on that date.`}
+            {draft.tzManual ? " (set by you)." : ` in ${draft.birthCity ?? draft.birthZone} on that date.`}
+            {!draft.tzManual && !draft.birthCity
+              ? " Assumed from this device's time zone — pick your birth city if you were born elsewhere."
+              : ""}
             {resolvedZone.note ? ` ${resolvedZone.note}` : ""}
             {draft.tzManual && resolvedZone.offsetMinutes !== draft.tzOffset && (
               <>

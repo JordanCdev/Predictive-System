@@ -17,7 +17,7 @@ import { ConfidenceBreakdown, ConflictRecord, DayRecommendation, HourPick,
 } from "./decision.ts";
 import { McdaWeights, Objective } from "./objectives.ts";
 import { BranchInteraction, DaYun, DayMasterAnalysis, LuckPillar, SeasonalState } from "./bazi.ts";
-import { BRANCHES, FivePhase, TenGod } from "./symbols.ts";
+import { BRANCHES, FivePhase, GodGroup, STEMS, TenGod } from "./symbols.ts";
 
 // ── Verdict bands ──────────────────────────────────────────────────────────
 // Thresholds match the engine's classical bands. Single source of truth.
@@ -627,6 +627,207 @@ export function luckPhasePlain(lp: LuckPillar): string {
 }
 
 const branchHz = (i: number) => BRANCHES[i].hanzi;
+
+// ── Day-Master archetypes (the classical stem imagery, 甲..癸) ────────────────
+// Interpretive tradition, clearly labelled as such by every caller. Character
+// sketches only — no outcome claims, nothing predictive.
+
+export interface DayMasterArchetype {
+  /** e.g. "Towering Wood". */
+  name: string;
+  /** "甲 Jiǎ — Towering Wood" for headings. */
+  title: string;
+  hanzi: string;
+  pinyin: string;
+  /** The classical image in a phrase, e.g. "the tall oak growing toward the light". */
+  image: string;
+  /** Deterministic interpretive paragraph in the tradition's voice. */
+  paragraph: string;
+}
+
+const DAY_MASTER_ARCHETYPES: Record<number, { name: string; image: string; paragraph: string }> = {
+  0: {
+    name: "Towering Wood",
+    image: "the tall oak growing straight toward the light",
+    paragraph:
+      "In the classical imagery you are the towering tree — an oak growing straight toward the light. Tradition describes 甲 people as upright, principled and steadily ambitious, growing through obstacles rather than around them; the same image warns that a tall tree resists bending, so stubbornness is the noted shadow.",
+  },
+  1: {
+    name: "Bending Grass",
+    image: "grass and flowering vine that survive the storm",
+    paragraph:
+      "In the classical imagery you are the bending grass and flowering vine — soft wood that survives storms the oak cannot. Tradition describes 乙 people as adaptable, diplomatic and quietly persistent, finding a way around whatever cannot be pushed through; the noted shadow is a tendency to lean on stronger supports rather than stand alone.",
+  },
+  2: {
+    name: "Sun Fire",
+    image: "the sun that lights everything at once",
+    paragraph:
+      "In the classical imagery you are the sun — fire that lights everything at once. Tradition describes 丙 people as warm, generous and openly expressive, natural centres of a room; the noted shadow is impatience, and a dislike of going unseen.",
+  },
+  3: {
+    name: "Lamp Fire",
+    image: "the lamp flame and starlight in the dark",
+    paragraph:
+      "In the classical imagery you are the lamp flame and starlight — focused fire in the dark. Tradition describes 丁 people as perceptive, considerate and quietly intense, illuminating what others miss; the noted shadow is a flame that flickers — moods and private worry.",
+  },
+  4: {
+    name: "Mountain Earth",
+    image: "the mountain that holds its ground",
+    paragraph:
+      "In the classical imagery you are the mountain — earth that holds its ground. Tradition describes 戊 people as steady, protective and trustworthy under pressure, the one others shelter behind; the noted shadow is immovability once a position is taken.",
+  },
+  5: {
+    name: "Garden Earth",
+    image: "the cultivated soil that makes things grow",
+    paragraph:
+      "In the classical imagery you are the garden soil — cultivated earth that makes things grow. Tradition describes 己 people as nurturing, resourceful and tolerant, improving whatever is planted alongside them; the noted shadow is absorbing too much and keeping their own needs buried.",
+  },
+  6: {
+    name: "Raw Metal",
+    image: "the axe head and unpolished sword",
+    paragraph:
+      "In the classical imagery you are raw metal — the axe head and the unpolished sword. Tradition describes 庚 people as decisive, dutiful and hard to deflect, at their best when tempered by real challenge; the noted shadow is bluntness that can land as force.",
+  },
+  7: {
+    name: "Refined Metal",
+    image: "the finished jewel",
+    paragraph:
+      "In the classical imagery you are refined metal — the finished jewel. Tradition describes 辛 people as precise, discerning and quality-minded, persuasive through polish rather than pressure; the noted shadow is sensitivity to scratches — criticism cuts deep.",
+  },
+  8: {
+    name: "Ocean Water",
+    image: "the ocean and great river moving with scale",
+    paragraph:
+      "In the classical imagery you are the ocean and the great river — water moving with scale and force. Tradition describes 壬 people as resourceful, far-ranging and able to carry others in their current; the noted shadow is restlessness that resists any fixed channel.",
+  },
+  9: {
+    name: "Mist Water",
+    image: "mist, dew and gentle rain",
+    paragraph:
+      "In the classical imagery you are mist, dew and gentle rain — water that reaches everywhere unnoticed. Tradition describes 癸 people as subtle, intuitive and patient, nourishing quietly over time; the noted shadow is elusiveness — keeping too much beneath the surface.",
+  },
+};
+
+/** The classical character sketch for a Day-Master stem (0..9, 甲..癸). */
+export function dayMasterArchetype(stemIndex: number): DayMasterArchetype {
+  const stem = STEMS[stemIndex];
+  const a = DAY_MASTER_ARCHETYPES[stemIndex];
+  return {
+    name: a.name,
+    title: `${stem.hanzi} ${stem.pinyin} — ${a.name}`,
+    hanzi: stem.hanzi,
+    pinyin: stem.pinyin,
+    image: a.image,
+    paragraph: a.paragraph,
+  };
+}
+
+/** One honest line combining the strength verdict with the structure (格局).
+ *  Follow/dominant charts get their own line — their favourable elements invert,
+ *  so the normal strength phrasing would mislead. */
+export function strengthStructurePlain(dm: DayMasterAnalysis): string {
+  if (dm.structure === "follow") {
+    return (
+      "Special structure 從格 (a “following” chart): your Day Master is too unsupported to prop up, so the tradition reads it as flowing with the chart's dominant force rather than resisting it — the usual helpful and straining elements are inverted (a school-dependent reading)."
+    );
+  }
+  if (dm.structure === "dominant") {
+    return (
+      "Special structure 專旺 (a “dominant” chart): your Day Master overwhelms everything else, so the tradition reads it as flowing with its own element — the elements that fight it are the ones marked as straining (a school-dependent reading)."
+    );
+  }
+  switch (dm.strength) {
+    case "strong":
+      return "A well-supported Day Master in a regular structure — the classical reading favours letting it give: output, wealth and challenge tend to suit it better than yet more support.";
+    case "weak":
+      return "A Day Master in need of support, in a regular structure — the classical reading favours backing it up (learning, allies, its own element) before taking on draining moves.";
+    default:
+      return "A balanced Day Master in a regular structure — neither propped up nor drained; the tradition reads such charts as flexible across most kinds of move.";
+  }
+}
+
+// ── Pillar palaces (宮位) — the standard Zi Ping mapping, phrased honestly ────
+
+export interface PalacePlain {
+  /** Short label for the pillar column, e.g. "Self & spouse". */
+  label: string;
+  /** One honest sentence on what the tradition reads into this pillar. */
+  note: string;
+}
+
+const PALACE_PLAIN: Record<"year" | "month" | "day" | "hour", PalacePlain> = {
+  year: {
+    label: "Ancestry & roots",
+    note: "In the Zi Ping palace map, the Year pillar speaks for family origins, grandparents and the world you started from.",
+  },
+  month: {
+    label: "Parents & career",
+    note: "In the Zi Ping palace map, the Month pillar speaks for parents, upbringing and your working life.",
+  },
+  day: {
+    label: "Self & spouse",
+    note: "In the Zi Ping palace map, the Day pillar is you — the stem is your Day Master, and the branch beneath it is the marriage palace.",
+  },
+  hour: {
+    label: "Children & later life",
+    note: "In the Zi Ping palace map, the Hour pillar speaks for children, what you leave behind and your later years.",
+  },
+};
+
+/** The palace (宮位) reading of a pillar position — a traditional lens, not a verdict. */
+export function pillarPalacePlain(position: "year" | "month" | "day" | "hour"): PalacePlain {
+  return PALACE_PLAIN[position];
+}
+
+// ── The functional element map, in plain words ───────────────────────────────
+
+export interface FunctionalElementPlain {
+  group: GodGroup;
+  /** e.g. "Wealth 財". */
+  label: string;
+  element: FivePhase;
+  /** How this element currently sits for the chart (from the useful-element set). */
+  valence: "helps" | "strains" | "neutral";
+  /** e.g. "Wealth for you is Water — days and periods rich in Water touch your money themes." */
+  sentence: string;
+}
+
+const FUNCTIONAL_LABEL: Record<GodGroup, string> = {
+  wealth: "Wealth 財",
+  officer: "Career & authority 官殺",
+  output: "Output & launch 食傷",
+  resource: "Learning & support 印",
+  companion: "Peers & partnership 比劫",
+};
+const FUNCTIONAL_WORD: Record<GodGroup, string> = {
+  wealth: "Wealth",
+  officer: "Career-and-authority",
+  output: "Output",
+  resource: "Support",
+  companion: "Companion",
+};
+const FUNCTIONAL_THEME: Record<GodGroup, string> = {
+  wealth: "your money themes",
+  officer: "your career, status and responsibility themes",
+  output: "your creative, launch and self-expression themes",
+  resource: "your learning, backing and recovery themes",
+  companion: "your peer, partnership and independence themes",
+};
+
+/** All five functional roles (財/官殺/食傷/印/比劫) as plain sentences, in a fixed order. */
+export function functionalElementsPlain(dm: DayMasterAnalysis): FunctionalElementPlain[] {
+  const order: GodGroup[] = ["wealth", "officer", "output", "resource", "companion"];
+  return order.map((group) => {
+    const element = dm.functional[group];
+    const valence: FunctionalElementPlain["valence"] = dm.favorableElements.includes(element)
+      ? "helps"
+      : dm.unfavorableElements.includes(element)
+        ? "strains"
+        : "neutral";
+    const sentence = `${FUNCTIONAL_WORD[group]} for you is ${elementPlain(element)} — days and periods rich in ${elementPlain(element)} touch ${FUNCTIONAL_THEME[group]}.`;
+    return { group, label: FUNCTIONAL_LABEL[group], element, valence, sentence };
+  });
+}
 
 // ── "How to read this" + glossary (plain definitions of the terms used) ──────
 

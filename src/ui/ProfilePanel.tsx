@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import {
   AdvisorAnswer,
   BaziChart,
@@ -52,6 +53,7 @@ export function ProfilePanel({
   personalized: boolean;
   onOpenReading: (objectiveId: string, windowDays: number) => void;
 }) {
+  const { clamp } = useEntitlements();
   const profile = useMemo(() => analyzeProfile(chart), [chart]);
 
   // Best day for each top recommendation, scanned over the chosen horizon.
@@ -75,9 +77,17 @@ export function ProfilePanel({
       const intent = parseAdvisorQuery(q);
       let answer: AdvisorAnswer;
       if (intent.kind === "timing" && intent.objectiveId) {
-        const win = intent.windowDays ?? defaultWindowDays;
+        // Describe the window actually searched: the plan clamp caps length,
+        // so a free user asking about "next year" must be told the truth.
+        const { days: win, capped } = clamp(intent.windowDays ?? defaultWindowDays);
         const result = evaluate(intent.objectiveId, win);
         answer = composeTimingAnswer(objectiveById(intent.objectiveId), result, todayIso, win);
+        if (capped) {
+          answer = {
+            ...answer,
+            paragraphs: [...answer.paragraphs, `Searched the next ${win} days — your plan's horizon. A Pro plan searches up to five years out.`],
+          };
+        }
       } else if (intent.kind === "profile") {
         answer = composeProfileAnswer(profile);
       } else {
@@ -86,7 +96,7 @@ export function ProfilePanel({
       setExchanges((prev) => [...prev, { id: nextId.current++, question: q, answer }]);
       setQuery("");
     },
-    [defaultWindowDays, evaluate, profile, todayIso],
+    [defaultWindowDays, evaluate, profile, todayIso, clamp],
   );
 
   return (
@@ -152,6 +162,47 @@ export function ProfilePanel({
           );
         })}
       </div>
+
+      {/* The rest of the 11-objective ranking — every decision type, weakest last,
+          each with its honest reason. Fit transparency is never gated. */}
+      {profile.fits.length > profile.top.length && (
+        <>
+          <div className="section-title" style={{ marginTop: 18 }}>
+            The rest of the ranking — weakest last
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {profile.fits.slice(profile.top.length).map((fit) => {
+              const op = objectivePlain(fit.objectiveId);
+              const obj = objectiveById(fit.objectiveId);
+              const fl = fitLabel(fit.fit);
+              return (
+                <button
+                  key={fit.objectiveId}
+                  className="rec-day"
+                  style={{ display: "block", textAlign: "left", width: "100%" }}
+                  onClick={() => onOpenReading(fit.objectiveId, defaultWindowDays)}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span aria-hidden="true">{obj.emoji}</span>
+                    <span style={{ fontWeight: 600, fontSize: 13.5 }}>{op.gerund}</span>
+                    <span className={`fit-badge ${fl.cls}`} style={{ marginLeft: "auto" }}>
+                      {fl.word}
+                    </span>
+                  </span>
+                  <span className="fit-bar" aria-hidden="true" style={{ display: "block", marginTop: 5 }}>
+                    <span className="fit-fill" style={{ width: `${fit.fit}%`, background: scoreColor(fit.fit) }} />
+                  </span>
+                  <span className="rec-reason" style={{ display: "block", marginTop: 4 }}>{fit.reason}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="ask-note" style={{ marginTop: 8 }}>
+            A “demanding” fit isn't a prohibition — it means this kind of move leans on energies your chart carries less easily, so
+            the day you pick matters more. Open any of them to find it.
+          </div>
+        </>
+      )}
 
       {/* Custom Q&A — the app responds deterministically. */}
       <div className="section-title" style={{ marginTop: 18 }}>

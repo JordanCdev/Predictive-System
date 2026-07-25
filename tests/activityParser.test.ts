@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseActivity } from "../src/engine/advisor.ts";
+import { parseActivity, parseTimeframe, snapWindow } from "../src/engine/advisor.ts";
 
 // The example phrases from the Phase-5 spec must land on a sensible objective.
 const cases: [string, string][] = [
@@ -49,5 +49,26 @@ describe("free-text activity parser", () => {
   it("is deterministic and returns null for gibberish", () => {
     expect(JSON.stringify(parseActivity("launch my website"))).toBe(JSON.stringify(parseActivity("launch my website")));
     expect(parseActivity("qwerty zxcvbn")).toBeNull();
+  });
+});
+
+// The global-search handler runs parseTimeframe over the same query, so "sign a
+// contract next year" opens a one-year window rather than the default month.
+describe("timeframe parsing for the search entry point", () => {
+  it("reads idiomatic horizons out of a decision phrase", () => {
+    expect(parseTimeframe("sign a contract next year")).toBe(365);
+    expect(parseTimeframe("launch asap")).toBe(14);
+    expect(parseTimeframe("get married within a month")).toBe(31);
+    expect(parseTimeframe("move house in the coming months")).toBe(92);
+  });
+
+  it("snaps n-unit phrases onto the supported window ladder", () => {
+    expect(parseTimeframe("move in 3 months")).toBe(92);
+    expect(parseTimeframe("surgery in two years")).toBe(730);
+    expect(snapWindow(100)).toBe(92);
+  });
+
+  it("returns null when the phrase carries no horizon", () => {
+    expect(parseTimeframe("sign a contract")).toBeNull();
   });
 });
