@@ -1,9 +1,42 @@
 {
   "_meta": {
     "title": "董公選要覽 — printed-witness cell corpus (verbatim transcription snapshot)",
-    "note": "Snapshot of the witness transcriptions so dong-gong-extract.mjs stays re-runnable after the session scratchpad is gone. Verbatim; no emendation beyond the reader-supplied OCR errata table documented in the extractor.",
+    "note": "Snapshot of the witness transcriptions so dong-gong-extract.mjs stays re-runnable after the session scratchpad is gone. `text` is the transcription after normaliseWitnessText(): bracketed apparatus and running headers removed, punctuation folded to 。, synthetic clause breaks inserted before clause-initial markers, and the cell header (執未日 …) stripped. No character of the witness text is otherwise altered. Readings from the hunt passes additionally had the readers' own OCR errata table applied; readings from the 2026-07-26 re-read pass did NOT (see `passes`).",
     "builtFrom": "/private/tmp/claude-501/-Users-jordan-src-GitHub-Predictive-System-Predictive-System/4e05047a-f7f3-46d7-ba11-fd136cc5a69b/tasks/w3i13fyhm.output",
-    "generated": "2026-07-26"
+    "generated": "2026-07-26",
+    "sourceOfTruth": "THIS FILE IS THE CORPUS OF RECORD. It is no longer a projection of the hunt output: the 2026-07-26 pass contributed cells that exist in no hunt. dong-gong-extract.mjs loads it by default and only merges the hunt over it when run with --rebuild-from-hunt.",
+    "passes": {
+      "hunt-2026-07-26": "The original three hunt transcriptions (reading.hunt = 0|1|2). OCR errata table applied at snapshot time.",
+      "reread-2026-07-26": "A double-blind re-read of Witness A (nlc416-wenming) covering 39 native cells that had no transcription at all. Each cell was read by a first reader and, independently and without sight of the first, by a second (reading.reader = \"first\" | \"second\"); 32 of the 39 carry both readings and 7 carry only the first — see `readingsShortOfTwo`. Both readings are recorded separately and NEITHER was adjudicated against the other by the merge; where they differ, the extractor's keep-rule declines to rate the affected stems. OCR errata NOT applied: these are hand readings off page images, so applying an OCR errata table would be emendation — in particular 與工 is kept as printed rather than rewritten to 興工, which §8.6 lists as an unresolved glyph and which is an ACTIVITIES token."
+    },
+    "witnessFields": {
+      "witnesses": "The witness the TEXT was read from. For the 2026-07-26 pass this is always nlc416-wenming: both readers transcribed Witness A.",
+      "corroboratedAgainst": "A second print consulted to settle doubtful glyphs only. It is NOT a source of text, and a reading carrying this field is still a single-witness reading — the distinction the old corroboratingReadings field lost."
+    },
+    "readingsShortOfTwo": [
+      "酉|卯, 酉|巳, 酉|午, 酉|未, 酉|申, 酉|子 (八月) and 戌|丑 (九月平丑日) carry ONE reading, not two: the 八月+九月 group's handoff to this merge was truncated part-way through the first reader's 九月平丑日 notes, and the blind second reading of that group was never delivered. The seven texts themselves are complete and are admitted on that basis; they simply have no second reading to be checked against, exactly like the 48 single-reading cells the hunts produced."
+    ],
+    "cellsNotAdmitted": [
+      {
+        "month": "戌",
+        "dayBranch": "巳",
+        "officerPrinted": "危",
+        "why": "The 八月+九月 group's payload was truncated in the handoff to this merge. The first reader's cell list stops inside the notes of 九月平丑日, so 九月危巳日 arrived with no `text` at all, and the second, blind reading of that whole group was not delivered. Nothing is transcribed here that could be admitted. The reader's group-level note does record that at 6× the cell's tail reads 開張出行。犯之凶敗。 (correcting a whole-page first pass that had read 開張出行入宅犯之凶敗), but a tail is not a cell."
+      },
+      {
+        "month": "戌",
+        "dayBranch": "未",
+        "officerPrinted": "收",
+        "why": "Same truncated handoff as 九月危巳日: no text delivered by either reader."
+      },
+      {
+        "month": "戌",
+        "dayBranch": "酉",
+        "officerPrinted": "閉",
+        "why": "Same truncated handoff as 九月危巳日: no text delivered by either reader."
+      }
+    ],
+    "lastMerged": "2026-07-26 — added 39 cells from the reread-2026-07-26 double-blind pass"
   },
   "cells": [
     {
@@ -274,6 +307,85 @@
     },
     {
       "month": "午",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "危",
+          "scanPage": "nlc416.pdf scan image p024 (= printed p.12); columns 6–7 from the right",
+          "text": "丁丑癸丑不宜娶親造作安葬入宅。犯之田產不收財物失脫虎咬蛇傷多凶。餘丑亦不吉犯六害招官司百事不宜",
+          "variantNotes": [
+            "Heading verified at 8× as 危. No small-type annotation after the heading. Witness B (p024) reads identically."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "scanPage": "nlc416.pdf scan image p024 (= printed p.12); columns 5–6 from the right",
+          "text": "丁丑癸丑不宜娶親造作。安葬入宅。犯之。田產不收。財物失脫。虎咬蛇傷。多凶。餘丑亦不吉。犯六害。招官司。百事不宜。",
+          "variantNotes": [
+            "Column 5 ends at 虎咬蛇傷。 with blank space below; column 6 opens 多凶。 × beside each of 危, 丑, 日 and beside each character of 丁丑 and 癸丑."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "執",
+          "scanPage": "nlc416.pdf scan image p024 (= printed p.12); columns 1–2 from the right",
+          "text": "乙亥小可修爲次吉丁亥己亥又次吉辛亥陰府決遣之日癸亥六甲窮日又正四廢大凶",
+          "variantNotes": [
+            "Heading verified at 8× as 執 — the machine OCR of this scan misreads it 孰. Witness B (p024) reads identically."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "scanPage": "nlc416.pdf scan image p024 (= printed p.12); columns 1–2 from the right, the first two text columns of the page",
+          "text": "乙亥小可修爲。次吉。丁亥己亥又次吉。辛亥陰府決遣之日。癸亥六甲窮日。又正四廢大凶。",
+          "variantNotes": [
+            "Marginal marks: ○ beside 執, ○ beside 亥, ● beside 日; ○ beside each character of 乙亥, 丁亥, 己亥; × beside each character of 辛亥 and 癸亥.",
+            "Column break falls inside 六甲窮 | 日."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "午",
       "dayBranch": "午",
       "readings": [
         {
@@ -295,6 +407,46 @@
           "officer": "建",
           "text": "甲午日天赦。不係轉煞。埋葬。用之次吉。餘午日皆亦不利。若別事。主招官司。口舌。孤寡窮病。蓋午月逢午日埋葬。係天地轉煞也。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan image p024 (= printed p.12); single column, 12th from the right",
+          "text": "往亡有朱雀勾絞小人刑害凶禍纏綿官司口舌損六畜百事不宜大凶",
+          "variantNotes": [
+            "往亡 follows the heading in the same column. Complete in one column. Witness B (p024) reads identically."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan image p024 (= printed p.12); single column, 11th from the right by this reader's count, immediately before the 開辰日 column",
+          "text": "往亡有朱雀勾絞。小人刑害。凶禍纏綿。官司口舌。損六畜。百事不宜。大凶。",
+          "variantNotes": [
+            "Sentence division verified at 6×: the printed 。 falls after 刑害, so the text reads 小人刑害。凶禍纏綿。 and NOT 小人刑害凶。禍纏綿。 — the alternative parse is plausible from a page-level read.",
+            "Column-count note: this reader counts twelve text columns on p024 with 收卯日 as the 11th and 開辰日 as the 12th; the first reader called it the 12th. Same column either way — it is the one immediately preceding 開辰日."
+          ]
         }
       ]
     },
@@ -384,6 +536,45 @@
     },
     {
       "month": "午",
+      "dayBranch": "未",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "除",
+          "scanPage": "nlc416.pdf scan image p023 (= printed p.11); columns 4–5 from the right",
+          "text": "惟乙未一日最爲不利。如娶親開張入宅修造。主退人口生疾病損血財。其餘未日小作可用乃次吉之日也",
+          "variantNotes": [
+            "No small-type annotation after the heading. Column break at …損血財 / 其餘未日. Witness B (p023) reads identically."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "scanPage": "nlc416.pdf scan image p023 (= printed p.11); columns 4–5 from the right",
+          "text": "惟乙未一日。最爲不利。如娶親開張。入宅修造。主退人口。生疾病。損血財。其餘未日。小作可用。乃次吉之日也。",
+          "variantNotes": [
+            "Marginal marks: no mark beside 除, × beside 未, filled ● beside 日; × beside each character of 乙未. No small-type gloss."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "午",
       "dayBranch": "申",
       "readings": [
         {
@@ -405,6 +596,130 @@
           "officer": "滿",
           "text": "天。富天喜。甲申丙申戊申宜安葬起造婚姻入宅開張出行次吉俱不宜動土庚申只宜安葬不宜修造入宅等事壬申西沈之日五行無氣不可用雖是葬日。但月令不利。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "開",
+          "scanPage": "nlc416.pdf scan images p024–p025 (= printed pp.12–13); last column of p024 continuing into the first column of p025",
+          "text": "天成丙辰有月德庚辰壬辰有黃羅紫檀吉星。蓋照。用之田產六畜興旺生貴子百事大吉。惟戊辰甲辰二日煞入中宮大凶",
+          "variantNotes": [
+            "Heading verified at 10× as 開 (not 收 or 閉) — the machine OCR of the same scan mislabels the corresponding 四月 cell 開辰日 where the print actually reads 閉辰日.",
+            "Page break falls mid-word: p024 ends …田產六畜興旺生 and p025 resumes 貴子百事大吉…"
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "開",
+          "scanPage": "nlc416.pdf scan images p024–p025 (= printed pp.12–13); last column of p024 into the first column of p025",
+          "text": "天成丙辰有月德。庚辰壬辰有黃羅紫檀吉星。蓋照。用之田產六畜興旺。生貴子。百事大吉。惟戊辰甲辰二日。煞入中宮大凶。",
+          "variantNotes": [
+            "uncertain glyph 成 (second character of the small-type gloss 天成) — alternatives 戌 or 戊; agrees with the same gloss at 四月成丑日, which is corroboration within Witness A but not independent.",
+            "There is a printed 。 after 二日, so the closing clause reads 惟戊辰甲辰二日。煞入中宮大凶。"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "酉",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "平",
+          "scanPage": "nlc416.pdf scan image p023 (= printed p.11); single column, 9th from the right",
+          "text": "小紅沙有朱雀勾絞到州星招官司損長幼家下伶仃百事不宜。犯之大凶",
+          "variantNotes": [
+            "州 (in 到州星) is unambiguously 州 at 9× and Witness B prints 到州星 too. Flagged because the star-name 到州星 is anomalous and looks like an inherited corruption; both witnesses transmit it, so it is recorded AS PRINTED and must not be silently emended."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "scanPage": "nlc416.pdf scan image p023 (= printed p.11); single column, 9th from the right",
+          "text": "小紅沙有朱雀勾絞到州星。招官司。損長幼。家下伶仃。百事不宜。犯之大凶。",
+          "variantNotes": [
+            "州 is crisp and unambiguous at 10× (not 洲). What is flagged is the READING, not the glyph: 到州星 is not a star name this reader can place, and the identical 又犯到州星 appears in the 平戌日 entry on printed p.13, so the edition is internally consistent. Do not normalise it to a familiar star name."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "開",
+          "scanPage": "nlc416.pdf scan image p017 (= printed p.5), columns 10–11 from the right",
+          "text": "不利造作粧修。婚姻。會親等事。犯之。主田蠶不收。室有產厄湯火之災。丁丑癸丑殺入中宮。更凶。主官非。損人口。小人侵害。",
+          "variantNotes": [
+            "uncertain glyph 粧 (米 + 庄) as printed — easily misread as 糚, and modern recensions print 裝修 here. Witness B (nlc892 img p016) independently prints 粧.",
+            "VERBATIM: this cell prints 殺入中宮 (殺), whereas 正月執未/成戌 and 二月危戌 all print 煞…中宮 (煞). Left as printed in each case; Witness B also reads 殺 here."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "開",
+          "scanPage": "nlc416.pdf scan image p017 (= printed p.5), text columns 10–11 from the right",
+          "text": "不利造作粧修。婚姻。會親等事。犯之。主田蠶不收。室有產厄湯火之災。丁丑癸丑殺入中宮更凶。主官非。損人口。小人侵害。",
+          "variantNotes": [
+            "uncertain glyph 粧: in Witness A alone the 米/糸 distinction is not safely decidable (first read as 紝); at 18× the left radical resolves as 米 and the right as 庄, and Witness B (nlc892 p.16) prints it cleanly as 粧.",
+            "殺 here, not 煞 — as printed in both witnesses."
+          ]
         }
       ]
     },
@@ -470,6 +785,49 @@
     },
     {
       "month": "卯",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan image p017 (= printed p.5), columns 8–9 from the right",
+          "text": "不利婚姻起造。入宅。開張。犯之。三年內便見退財。永不進益。主是非官訟。產業虛耗。",
+          "variantNotes": [
+            "uncertain glyph 益 (in 永不進益): the upper strokes are ink-merged and at page scale it can be taken for 盆; verified at maximum zoom, and Witness B reads 永不進益.",
+            "No 神煞 annotation after 日."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan image p017 (= printed p.5), text columns 8–9 from the right",
+          "text": "不利婚姻起造。入宅。開張。犯之。三年內便見退財。永不進益。主是非官訟。產業虛耗。",
+          "variantNotes": [
+            "Witness B reads 收子日 不利婚姻起造入宅開張。犯之三年內便見退財。… — same wording; A points it more heavily (。 after 起造, 入宅, 開張, 犯之)."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "卯",
       "dayBranch": "寅",
       "readings": [
         {
@@ -497,6 +855,97 @@
           "officer": "滿",
           "text": "往亡。天空。不宜動土。如修造百事俱吉。若在乾巽二宮起造更吉。出行。開張。婚姻。入宅。內有黃羅紫檀。田塘庫貯星。蓋照。三五年內家生貴子。田蠶興旺。永代吉昌。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "危",
+          "scanPage": "nlc416.pdf scan image p017 (= printed p.5), columns 3–4 from the right",
+          "text": "宜合板作生基。如修造會親婚姻。不利於長房。先退田地。火盜侵欺。又云丙戌壬戌煞入中宮更凶。",
+          "variantNotes": [
+            "The final clause is printed 煞入中宮更凶。 with NO 句讀 dot between 中宮 and 更凶, unlike the parallel clauses in other cells — left exactly as printed.",
+            "Two 戌 days only here (丙戌, 壬戌), against the four in 正月成戌日.",
+            "Witness B (nlc892 img p015) reads identically."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "危",
+          "scanPage": "nlc416.pdf scan image p017 (= printed p.5), text columns 3–4 from the right",
+          "text": "宜合板作生基。如修造會親婚姻。不利於長房。先退田地。火盜侵欺。又云丙戌壬戌煞入中宮更凶",
+          "variantNotes": [
+            "This reader records that A DOES print a terminal 。 after 更凶 (visible in the col-4 crop) but left it off the end of the transcribed string; Witness B carries no terminal circle. The terminal dot is therefore a transcription difference, not a reading difference.",
+            "A blank one-character annotation gap stands before 宜."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "未",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "定",
+          "scanPage": "nlc416.pdf scan image p016 (= printed p.4), columns 6–9 from the right",
+          "text": "不利婚姻起造。係陰宮主事。不宜向家內動作一切。屋外修爲不妨。乙未乃白虎入中宮。更凶。犯之損人。是月。惟癸未一日。乃水入秦州。因癸水當長生旺相之際。內有黃羅。紫檀。天皇。地皇。星。蓋照。利人眷。添子孫。進田地大吉。餘未俱不利。",
+          "variantNotes": [
+            "uncertain glyph 眷 (in 利人眷): the 龹 element above 目 is partly ink-merged in A; Witness B (nlc892 img p015) shows the same character.",
+            "爲 printed in the older form, not 為. Transcribed as printed.",
+            "Heading marks are mixed/over-inked: 定 carries ○ while 未 and 日 carry ●; read as the same evaluation mark inked differently, and not interpreted."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "定",
+          "scanPage": "nlc416.pdf scan image p016 (= printed p.4), text columns 6–9 from the right; column 9 holds only 利。",
+          "text": "不利婚姻起造。係陰宮主事。不宜向家內動作一切。屋外修爲不妨。乙未乃白虎入中宮更凶。犯之損人。是月。惟癸未一日。乃水入秦州。因癸水當長生旺相之際。內有黃羅。紫檀。天皇。地皇。星。蓋照。利人眷。添子孫。進田地。大吉。餘未俱不利。",
+          "variantNotes": [
+            "The circles in 天皇。地皇。星蓋照。 are individually visible at 6× and are recorded exactly where they sit; Witness B prints this stretch with no circles at all, so the pointing is A's own.",
+            "Witness B punctuates 乙未乃白虎入中宮。更凶。 where A runs 入中宮更凶。",
+            "定未日 is the only one of this reader's eight 正月/二月 cells whose heading carries favourable ◎/● marks rather than ×."
+          ]
         }
       ]
     },
@@ -716,6 +1165,51 @@
     },
     {
       "month": "寅",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan images p014–p015 (= printed pp.2–3); opens as the leftmost column of p014 and finishes in the rightmost column of p015",
+          "text": "有勾絞。不宜用事。犯之。損家長。害子孫。六十日一百二十日內。主南方白衣刑害。男女多災大凶。惟天干地支與月建陰陽合德者。次吉。",
+          "variantNotes": [
+            "The cell is split across the page turn at 白 | 衣. No 神煞 annotation after 日.",
+            "Witness B (nlc892 img p012) carries the same wording across its own column break."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan images p014–p015 (= printed pp.2–3); last text column of p014 into the first text column of p015",
+          "text": "有勾絞。不宜用事。犯之。損家長。害子孫。六十日一百二十日內。主南方白衣刑害。男女多災大凶。惟天干地支與月建陰陽合德者。次吉。",
+          "variantNotes": [
+            "A blank one-character gap (empty annotation slot) stands before 有.",
+            "The 版心 running-header column sits on the outer edge of each half-leaf and does not intrude into this cell.",
+            "Witness B (nlc892 p.12, cols 11–13) reads identically apart from A's extra 。 after 犯之 and after 合德者."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "寅",
       "dayBranch": "午",
       "readings": [
         {
@@ -836,6 +1330,142 @@
     },
     {
       "month": "寅",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "成",
+          "scanPage": "nlc416.pdf scan image p014 (= printed p.2), columns 8–10 from the right",
+          "text": "天喜却是地網。諸事不宜。犯之。主家長病。人口不義冷退。又云丙戌戊戌庚戌壬戌煞集中宮。犯之。主起首殺人。兄弟不義。死別生離。尤忌起造婚嫁入宅修作。",
+          "variantNotes": [
+            "丙戌戊戌庚戌壬戌 straddles a column break; the 戌/戊 distinction was verified glyph-by-glyph at maximum zoom (2nd and 4th carry the interior horizontal, the 3rd does not).",
+            "Witness A prints 却; Witness B prints 卻. A kept as printed. Printed 煞 (not 殺).",
+            "Annotation 天喜 carries a hollow ○ beside each character (same convention as 執未日天成) — read as evaluation marks, not punctuation."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "成",
+          "scanPage": "nlc416.pdf scan image p014 (= printed p.2), text columns 9–11 from the right",
+          "text": "天。喜。却是地網。諸事不宜。犯之。主家長病。人口不義冷退。又云丙戌戊戌庚戌壬戌煞集中宮。犯之。主起首殺人。兄弟不義。死別生離。尤忌起造婚嫁入宅修作。",
+          "variantNotes": [
+            "The annotation is 天 followed by 。 then 喜 followed by 。 — the same two-circle typography as 執未日's 天。成。, which this reader read as punctuation.",
+            "A prints 人口不義冷退。 with NO circle after 義 (verified at 9× zoom); Witness B prints 人口不義。冷退。 — a punctuation divergence, not a wording one.",
+            "Witness B has 犯之主家長病 and 犯之主起首殺人 where A inserts 。 after 犯之."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "未",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "執",
+          "scanPage": "nlc416.pdf scan image p014 (= printed p.2), columns 2–3 from the right",
+          "text": "天成有朱雀勾絞。六十日一百二十日內。損六畜。招官司。傷騾馬成惡疾。其乙未煞集中宮。更忌起造入宅。婚姻。開張。修整等事。",
+          "variantNotes": [
+            "uncertain glyph 騾 (in 傷騾馬): the 累 element is partly ink-filled in Witness A; Witness B (nlc892 img p012) prints the same 傷騾馬, so corroborated, not reconstructed.",
+            "The hollow ○ printed beside each of 天 and 成 is read as an evaluation mark, NOT as 句讀; Witness B prints the same pair of circles while carrying no punctuation anywhere. Transcribed 天成, not 天。成。",
+            "Printed marks not carried into the text: × beside each of 執,未,日; ○ beside each of 天,成. Printed 煞 (not 殺)."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "執",
+          "scanPage": "nlc416.pdf scan image p014 (= printed p.2), text columns 3–4 from the right",
+          "text": "天。成。有朱雀勾絞。六十日一百二十日內。損六畜。招官司。傷騾馬。成惡疾。其乙未煞集中宮。更忌起造入宅。婚姻。開張。修整等事。",
+          "variantNotes": [
+            "uncertain glyph 騾 (in 傷騾馬): heavily inked in A; the only competing shape is 驟, but the right element resolves as 田-over-糸. Witness B (nlc892 p.12 col 1) prints 傷騾馬 unambiguously.",
+            "天 / 成 are measurably smaller than body text (34px vs 43–50px) — the small-print star-annotation slot. Each carries its own small circle, transcribed here as 。 — this reader read those circles as punctuation where the first reader read them as evaluation marks.",
+            "Witness B punctuates 起造。入宅。 where A has 起造入宅。"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "破",
+          "scanPage": "nlc416.pdf scan image p014 (= printed p.2), columns 4–5 from the right",
+          "text": "有朱雀勾絞。招官司口舌。退牲財。主三五年內見寡婦不吉等事。庚申正四廢更凶。",
+          "variantNotes": [
+            "No 神煞 annotation printed after 日 — the heading is bare. 牲 verified at high zoom (牛+生), not 姓/性.",
+            "Witness B (nlc892 img p012) gives the same wording unpunctuated."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "破",
+          "scanPage": "nlc416.pdf scan image p014 (= printed p.2), text columns 5–6 from the right",
+          "text": "有朱雀勾絞。招官司口舌。退牲財。主三五年內見寡婦不吉等事。庚申正四廢更凶。",
+          "variantNotes": [
+            "There is a deliberate one-character blank gap between 破申日 and 有 — the star-annotation slot is EMPTY on this day. Nothing was inserted there.",
+            "Witness B (nlc892 p.12, cols 3–4) reads word-for-word the same."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "寅",
       "dayBranch": "辰",
       "readings": [
         {
@@ -885,6 +1515,88 @@
           "officer": "危",
           "text": "辛酉正四廢。不宜用事。惟丁酉有天德福星。蓋照。宜安葬。還福願。出行。開張。參官見貴吉。只不宜起造及婚姻嫁娶等事。乃比和之日也。餘酉均不可用。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "成",
+          "scanPage": "nlc416.pdf scan image p022 (= printed p.10); columns 5–6 from the right",
+          "text": "天喜天成卻犯勾絞朱雀。用之招官司口舌小人肆誣妄毁丁丑癸丑煞入中宮更凶此數日犯空亡破敗受小人陷害",
+          "variantNotes": [
+            "毁 printed with the 毁 (not 毀) left component; the two are near-identical at this size. Recorded as it looks in print. The second reader transcribes 毀.",
+            "天喜 and 天成 immediately after the heading are printed in reduced (annotation) type, transcribed inline without markup."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "成",
+          "scanPage": "nlc416.pdf scan image p022 (= printed p.10); columns 5–6 from the right",
+          "text": "天喜天成卻犯勾絞朱雀。用之招官司口舌。小人肆誣妄毀。丁丑癸丑煞入中宮更凶。此數日犯空亡破敗。受小人陷害。",
+          "variantNotes": [
+            "uncertain glyph 成 (second character of the small-type gloss 天成) — alternatives 戌 or 戊; at 8× the enclosed stroke reads as the short horizontal of 成, and the same gloss recurs in the 五月開辰日 header with an identical impression. Flagged because 成/戌/戊 are the classic confusion set in this typeface.",
+            "The page carries an internal contradiction as printed: an auspicious ○-marked gloss (天喜/天成) on a header that is ×-rated and whose prose is entirely negative."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "破",
+          "scanPage": "nlc416.pdf scan image p021 (= printed p.9); columns 11–12 from the right, the last two columns of the page",
+          "text": "往亡朱雀勾絞招官司小人啾喞之災。主損血財染疾病癸亥正四廢更凶是月亥日諸事忌之",
+          "variantNotes": [
+            "uncertain glyph 喞: at 11× the right component's left half reads as 皀, giving 喞; the alternative 唧 (口+即) is not excludable. Machine OCR of this scan also gives 喞. THIS READER READS 喞; the second reader reads 唧.",
+            "往亡 follows the heading in the same column. Witness B (p021) reads identically."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "scanPage": "nlc416.pdf scan image p021 (= printed p.9); columns 11–12 from the right",
+          "text": "往亡朱雀勾絞。招官司。小人啾唧之災。主損血財。染疾病。癸亥正四廢更凶。是月亥日諸事忌之。",
+          "variantNotes": [
+            "uncertain glyph 唧 (口+即) — verified at 12×: the 口 radical is separately inked and 即 is fully resolved. THIS READER READS 唧; the first reader reads 喞. The two readings disagree on this glyph.",
+            "往亡 is a small-type inline shensha gloss immediately after 日, followed by a filled ● (inauspicious-star marker in this edition)."
+          ]
         }
       ]
     },
@@ -943,6 +1655,46 @@
           "officer": "危",
           "text": "庚子月德丙子戊子起造婚姻興工動土出行開張移徙進人口益子孫旺田蠶增財產大作大發小作小發甲子是自死之金五行無氣壬子木打寶瓶北方沐浴之地福力甚淺。又是正四廢。用之損人口主冷退大凶甲子壬子二日。用之立見蕭索損敗。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan image p022 (= printed p.10); single short column, 7th from the right",
+          "text": "同上成丑日亦大不利",
+          "variantNotes": [
+            "Genuinely this short — the cell is a cross-reference to the preceding 成丑日 cell. Witness B (p021) reads the same, confirming the brevity is not damage or a lacuna."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan image p022 (= printed p.10); single short column, 7th from the right",
+          "text": "同上成丑日亦大不利。",
+          "variantNotes": [
+            "One column, ~11 glyphs, then blank to the foot of the column. × beside each of 收, 寅, 日. No shensha gloss.",
+            "The cross-reference 同上成丑日 points back to the 成丑日 entry two columns to the right on the same page."
+          ]
         }
       ]
     },
@@ -1047,6 +1799,67 @@
           "officer": "閉",
           "text": "戊辰甲辰煞入中宮。不利修造婚姻開張出行入宅安葬。犯之損人口。六畜不旺。財產有失。庚辰雖值月德。卻有天地轉煞之疑。丙辰壬辰火星。小小營爲則可。不宜婚姻起造移徙開張大作用也。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "酉",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "定",
+          "scanPage": "nlc416.pdf scan image p021 (= printed p.9); columns 6–7 from the right",
+          "text": "雖有九土鬼不宜動土安葬。若小小營爲在四月節爲次吉之日。如婚姻入宅修造斷不可用主凶",
+          "variantNotes": [
+            "No small-type annotation after the heading. Witness B (p020) reads identically."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "scanPage": "nlc416.pdf scan image p021 (= printed p.9); columns 6–7 from the right",
+          "text": "雖有九土鬼。不宜動土安葬。若小小營爲。在四月節爲次吉之日。如婚姻入宅修造。斷不可用。主凶。",
+          "variantNotes": [
+            "Header anomaly: unlike its neighbours, 定酉日 carries only ONE marginal mark — a hollow ○ to the right of 日 — with no mark beside 定 or 酉, and no faded impression at 10×. The ○ was NOT transcribed as 。 because in this edition ○/×/● beside a header are rating marks; reading it as punctuation would be an interpretation, not a reading."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "scanPage": "nlc416.pdf scan image p034 (= printed p.22, folio 二二); columns 3–5",
+          "text": "小紅沙有福生。惜被月建刑破。犯朱雀勾絞。招官司拮据。諸事不利。若小小營爲。內有福生。亦僅可備於急用。然而終無利益。大。用之立見其凶。丁丑癸丑煞入中宮更凶。",
+          "variantNotes": [
+            "小紅沙 is the small-type label and is followed by a SOLID ● (not inlined).",
+            "The reading's own per-cell note is TRUNCATED in the handoff at this point; the transcribed text itself is complete (it ends at the printed 更凶。 before 定寅日 begins in column 5)."
+          ]
         }
       ]
     },
@@ -1226,6 +2039,138 @@
     },
     {
       "month": "未",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "定",
+          "scanPage": "nlc416.pdf image p026 (= printed p.14, verso, 版心 at RIGHT); text-columns 3–6 from the right",
+          "text": "己亥火星。丁亥有黃羅。紫檀。天皇。地皇星。蓋照。乙亥文昌值日。宜出行入宅。婚姻入學。修造動土。參官見貴。招財祿。生貴子。大作大發。小作小發。又云乙亥文昌在午。文昌是太陽。午宮乃太陽之位。故有文昌星值日。是以大吉。辛亥是婦人之金。陰氣全盛。癸亥六甲窮日。五行無氣。此二日不宜用。",
+          "variantNotes": [
+            "參官見貴: 參 (not 叅). Confident but dense at this resolution.",
+            "No annotation follows the officer heading in this cell (unlike 滿酉日 / 開巳日); the cell goes straight to 己亥火星."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "scanPage": "nlc416.pdf image p026 (= printed p.14, verso, 版心 董公選要覽 / 一四 at RIGHT edge); text-columns 3–6 from the right",
+          "text": "己亥火星丁亥有黃羅紫檀天皇地皇星。蓋照乙亥文昌值日宜出行入宅婚姻入學修造動土參官見貴招財祿生貴子大作大發小作小發。又云乙亥文昌在午文昌是太陽午宮乃太陽之位故有文昌星值日是以大吉辛亥是婦人之金陰氣全盛癸亥六甲窮日五行無氣此二日不宜用",
+          "variantNotes": [
+            "己 in 己亥 zoomed at 16×: top-left corner OPEN, ruling out 巳. Flagged only because this print does not always cut 己/已/巳 cleanly.",
+            "窮 in 六甲窮日 legible at 5× but the 弓 element is ink-filled.",
+            "天皇 and 地皇 are separated by a reading-dot in the print (…紫檀。天皇。地皇星蓋照。), i.e. the print groups them as two star names, not one four-character name."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "閉",
+          "scanPage": "nlc416.pdf images p027→p028 (= printed pp.15–16); straddles the leaf break at 丙 | 午",
+          "text": "往亡。甲午天赦。不係轉殺。又值月德。然亦止可小用。因有受死不全之氣。丙午葬日。如小小營爲亦次吉。壬午庚午小葬次吉。餘事不宜。戊午重喪不可用。",
+          "variantNotes": [
+            "戊午: same 戊/戌/戍 check as 收辰日; resolved to 戊 by side-by-side comparison and confirmed by Witness B (nlc892 image p028).",
+            "Witness A's half-size annotation reads 往亡; Witness B reads 往凶 at the same position. A recorded as printed."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "閉",
+          "scanPage": "nlc416.pdf images p027→p028 (= printed pp.15–16); p027 column 12 ends with 丙, p028 column 1 opens with 午",
+          "text": "往亡甲午天赦不係轉殺。又值月德然亦止可小用因有受死不全之氣丙午葬日。如小小營爲亦次吉壬午庚午小葬次吉餘事不宜戊午重喪不可用",
+          "variantNotes": [
+            "往亡 verified at 8× on p027 col 12; 亡 is unambiguous. Noted because Witness B's corresponding small-type label is harder to read there and could be taken for 往凶 — this reader considers Witness A clear. (The first reader records B as reading 往凶.)",
+            "Witness B b028 carries the whole cell on one leaf and matches Witness A character for character."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "成",
+          "scanPage": "nlc416.pdf image p027 (= printed p.15); text-columns 5–7 from the right",
+          "text": "天喜。乙卯辛卯有黃羅。紫檀。鑾輿。寶。蓋。祿蔭。馬注。並瓊玉。金寶。天帝。聚垣諸吉星照臨。利造作。入宅。開張。出行。婚姻等事。主益子孫。旺田產。進橫財。增房屋。生貴子。大吉。餘卯次吉。",
+          "variantNotes": [
+            "uncertain glyph 馬注: the alternative 洼 (氵+圭) cannot be excluded from Witness A alone at ~1580px page width. Witness B (nlc892 image p027) prints an unmistakable 注. Reported as 注; flagged because the phrase 祿蔭馬注 does not parse cleanly.",
+            "Witness A prints 並; Witness B prints the variant 竝 at the same place. A recorded as printed.",
+            "鑾 is very dense (糸言糸 over 金) at this resolution; read with moderate confidence, corroborated by Witness B."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "成",
+          "scanPage": "nlc416.pdf image p027 (= printed p.15); text-columns 5–7 from the right",
+          "text": "天喜乙卯辛卯有黃羅紫檀鑾輿寶。蓋祿蔭馬注並瓊玉金寶天帝聚垣諸吉星照臨利造作入宅開張出行婚姻等事主益子孫旺田產進橫財增房屋生貴子大吉。餘卯次吉",
+          "variantNotes": [
+            "注 in 祿蔭馬注 is graphically unambiguous at 8× (氵 + 主) but semantically odd in a list of star-names; possible block-cut error for 駐 / 進 / 洼. Recorded exactly as printed; NOT corrected.",
+            "Witness B (nlc892 image b028, leaf 十六) carries the tail of this cell verbatim from 玉金寶天帝聚垣… onward, matching Witness A character for character; the head of the cell (including 馬注) falls on the preceding B leaf and was not checked.",
+            "This reader omitted the printed 圈 punctuation from the text by declared policy — see the pass-level note."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "未",
       "dayBranch": "子",
       "readings": [
         {
@@ -1265,6 +2210,51 @@
           "officer": "危",
           "text": "夏為鬼神空宅甲寅有天月二德黃羅紫檀金銀庫樓祿馬寶。蓋帝馭星。蓋照。但不利遠行起造入宅婚姻。緣為鬼神凶宅之疑耳。如開山埋葬營謀百事六十日一百二十日内生貴子家業興旺貴人接引進絕戶之產業大吉。餘寅次吉。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "開",
+          "scanPage": "nlc416.pdf image p027 (= printed p.15); text-columns 10–11 from the right",
+          "text": "天成。天賊。福生。宜接福。乙巳癸巳與工動土。入宅開張。次吉。餘巳不利。犯月厭凶。",
+          "variantNotes": [
+            "Witness A prints a small open circle after 天, after 成 and after 賊, but NOT after the second 天; Witness B prints dots only after 成 and after 賊. A's extra circle after the first 天 is not rendered as 。; flagged as an unresolved circle.",
+            "The officer heading carries MIXED grade marks: 開○ 巳× 日○ — a × between two circles. Verified at 12×; printed that way.",
+            "與工動土 transcribed as printed (與, not 興)."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "開",
+          "scanPage": "nlc416.pdf image p027 (= printed p.15); text-columns 10–11 from the right",
+          "text": "天成天賊福生宜接福乙巳癸巳與工動土入宅開張次吉。餘巳不利犯月厭凶",
+          "variantNotes": [
+            "TYPE-SIZE DIVERGENCE: in Witness A the small-type shen labels after the heading are 天成 and 天賊 ONLY — 福生 is cut at FULL body size and reads as the start of the prose (福生。宜接福。). In Witness B the small-type run is 天成。天賊。福生。 — B treats 福生 as a third shen label. Same character sequence in both; only the typographic grouping differs.",
+            "與工動土 transcribed as printed (與, not 興)."
+          ]
         }
       ]
     },
@@ -1347,6 +2337,177 @@
           "officer": "除",
           "text": "甲申有天月二德。黃羅紫檀星。蓋照。利豎柱起造。安葬。動土。開山斬草。出行。開張。百事皆吉。餘申日亦大吉。惟丙申。壬申五行無氣不可用。庚申日慎用。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf image p027 (= printed p.15); text-columns 8–9 from the right",
+          "text": "甲辰天德。丙辰壬辰三日次吉。利偷方修理。主益田產。旺六畜。亦宜安葬營爲等事。惟庚辰爲騰蛇朱雀不宜用。戊辰亦不吉。",
+          "variantNotes": [
+            "戊辰: RESOLVED, not uncertain — verified by a same-scale side-by-side against a known 戊 (p025) and a known 戌 (p028 滿戌日 heading). Witness B (nlc892 image p028) prints 戊辰 with an unambiguously empty interior.",
+            "THIS READER TRANSCRIBES 騰蛇; the second reader transcribes 螣蛇 and reports the printed glyph is a rearranged ⿰月⿱关虫 form in both witnesses. The two readings differ on this character."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf image p027 (= printed p.15); text-columns 8–9 from the right",
+          "text": "甲辰天德丙辰壬辰三日次吉利偷方修理主益田產旺六畜亦宜安葬營爲等事。惟庚辰爲螣蛇朱雀不宜用戊辰亦不吉",
+          "variantNotes": [
+            "PALAEOGRAPHIC FINDING: the character in 螣蛇 is NOT cut as the standard ⿰虫朕. At 16× it is ⿰月⿱关虫 — 月 left, 关 upper-right, 虫 lower-right. Witness B (nlc892 image b028) prints the IDENTICAL rearranged form, so it is the tradition's variant, not lithograph damage. Transcribed as 螣 (same three components, closest Unicode); could equally be intended as 騰. Flagged, not silently normalised.",
+            "偷 (亻+俞) verified at 16×; the 偷/偸 variant distinction is below this scan's resolution. Witness B prints 偷.",
+            "Witness B b028 gives this cell in full and matches Witness A character for character."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "酉",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "滿",
+          "scanPage": "nlc416.pdf image p025 (= printed p.13); text-columns 9–11 from the right",
+          "text": "天喜。天富。乙酉辛酉伐木拴架。定磉起造。乃次吉之日。己酉九土鬼日。癸酉小葬日。又犯黑煞所臨。僅可備於急用。丁酉亦不利。此數日恐吉中有凶。終爲不美。用之宜愼。",
+          "variantNotes": [
+            "定磉: read 磉 (石+桑), verified at 13× — the right component is the three-hook top of 桑 over 木, NOT 楚. Initially misread as 礎.",
+            "用之宜愼: the 眞-form variant 愼 (忄+眞), not 慎, as printed. The second reader transcribes 慎.",
+            "伐木拴架: 拴 has the hand radical 扌 (not 栓).",
+            "The print puts a small open circle after EACH of the four characters 天/喜/天/富, not only after each complete star name; rendered here as one 。 per star name."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "scanPage": "nlc416.pdf image p025 (= printed p.13, recto, 版心 at LEFT); text-columns 9–11 from the right",
+          "text": "天喜天富乙酉辛酉伐木拴架定磉起造乃次吉之日己酉九土鬼日癸酉小葬日又犯黑煞所臨僅可備於急用丁酉亦不利此數日恐吉中有凶終爲不美。用之宜慎",
+          "variantNotes": [
+            "己 in 己酉 verified at 14×: top-left corner is OPEN, distinguishing it from 巳 (closed top box, cf. the 開巳日 heading on p027) and 已.",
+            "This reader transcribes 慎 where the first reader transcribes the 眞-form 愼.",
+            "己酉 / 癸酉 / 丁酉 each carry a vertical 專名號 side-rule in the print."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "執",
+          "scanPage": "nlc416.pdf image p029 (= printed p.17); text-columns 2–3 from the right",
+          "text": "有朱雀勾絞騰蛇白虎之煞。不宜用事。犯之。主退財。傷人口。丁丑癸丑煞入中宮。切不可用。乃受死之日也。",
+          "variantNotes": [
+            "No reading dot after 勾絞 in the print (the first dot falls after 煞). Recorded as printed; Witness B (nlc892 image p030) agrees character-for-character with this whole cell.",
+            "THIS READER TRANSCRIBES 騰蛇; the second reader transcribes 螣蛇."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "scanPage": "nlc416.pdf image p029 (= printed p.17, recto, 版心 at LEFT); text-columns 2–3 from the right",
+          "text": "有朱雀勾絞螣蛇白虎之煞不宜用事。犯之。主退財傷人口丁丑癸丑煞入中宮切不可用乃受死之日也",
+          "variantNotes": [
+            "螣 — same rearranged ⿰月⿱关虫 form; see 收辰日.",
+            "Unlike most cells here, 執丑日 carries NO small-type shen label after the heading — the prose starts straight at 有朱雀…. 丁丑 and 癸丑 carry 專名號 side-rules."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "平",
+          "scanPage": "nlc416.pdf image p028 (= printed p.16); text-column 10 from the right — the entire cell is one column",
+          "text": "騰蛇纏擾。損人口。遭官司口舌橫禍凶。",
+          "variantNotes": [
+            "Cell is complete in one column and short; no annotation after the heading. Corroborated verbatim by Witness B (nlc892 image p029).",
+            "THIS READER TRANSCRIBES 騰蛇; the second reader transcribes 螣蛇."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "scanPage": "nlc416.pdf image p028 (= printed p.16, verso); text-column 10 from the right — the entire cell is one column",
+          "text": "螣蛇纏擾損人口遭官司口舌橫禍凶",
+          "variantNotes": [
+            "螣 — same rearranged ⿰月⿱关虫 form as in 收辰日; the left 月 and upper-right 关 are clear at 16×, the lower-right 虫 is partly ink-filled here.",
+            "Single-column cell confirmed: the column goes blank after 禍凶。 and col 11 begins 定子日. Shortest of the twelve cells in this group."
+          ]
         }
       ]
     },
@@ -1436,6 +2597,134 @@
     },
     {
       "month": "申",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "收",
+          "scanPage": "nlc416.pdf image p029 (= printed p.17); text-column 11 from the right — the entire cell is one column",
+          "text": "小紅沙。有朱雀勾絞騰蛇。諸事不利。犯之。招官司口舌。損人口大凶。",
+          "variantNotes": [
+            "小紅沙 is the half-size annotation after the heading, followed by a filled ● rather than an open circle; rendered here as 。",
+            "THIS READER TRANSCRIBES 騰蛇; the second reader transcribes 螣蛇 (see 未|辰 for the palaeographic note).",
+            "Corroborated verbatim by Witness B (nlc892 image p030)."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "收",
+          "scanPage": "nlc416.pdf image p029 (= printed p.17, recto); text-column 11 from the right — the entire cell is one column",
+          "text": "小紅沙有朱雀勾絞螣蛇諸事不利。犯之招官司口舌損人口大凶",
+          "variantNotes": [
+            "螣 — same rearranged ⿰月⿱关虫 form as in 未|辰 收辰日; see that cell's note for the full justification.",
+            "Single-column cell: runs head-to-foot of col 11 and stops at 大凶。; col 12 begins 開午日."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "滿",
+          "scanPage": "nlc416.pdf image p028 (= printed p.16, verso); text-columns 8–9 from the right",
+          "text": "天富。天賊。丙戌壬戌朱雀勾絞。白虎入中宮。用之。主招官司是非。家門衰敗。損人口。疾病纏綿。一起一倒。不離床蓆。大凶。一切謀爲忌之。",
+          "variantNotes": [
+            "不離床蓆: 蓆 with the grass radical 艹 (not bare 席), as printed.",
+            "A heavy vertical rule/black line runs down the page immediately to the RIGHT of this cell's first column on p028. It is a printing/scan feature, not a character, and it obscures no glyph."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "scanPage": "nlc416.pdf image p028 (= printed p.16, verso, 版心 董公選要覽 / 一六 at RIGHT edge); text-columns 8–9 from the right",
+          "text": "天富天賊丙戌壬戌朱雀勾絞白虎入中宮。用之。主招官司是非家門衰敗損人口疾病纏綿一起一倒不離床蓆大凶一切謀爲忌之",
+          "variantNotes": [
+            "蓆 in 不離床蓆 verified at 5× (艹 + 席), not bare 席. 絞 in 勾絞 clear (糹+交).",
+            "Small-type shen labels after the heading: 天富, 天賊. Col 10 begins the next cell (平亥日)."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "未",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "閉",
+          "scanPage": "nlc416.pdf image p030 (= printed p.18, verso); text-columns 3–6 from the right; the 八月建酉 heading begins in column 7",
+          "text": "天成。天賊。癸未火星天德。己未火星。宜修理入宅。定磉拴架。出行開張。次吉。辛未丁未小用亦次吉。惟乙未煞入中宮。若在中庭釘丁打物。喧嘩吵叫等類。驚動神煞。刑妨家長。損傷頭目手足。大凶。主血光湯火之厄。飛來禍事。小人侵害。官司口舌纏綿。凡煞入中宮之日。俱宜做此避忌。",
+          "variantNotes": [
+            "俱宜做此避忌: read 做 (亻+故), NOT 倣 (亻+放). Verified at 13×. Worth checking against whatever the grid holds, because 倣 is the form one would expect from context.",
+            "釘丁打物: 釘 then 丁, two distinct characters (not a doubled 釘). THE SECOND READER READS 釘打物 without the 丁 — the two readings differ here.",
+            "定磉拴架: 磉 (石+桑) verified at 13×, same character as in 六月滿酉日.",
+            "No dot printed after the first 火星; the dot falls after 天德."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "閉",
+          "scanPage": "nlc416.pdf image p030 (= printed p.18, verso, 版心 董公選要覽 / 一八 at RIGHT edge); text-columns 3–6 from the right",
+          "text": "天成天賊癸未火星天德己未火星宜修理入宅定磉拴架出行開張次吉辛未丁未小用亦次吉。惟乙未煞入中宮。若在中庭釘打物喧嘩吵叫等類驚動神煞刑妨家長損傷頭目手足大凶主血光湯火之厄飛來禍事小人侵害官司口舌纏綿凡煞入中宮之日俱宜做此避忌",
+          "variantNotes": [
+            "釘 in 中庭釘打物 verified at 5× as 金+丁. THIS READER READS 釘打物; the first reader reads 釘丁打物 (an additional 丁). The two readings differ here.",
+            "己 in 己未 zoomed at 12×: top-left corner OPEN — same diagnostic as 己酉/己亥.",
+            "做 in 俱宜做此避忌 is 亻+故, not 作. Verified at 5×.",
+            "SCOPE NOTE: the last clause 凡煞入中宮之日俱宜做此避忌 is a GENERAL rubric about 煞入中宮 days rather than anything specific to 未日, but it is printed inside this cell before the 八月建酉 heading, so it was included rather than silently trimmed."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "申",
       "dayBranch": "申",
       "readings": [
         {
@@ -1457,6 +2746,48 @@
           "officer": "建",
           "text": "戊申天赦。甲申。壬申為比和之日。只宜埋葬。然月建上凶不可用。庚申煞集中宮。丙申五行無氣更凶。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "成",
+          "scanPage": "nlc416.pdf image p029 (= printed p.17); text-columns 9–10 from the right",
+          "text": "天喜。壬辰月德。庚辰丙辰三日。皆是葬日。次吉。俱不宜大用。戊辰甲辰白虎入中宮。犯之。三六九年消索遭凶。",
+          "variantNotes": [
+            "The officer heading carries mixed grade marks: 成○ 辰× 日× — the officer character is circled while both following characters are crossed. Verified at high zoom.",
+            "消索 read as 消索 (not 消素); corroborated by Witness B.",
+            "The circle after 三日 is taken as a reading dot; the circles beside 壬/辰/庚/辰/丙/辰 are per-character grade marks. Witness B prints no dot at that point."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "成",
+          "scanPage": "nlc416.pdf image p029 (= printed p.17, recto); text-columns 9–10 from the right",
+          "text": "天喜壬辰月德庚辰丙辰三日皆是葬日次吉俱不宜大用戊辰甲辰白虎入中宮。犯之三六九年消索遭凶",
+          "variantNotes": [
+            "索 in 消索 verified at 12× (十 over 冖 over 糸); flagged only because 消索 is an unusual collocation.",
+            "戊 in 戊辰甲辰 is 戊 not 戌; the interior has no horizontal bar."
+          ]
         }
       ]
     },
@@ -1539,6 +2870,47 @@
           "text": "天富。甲午有土鬼。丙午平常不能見吉。戊午有猖鬼敗亡並犯重喪。即安葬亦屬不宜。庚午十惡敗日不可用。壬午天月二德。用之次吉。",
           "variantNotes": [
             "print 十惡敗日; modern 十惡日"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "閉",
+          "scanPage": "nlc416.pdf scan image p020 (= printed p.8); single column, 6th from the right, immediately before the 四月建巳 heading column",
+          "text": "不宜造作婚姻埋葬入宅等事。犯之損傷疾病冷退凶百事不宜",
+          "variantNotes": [
+            "This reader deliberately did NOT reproduce the printed 圈點: in 三月定申日 the run 甲申丙申 carries a circle beside every one of the four characters, so reproducing them mechanically would inject false sentence breaks into stem-branch runs. Cells are given as bare character strings.",
+            "Corroborated verbatim by Witness B (nlc892.pdf scan image p019)."
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "閉",
+          "scanPage": "nlc416.pdf scan image p020 (= printed p.8), 6th text column from the right",
+          "text": "不宜造作。婚姻。埋葬。入宅等事。犯之。損傷疾病冷退凶。百事不宜。",
+          "variantNotes": [
+            "Printed 。 retained verbatim; the marginal ×/○/● rating marks are NOT included in the text (× beside each of 閉, 卯, 日).",
+            "Single complete column, ends mid-column with blank space below."
           ]
         }
       ]
@@ -1646,6 +3018,50 @@
     },
     {
       "month": "辰",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "corroboratedAgainst": [
+            "nlc892-1898"
+          ],
+          "officer": "定",
+          "scanPage": "nlc416.pdf scan images p018–p019 (= printed pp.6–7); starts in the leftmost column of p018 and runs to columns 1–3 of p019",
+          "text": "甲申丙申宜斬草破土定磉拴架安葬大吉二三年内益子孫進財祿壬申有天月二德黃羅紫檀天皇地皇金銀庫樓星。蓋照。是日十全大吉大利萬事。如意戊申天罡空亡猖鬼敗亡凶庚申正四廢亦凶申日又屬往亡出行出軍赴任不取者此也",
+          "variantNotes": [
+            "uncertain glyph 益: machine OCR of this scan reads 盆. Read 益 because the identical glyph occurs on the same page in 建辰日's 醜拙惡陋無益 where the sense requires it, and Witness B writes a clearly-formed 益. Shape alone does not exclude 盆.",
+            "内 vs 內 is not resolvable at this scan's resolution; transcribed 内 throughout.",
+            "蓋 (in 蓋照) recorded after 12× zoom; machine OCR renders it 藎. 猖 (in 猖鬼) verified at 11×.",
+            "Column break falls mid-word: p018 ends …進財祿壬 and p019 resumes 申有天月二德…"
+          ]
+        },
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "second",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "scanPage": "nlc416.pdf scan images p018–p019 (= printed pp.6–7); last column of p018 through columns 1–3 of p019",
+          "text": "甲申丙申宜斬草。破土。定磉。拴架。安葬。大吉。二三年內。益子孫。進財祿。壬申有天月二德。黃羅。紫檀。天皇。地皇。金銀庫樓星。蓋照。是日十全大吉大利萬事。如意。戊申天罡空亡。猖鬼敗亡凶。庚申正四廢亦凶。申日又屬往亡。出行出軍赴任不取者此也。",
+          "variantNotes": [
+            "uncertain glyph 磉 (石+桑) in 定磉拴架 — both radical and phonetic fully resolved at 6×; flagged only because the compound is rare.",
+            "Per-character ◎/× rating marks sit beside each character of 甲申, 丙申, 壬申 (◎) and 戊申, 庚申 (×). Those are rating marks, NOT punctuation, so no 。 was inserted between the ganzhi pairs.",
+            "This reader transcribes 內 where the first reader transcribes 内."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "辰",
       "dayBranch": "辰",
       "readings": [
         {
@@ -1737,6 +3153,74 @@
     },
     {
       "month": "酉",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "收",
+          "scanPage": "nlc416.pdf scan image p032 (= printed p.20, folio 二〇); columns 11–12, the last cell on the page",
+          "text": "福生。可惜建破來冲。壬午火星用事次吉。丙午動土安葬。一切營爲亦次吉。惟戊午有火星不利。庚午亦不利。犯之。損子孫。招官非。冷退凶。",
+          "variantNotes": [
+            "福生 sits in the small-type label slot after 日 but is set at BODY size on this page, unlike 天賊/天喜 nearby.",
+            "戊 in 戊午 resolved at 12× — the interior is empty, so 戊 not 戌; the call is made on the ink, not on the calendar.",
+            "Side-marks not inlined: 收○ 午× 日×; 壬○午○; 丙○午○; 戊×午×; 庚×午×."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "scanPage": "nlc416.pdf scan image p032 (= printed p.20, folio 二〇); column 5 and the top of column 6",
+          "text": "天賊。癸卯己卯用事次吉。餘卯不利。有朱雀勾絞。招官司口舌。兼犯月厭之凶。乙卯正四廢亦凶。",
+          "variantNotes": [
+            "天賊 is the small-type label in the slot after 日.",
+            "Side-marks not inlined: 破○ 卯× 日×; 癸○卯○ 己○卯○; × on the 卯 of 餘卯; 乙×卯×.",
+            "Witness B was not consulted for this cell — every glyph resolved off Witness A at magnification."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "scanPage": "nlc416.pdf scan image p031 (= printed p.19, folio 一九); columns 4–6 (columns 1–3 are the tail of 滿亥日 carried over from image p030)",
+          "text": "往亡朱雀勾絞。招官司。損宅長。丙子乃水潔淨之時。庚子火星傍天月二德。戊子等三日。利起造嫁娶入宅出行動土諸事。用之卻吉。惟甲子亦有火星。但是北方黑煞之氣。壬子草木凋零之時。五行無氣。不宜用。",
+          "variantNotes": [
+            "往亡 is the small-type label and is followed by a SOLID ● rather than a hollow ring; per this reader's stated convention the ● is not inlined, so 往亡 and 朱雀 sit adjacent in the text.",
+            "Side-marks not inlined: 平 filled ring, 子◎, 日×; 丙◎子◎; 庚◎子◎; 戊◎子◎; 甲○子○; 壬×子×."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "酉",
       "dayBranch": "寅",
       "readings": [
         {
@@ -1748,6 +3232,30 @@
           "officer": "執",
           "text": "黃沙。庚寅天月二德。有黃羅紫檀天皇地皇金銀寶藏田塘庫珠聚祿帶馬鑾輿官曜眾吉星照臨。宜起造婚姻動土移居開張出行。旺田產。進橫財。增六畜。添人口。興子孫。改換門庭。家道隆昌。餘寅亦次吉可用。惟甲寅正四廢凶。",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "成",
+          "scanPage": "nlc416.pdf scan image p032 (= printed p.20, folio 二〇); columns 9–10",
+          "text": "天喜。乙巳己巳有紫檀。帶祿。驛馬。集聚曲堂諸星。蓋照。宜婚姻入宅。與工動土。開張出行。起造倉庫牛羊欄圈。皆大吉。百事順利。餘巳次吉。",
+          "variantNotes": [
+            "天喜 is the small-type label in the slot after 日. Side-marks not inlined: 成◎ 巳◎ 日◎; 乙◎巳◎ 己◎巳◎; ○ on the 巳 of 餘巳.",
+            "曲 in 集聚曲堂 checked at 6× and is unambiguously 曲 (not 田 or 由); flagged only because 曲堂 is an uncommon star name.",
+            "This print distinguishes 己 (top-left open) from 巳/已 (closed top box) — checked side by side on 乙巳己巳 here.",
+            "與工動土 transcribed as printed (與, not 興)."
+          ]
         }
       ]
     },
@@ -1774,6 +3282,53 @@
           "officer": "除",
           "text": "庚戌天月二德戊戌甲戌宜興工動土入宅開張婚姻等事。用之次吉丙戌壬戌煞入中宮諸事不宜。犯之。主失血財冷退大凶",
           "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "未",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "開",
+          "scanPage": "nlc416.pdf scan image p033 (= printed p.21, folio 二一); columns 1–2",
+          "text": "丁未己未辛未癸未均係次吉之日。只宜斬草開山。掘樹安葬等事。惟乙未百事不利凶。內犯棄敗死絕之鄉。",
+          "variantNotes": [
+            "The small-type label slot after 日 is BLANK for this cell — no 神煞 name is printed.",
+            "The printed circle falls after 凶 (惟乙未百事不利凶。內犯…), not after 利.",
+            "Side-marks not inlined: 開○ 未○ 日×; 丁○未○ 己○未○ 辛○未○ 癸○未○; 乙×未×."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": null,
+          "pass": "reread-2026-07-26",
+          "reader": "first",
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "閉",
+          "scanPage": "nlc416.pdf scan image p033 (= printed p.21, folio 二一); columns 3–5; the 九月建戌 heading begins immediately after in column 6",
+          "text": "戊申天赦。庚申丙申天月二德。宜出行修方。動土與工。定磉拴架。婚姻入宅。安葬開張。作倉庫牛羊猪棧。利子孫。旺田產。進橫財。家門發達。上吉。甲申壬申次吉。",
+          "variantNotes": [
+            "天赦 and 天月二德 are small-type labels.",
+            "磉 (石+桑) in 定磉拴架 and 棧 (木+戔) in 猪棧 both confirmed at 9–10×.",
+            "Side-marks not inlined: 閉◎ 申◎ 日◎; 戊◎申◎; 庚◎申◎ 丙◎申◎; 甲○申○ 壬○申○.",
+            "動土與工 transcribed as printed (與, not 興)."
+          ]
         }
       ]
     },

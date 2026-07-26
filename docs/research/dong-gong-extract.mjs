@@ -27,14 +27,19 @@
  * independent witnesses — §8.6) and the divergence is recorded on the cell rather
  * than silently resolved.
  *
- * The transcriptions live in the hunt output. Because that file is session-scoped,
- * step 1 snapshots it to dong-gong-witness-corpus.json next to this script, and
- * later runs fall back to the snapshot. The script is therefore re-runnable and
- * deterministic: same corpus in, byte-identical grid out.
+ * INPUT LIVES IN dong-gong-witness-corpus.json, WHICH IS NOW THE CORPUS OF RECORD.
+ * It began as a snapshot of a session-scoped hunt output, but it is no longer a
+ * projection of it: a 2026-07-26 double-blind re-read added 39 native cells that
+ * appear in no hunt, each read independently by two readers off the same print.
+ * So the precedence is snapshot-first — running with --rebuild-from-hunt re-derives
+ * from the hunt and MERGES over the snapshot rather than replacing it, because
+ * replacing it would silently delete those readings. The script stays re-runnable
+ * and deterministic: same corpus in, byte-identical grid out.
  *
  * Usage:
- *   node docs/research/dong-gong-extract.mjs [--hunt <path-to-hunt-output.json>]
- * Exits non-zero if any §8.5 self-check regression test fails.
+ *   node docs/research/dong-gong-extract.mjs
+ *   node docs/research/dong-gong-extract.mjs --rebuild-from-hunt [--hunt <path>]
+ * Exits non-zero if any self-check regression test fails.
  *
  * ---------------------------------------------------------------------------
  * THE DERIVATION, IN ONE PARAGRAPH
@@ -52,7 +57,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CORPUS_PATH = join(HERE, 'dong-gong-witness-corpus.json');
@@ -335,7 +340,16 @@ const OCR_FIXES = [
 /** Running headers the OCR interleaved mid-cell. */
 const RUNNING_HEADERS = ['董公選要覽', '董公選要覧', '董公選要览', '黃公選要覧', '董公選要窢', '萤公', '童公'];
 
-function normaliseWitnessText(raw) {
+/**
+ * @param {string} raw
+ * @param {{ocrErrata?: boolean}} [opts] `ocrErrata:false` skips the OCR_FIXES table. The table is
+ *   errata supplied by the readers of an OCR run and is transcription hygiene THERE; applied to a
+ *   hand reading taken off the page images it would be emendation, and one of its entries
+ *   (與工→興工) rewrites an ACTIVITIES token §8.6 lists as unresolved. Readings that were read
+ *   character-by-character off the images are normalised with ocrErrata:false.
+ */
+export function normaliseWitnessText(raw, opts = {}) {
+  const { ocrErrata = true } = opts;
   let t = raw;
   // Drop the adjudicator's own bracketed apparatus, but keep what it says about
   // variants — captured separately by extractVariantNotes() before this runs.
@@ -346,7 +360,7 @@ function normaliseWitnessText(raw) {
   // The month header printed above 建 cells is cell-external.
   t = t.replace(/——\s*月頭小字[\s\S]*$/, '');
   for (const h of RUNNING_HEADERS) t = t.split(h).join('');
-  for (const [a, b] of OCR_FIXES) t = t.split(a).join(b);
+  if (ocrErrata) for (const [a, b] of OCR_FIXES) t = t.split(a).join(b);
   // Normalise punctuation to 。 so clause splitting behaves the same on the
   // punctuated 文明書局 reading and the sparsely-punctuated OCR run.
   t = t.replace(/[，,、．\.；;：:]/g, '。').replace(/\s+/g, '');
@@ -440,8 +454,9 @@ function buildCorpus(huntPath) {
       let attribution = 'tagged';
       if (witnesses.length === 0) {
         // Hunt 1 transcribed from rendered leaves named b892_p0NN.png (its own
-        // METHOD note) but did not tag its cell texts. Recorded as inferred and
-        // never used as the sole basis for a cell — see `soleBasis` gate below.
+        // METHOD note) but did not tag its cell texts. Recorded as inferred; the
+        // sole-basis gate in main() then marks every stem that rests on nothing
+        // but inferred-attribution readings (`soleBasisInferredWitness`).
         witnesses = ['nlc892-1898'];
         attribution = 'inferred';
       }
@@ -457,6 +472,35 @@ function buildCorpus(huntPath) {
     if (readings.length) corpus.push({ month: cell.month, dayBranch: cell.dayBranch, readings });
   }
   return corpus;
+}
+
+/** Stable identity of a reading, used to merge corpora without duplicating or losing readings.
+ *  Hunt-derived readings are identified by hunt index; readings contributed by a later
+ *  transcription pass carry `pass` + `reader` instead (they have no hunt index at all). */
+function readingId(r) {
+  return r.pass ? `pass:${r.pass}/${r.reader}` : `hunt:${r.hunt}`;
+}
+
+/**
+ * Merge a hunt-derived corpus into the snapshot WITHOUT dropping snapshot-only readings.
+ *
+ * This exists because the snapshot is no longer a pure projection of the hunt output: the
+ * 2026-07-26 double-blind re-read added 39 cells that were never in any hunt. Rebuilding
+ * straight from the hunt and overwriting the snapshot — which is what this script used to do
+ * whenever the session-scoped hunt file happened to still exist — would have silently deleted
+ * them. Snapshot readings win on identity collision; the hunt can add, never replace.
+ */
+function mergeCorpora(snapshotCells, huntCells) {
+  const byKey = new Map();
+  for (const c of snapshotCells) byKey.set(`${c.month}|${c.dayBranch}`, { month: c.month, dayBranch: c.dayBranch, readings: [...c.readings] });
+  for (const c of huntCells) {
+    const key = `${c.month}|${c.dayBranch}`;
+    if (!byKey.has(key)) { byKey.set(key, { month: c.month, dayBranch: c.dayBranch, readings: [...c.readings] }); continue; }
+    const target = byKey.get(key);
+    const seen = new Set(target.readings.map(readingId));
+    for (const r of c.readings) if (!seen.has(readingId(r))) target.readings.push(r);
+  }
+  return [...byKey.values()].sort((a, b) => (a.month + a.dayBranch).localeCompare(b.month + b.dayBranch));
 }
 
 // ===========================================================================
@@ -842,6 +886,76 @@ const TRANSCRIPTION_CAVEATS = {
 };
 
 // ===========================================================================
+// 7b. Disagreement classification  (§9.4 A — blocker)
+// ===========================================================================
+// The keep-rule drops a stem whenever two readings derive different ratings. The old drop
+// reason called that "printed witnesses disagree" WITHOUT EVER LOOKING AT `reading.witnesses`,
+// so two transcriptions of the same lithograph were published as two editions contradicting
+// each other — a false claim about the sources, in a file whose only value is provenance.
+//
+// There are two materially different situations and they have different remedies:
+//   transcription — one and the same print, read twice, read differently. The print does not
+//                   disagree with anything; WE do. Fixed by re-reading the named page.
+//   witness       — two different prints, each read once, that genuinely carry different text.
+//                   A real textual variant; fixed only by editorial judgement, which this
+//                   script does not make.
+// The 2026-07-26 re-read pass adds cells that carry two independent readings of the SAME print
+// by construction, so every disagreement it produces falls in the first class — which is
+// exactly why the label has to be right.
+function classifyDisagreement(votes) {
+  const byRating = new Map();
+  for (const v of votes) {
+    if (!byRating.has(v.v.rating)) byRating.set(v.v.rating, []);
+    byRating.get(v.v.rating).push(v);
+  }
+  const ratings = [...byRating.keys()];
+  const witnessesOf = (rating) => [...new Set(byRating.get(rating).flatMap((v) => v.p.reading.witnesses))].sort();
+  const readingsOf = (rating) => byRating.get(rating).map((v) => readingId(v.p.reading));
+
+  let disjointWitnessPair = false; // two different ratings resting on wholly different witnesses
+  for (let i = 0; i < ratings.length; i += 1) {
+    for (let j = i + 1; j < ratings.length; j += 1) {
+      const a = new Set(witnessesOf(ratings[i]));
+      if (!witnessesOf(ratings[j]).some((w) => a.has(w))) disjointWitnessPair = true;
+    }
+  }
+
+  const detail = ratings.map((r) => `${r} from ${witnessesOf(r).join('+')} [${readingsOf(r).join(', ')}]`).join(' vs ');
+  const allWitnesses = [...new Set(votes.flatMap((v) => v.p.reading.witnesses))].sort();
+
+  // The gate is the WITNESS COUNT across every reading involved, not whether two
+  // rating-groups happen to overlap. The overlap test alone declared 七月定子日
+  // 丙子 a same-print disagreement — its groups are {nlc416} and {nlc416,nlc892},
+  // which do share nlc416 — and then printed "the SAME printed witness
+  // (nlc416-wenming+nlc892-1898)", naming two editions in the act of calling them
+  // one. That is the exact class of false provenance claim this function was
+  // written to end, reintroduced one level down. If only one witness is involved
+  // at all, the disagreement is ours; the moment a second edition appears in any
+  // reading, it is not purely a transcription problem and must not say so.
+  const onePrintOnly = allWitnesses.length === 1;
+
+  if (onePrintOnly) {
+    return {
+      kind: 'transcription-disagreement',
+      reason: `the SAME printed witness (${allWitnesses.join('+')}) transcribed more than once yields different ratings — ${detail}. This is a disagreement between our transcriptions, NOT between the prints; dropped rather than adjudicated. Resolvable by re-reading the named page, not by locating another edition.`,
+      witnesses: allWitnesses,
+    };
+  }
+  if (disjointWitnessPair) {
+    return {
+      kind: 'witness-disagreement',
+      reason: `the printed editions genuinely disagree — ${detail}; dropped rather than adjudicated.`,
+      witnesses: allWitnesses,
+    };
+  }
+  return {
+    kind: 'mixed-disagreement',
+    reason: `more than one edition is involved and the ratings do not split cleanly along edition lines — ${detail}; dropped rather than adjudicated. Part of this may be a real textual variant and part ours to fix by re-reading; which is which cannot be settled without going back to the pages, so this claims neither.`,
+    witnesses: allWitnesses,
+  };
+}
+
+// ===========================================================================
 // 8. Main
 // ===========================================================================
 
@@ -850,25 +964,43 @@ function main() {
     ? process.argv[process.argv.indexOf('--hunt') + 1] : null;
   const huntPath = argHunt || DEFAULT_HUNT;
 
+  // Corpus precedence: THE SNAPSHOT IS AUTHORITATIVE. It used to be the other way round — the
+  // hunt output won whenever it happened to still be on disk — but the snapshot now carries
+  // readings that exist in no hunt (the 2026-07-26 double-blind re-read), so blind rebuilding
+  // would delete evidence. `--rebuild-from-hunt` re-derives from the hunt and MERGES, keeping
+  // every snapshot-only reading.
+  const rebuild = process.argv.includes('--rebuild-from-hunt') || argHunt !== null;
+
   let corpus;
   let corpusOrigin;
-  if (existsSync(huntPath)) {
+  const snapshot = existsSync(CORPUS_PATH) ? JSON.parse(readFileSync(CORPUS_PATH, 'utf8')) : null;
+  if (rebuild && existsSync(huntPath)) {
+    const built = buildCorpus(huntPath);
+    corpus = snapshot ? mergeCorpora(snapshot.cells, built) : built;
+    corpusOrigin = snapshot
+      ? `rebuilt from hunt output ${huntPath}, merged over snapshot ${CORPUS_PATH}`
+      : `rebuilt from hunt output ${huntPath}`;
+    writeFileSync(CORPUS_PATH, JSON.stringify({
+      _meta: { ...(snapshot && snapshot._meta ? snapshot._meta : {}), builtFrom: huntPath, rebuilt: '2026-07-26' },
+      cells: corpus,
+    }, null, 2) + '\n', 'utf8');
+  } else if (snapshot) {
+    corpus = snapshot.cells;
+    corpusOrigin = `loaded from snapshot ${CORPUS_PATH}`;
+  } else if (existsSync(huntPath)) {
     corpus = buildCorpus(huntPath);
-    corpusOrigin = `rebuilt from hunt output ${huntPath}`;
+    corpusOrigin = `built from hunt output ${huntPath} (no snapshot present)`;
     writeFileSync(CORPUS_PATH, JSON.stringify({
       _meta: {
         title: '董公選要覽 — printed-witness cell corpus (verbatim transcription snapshot)',
-        note: 'Snapshot of the witness transcriptions so dong-gong-extract.mjs stays re-runnable after the session scratchpad is gone. Verbatim; no emendation beyond the reader-supplied OCR errata table documented in the extractor.',
+        note: 'Snapshot of the witness transcriptions so dong-gong-extract.mjs stays re-runnable after the session scratchpad is gone.',
         builtFrom: huntPath,
         generated: '2026-07-26',
       },
       cells: corpus,
     }, null, 2) + '\n', 'utf8');
-  } else if (existsSync(CORPUS_PATH)) {
-    corpus = JSON.parse(readFileSync(CORPUS_PATH, 'utf8')).cells;
-    corpusOrigin = `loaded from snapshot ${CORPUS_PATH}`;
   } else {
-    console.error('No hunt output and no corpus snapshot. Nothing to derive from.');
+    console.error('No corpus snapshot and no hunt output. Nothing to derive from.');
     process.exit(2);
   }
 
@@ -888,17 +1020,55 @@ function main() {
     const disputeBlocked = perReading.some((p) => p.result.disputeBlocked);
     if (disputeBlocked) {
       for (const gz of ganzhiFor(dayBranch)) {
-        dropped.push({ month, ganzhi: gz, officer, reason: 'cell flagged DISPUTED by the text itself (§8.5 #6) — publishers disagree and the text declines to settle it' });
+        dropped.push({ month, ganzhi: gz, officer, dropClass: 'cell-disputed-by-its-own-text', reason: 'cell flagged DISPUTED by the text itself (§8.5 #6) — the printed commentary reports that publishers disagree and declines to settle it. This is the TEXT reporting a dispute, not our two readings differing.' });
       }
       cellReports.push({ key, officer, status: 'dispute-blocked', kept: 0 });
       continue;
     }
 
-    // A reading tagged to no witness ("inferred" attribution) may corroborate but
-    // may not be the sole basis for a cell — unless it is the only reading, in
-    // which case the cell is emitted with the attribution flag visible.
-    const tagged = perReading.filter((p) => p.reading.witnessAttribution === 'tagged');
-    const usable = tagged.length ? perReading : perReading;
+    // SOLE-BASIS PROVENANCE GATE (§9.4 B — blocker). Previously this was
+    //   const usable = tagged.length ? perReading : perReading;
+    // — two identical branches, with `tagged` computed and thrown away, under a comment
+    // promising a `soleBasis` gate that existed nowhere in the file. A comment asserting a
+    // safeguard that is not there is worse than no safeguard, so the gate is now real:
+    // a reading whose witness id was INFERRED (its transcriber never tagged the witness) may
+    // corroborate freely, but any stem resting on nothing BUT inferred-attribution readings is
+    // marked `soleBasisInferredWitness` and counted in _meta.provenance. It is marked rather
+    // than dropped because the TEXT is verbatim either way — it is the witness id, not the
+    // reading, that is probable rather than proven — and because dropping would delete
+    // evidence to make a number look better.
+    const usable = perReading;
+
+    // The recall half of §9.4 A. Two readings of one print can agree on every RATING and still
+    // disagree about what is on the page — 喞 vs 唧, 騰 vs 螣, 釘丁打物 vs 釘打物. A keep-rule that
+    // only compares ratings calls those cells corroborated and says nothing. They are not
+    // dropped (the rating is unaffected and dropping would delete a sound reading), but the
+    // divergence is published on every stem of the cell so a later reader knows a glyph is
+    // outstanding and where to look.
+    const cellReadingVariance = (() => {
+      if (cell.readings.length < 2) return undefined;
+      const texts = cell.readings.map((r) => r.text);
+      if (new Set(texts).size === 1) return undefined;
+      const bare = texts.map((t) => t.replace(/。/g, ''));
+      if (new Set(bare).size === 1) {
+        return { level: 'punctuation-only', note: 'The readings differ only in where sentence dots fall. §9.4 C: dot placement can still move a rating, so this is not nothing.' };
+      }
+      const firstDivergence = [];
+      for (let i = 0; i < bare.length; i += 1) {
+        for (let j = i + 1; j < bare.length; j += 1) {
+          if (bare[i] === bare[j]) continue;
+          let k = 0;
+          while (k < bare[i].length && k < bare[j].length && bare[i][k] === bare[j][k]) k += 1;
+          const win = (s) => `…${s.slice(Math.max(0, k - 5), k + 7)}…`;
+          firstDivergence.push(`${readingId(cell.readings[i])} ${win(bare[i])} vs ${readingId(cell.readings[j])} ${win(bare[j])}`);
+        }
+      }
+      return {
+        level: 'characters-differ',
+        note: 'Independent transcriptions of this cell disagree about at least one character, punctuation aside. The rating below is what BOTH readings derive; the glyph itself is unsettled and wants a re-read of the page named in the corpus.',
+        firstDivergence,
+      };
+    })();
 
     const cellOut = {};
     let cellKept = 0;
@@ -908,20 +1078,25 @@ function main() {
         .filter((x) => x.v);
       if (votes.length === 0) {
         const why = usable.map((p) => p.result.dropNotes.get(gz)).find(Boolean) || 'no verdict bound to this stem';
-        dropped.push({ month, ganzhi: gz, officer, reason: why });
+        dropped.push({ month, ganzhi: gz, officer, dropClass: 'no-verdict-bound-to-this-stem', reason: why });
         continue;
       }
       const distinct = [...new Set(votes.map((x) => x.v.rating))];
       if (distinct.length > 1) {
+        const d = classifyDisagreement(votes);
         dropped.push({
           month, ganzhi: gz, officer,
-          reason: `printed witnesses disagree (${distinct.join(' vs ')}) — dropped rather than adjudicated`,
+          dropClass: d.kind,
+          disagreementClass: d.kind,
+          witnesses: d.witnesses,
+          reason: d.reason,
         });
         continue;
       }
       const best = votes[0].v;
       const witnesses = [...new Set(votes.flatMap((x) => x.p.reading.witnesses))];
       const attribution = votes.map((x) => x.p.reading.witnessAttribution);
+      const soleBasisInferred = attribution.every((a) => a === 'inferred');
       cellOut[gz] = {
         rating: best.rating,
         ratingEn: TIER_EN[best.rating],
@@ -937,7 +1112,18 @@ function main() {
         orderingNote: best.orderingNote,
         witnesses,
         witnessAttribution: attribution.includes('tagged') ? 'tagged' : 'inferred',
-        corroboratingReadings: votes.length,
+        // §9.4 B: this stem rests on nothing but readings whose witness id was inferred, never
+        // tagged by the transcriber. The text is verbatim; the EDITION label is probable only.
+        soleBasisInferredWitness: soleBasisInferred ? true : undefined,
+        // §9.4 (corroboratingReadings) — the old single field counted a second transcription of
+        // ONE print as corroboration, overstating evidential support. Split in two, so the
+        // reader can see which kind of agreement they are being sold.
+        readingsAgreeing: votes.length,
+        witnessesAgreeing: witnesses.length,
+        corroboration: witnesses.length > 1
+          ? 'independent-witnesses'
+          : (votes.length > 1 ? 'one-witness-transcribed-more-than-once' : 'single-reading'),
+        cellReadingVariance,
         printVsOnline: KNOWN_DIVERGENCES[key],
         transcriptionCaveat: TRANSCRIPTION_CAVEATS[key],
       };
@@ -965,6 +1151,50 @@ function main() {
   }
 
   const nativeCellsWithText = corpus.length;
+
+  // Provenance accounting, COMPUTED rather than asserted (§9.4 B, H). Every number below is
+  // read off the output that was just built, so it cannot drift out of date the way the
+  // hand-written "8 inferred cells" did — the file carried 25.
+  const provenance = (() => {
+    let soleBasisInferredWitness = 0;
+    const byCorroboration = { 'independent-witnesses': 0, 'one-witness-transcribed-more-than-once': 0, 'single-reading': 0 };
+    const byReadingVariance = { 'agree-verbatim': 0, 'punctuation-only': 0, 'characters-differ': 0 };
+    for (const m of Object.keys(ordered)) for (const gz of Object.keys(ordered[m])) {
+      const c = ordered[m][gz];
+      if (c.soleBasisInferredWitness) soleBasisInferredWitness += 1;
+      byCorroboration[c.corroboration] += 1;
+      if (c.corroboration !== 'single-reading') {
+        byReadingVariance[c.cellReadingVariance ? c.cellReadingVariance.level : 'agree-verbatim'] += 1;
+      }
+    }
+    const disagreementDrops = {};
+    for (const d of dropped) if (d.disagreementClass) {
+      disagreementDrops[d.disagreementClass] = (disagreementDrops[d.disagreementClass] || 0) + 1;
+    }
+    const passes = {};
+    for (const cell of corpus) for (const r of cell.readings) {
+      const p = r.pass || 'hunt-2026-07-26';
+      passes[p] = (passes[p] || 0) + 1;
+    }
+    return {
+      note: 'All counts here are computed from the grid this run produced, not stated by hand.',
+      keptGanzhiCellsBySupport: byCorroboration,
+      multiReadingCellsByTextAgreement: byReadingVariance,
+      multiReadingCellsByTextAgreementMeans:
+        'Of the kept stems backed by more than one reading: how far those readings agree about the TEXT, not just the rating. characters-differ means the transcriptions disagree about a glyph even though they derive the same tier — corroborated on the verdict, unsettled on the page.',
+      soleBasisInferredWitness,
+      soleBasisInferredWitnessMeans:
+        'The stem rests only on readings whose witness id was inferred from the transcriber\'s working files rather than tagged in the transcription itself. The TEXT is verbatim; the edition label is probable, not proven. Emitted and counted, never silently upgraded to "corroborated".',
+      disagreementDropsByClass: disagreementDrops,
+      disagreementClassMeans: {
+        'transcription-disagreement': 'One print, transcribed more than once, read differently by us. Not a source disagreement. Fixable by re-reading the cited page.',
+        'witness-disagreement': 'Two different prints that genuinely carry different text. A real variant; this script declines to adjudicate it.',
+        'mixed-disagreement': 'Both of the above at once on the same stem.',
+      },
+      corpusReadingsByPass: passes,
+    };
+  })();
+
   const out = {
     _meta: {
       title: 'Dong Gong (董公選要覽) per-ganzhi day-rating draft v2 — RESEARCH DATA, NOT SHIPPED',
@@ -1003,8 +1233,13 @@ function main() {
         ganzhiCellsKept: kept,
         ganzhiCellsDropped: dropped.length,
         ganzhiCellsTotal: 720,
-        note: `Printed-witness text was transcribed for ${nativeCellsWithText} of the 144 native (month × day-branch) cells; the other ${144 - nativeCellsWithText} were never read from the prints and are therefore wholly absent here, not merely dropped.`,
+        // §9.6 / §9.4 H: the previous wording here said the untranscribed cells "were never read
+        // from the prints", which was false — it described unfinished transcription as an
+        // unavailable source. The 2026-07-26 re-read pass is the demonstration: 39 of those cells
+        // were transcribed off page images already on disk, with no new source acquired.
+        note: `Printed-witness text has been transcribed for ${nativeCellsWithText} of the 144 native (month × day-branch) cells. The remaining ${144 - nativeCellsWithText} are ABSENT FROM THIS FILE BECAUSE THEY ARE NOT YET TRANSCRIBED — not because the source lacks them. Both prints cover all 144 cells and both PDFs are in hand; the shortfall is bounded transcription labour against page images we already hold.`,
       },
+      provenance,
       ratingDistribution: dist,
       comparisonToV1: (() => {
         const v1Path = join(HERE, 'dong-gong-draft.json');
@@ -1031,8 +1266,10 @@ function main() {
           reading: `${changed} of ${same + changed} cells present in both grids carry a different rating in v2 — the first derivation was wrong far more widely than the 15.8% sample suggested, which is consistent with §8.5 diagnosing the failures as systematic rather than scattered.`,
         };
       })(),
+      // The two numbers here used to be hand-written and mutually contradictory (§9.4 H: this
+      // line said 57 while coverage.note said 59). Both are now interpolated from the corpus.
       shipStatus:
-        'STILL NOT SHIPPABLE. This is our derivation from the classical commentary by the stated rules, not the classical text\'s own rating. §8.7\'s gate requires the 316-cell spot-check to be re-run against the prints at zero contradiction-class mismatches, and 57 of 144 native cells have no printed transcription at all.',
+        `STILL NOT SHIPPABLE. This is our derivation from the classical commentary by the stated rules, not the classical text's own rating. §8.7's gate requires the 316-cell spot-check to be re-run against the prints at zero contradiction-class mismatches, and ${144 - nativeCellsWithText} of 144 native cells are still untranscribed.`,
       // Added after adversarial review (see §9). This file makes claims about its
       // own sources that are FALSE, and a reader who opens it without the sourcing
       // doc would have no way to know. In an artifact whose whole value is
@@ -1042,13 +1279,30 @@ function main() {
       // and a re-derivation must be reviewed, not slipped in beside a warning.
       knownFalseClaimsInThisFile: {
         readBeforeUsing: 'docs/research/DONG_GONG_SOURCING.md §9 — full findings, evidence and revised gate.',
+        note: 'This list is pruned only of entries genuinely fixed in the code. Leaving a warning that no longer applies would be its own false claim; so would deleting one that still stands. What was removed on 2026-07-26, and why, is recorded in `fixed` below.',
         claims: [
-          'DROP REASON "printed witnesses disagree" is false for 5 of the 6 cells carrying it. The code compares RATINGS between readings and never compares reading.witnesses, so two transcriptions of the SAME print (nlc416-wenming) that differ only in punctuation are recorded as a disagreement between witnesses. Only 六月除申日 壬申 is a genuine cross-witness variant.',
-          'coverage.note says the 59 untranscribed native cells "were never read from the prints". The witness reader\'s own method note says all 144 cells WERE read and the remaining ~98 are "legible in the same rendered pages and can be transcribed on demand"; a second reader parsed 130/144, losing 14 "not to absence". The shortfall is unfinished transcription, NOT an unavailable source — and the source PDFs are still in hand.',
-          'witnessAttribution: 25 kept cells rest solely on an INFERRED (unproven) witness attribution, not the 8 the summary states. The sole-basis gate promised in the comment at line ~444 was never implemented — the ternary that should enforce it has two identical branches.',
-          'corroboratingReadings counts a second transcription of the same print as corroboration. 41 of 161 "corroborated" cells are one witness read twice, so the field overstates evidential support.',
-          'The drop ledger does not reconcile: 87 native cells were transcribed, 85 entered the corpus. 二月定未日 and 十一月執巳日 are correctly discarded as truncated but appear in neither the grid nor _meta.dropped.',
-          'The derivation is not punctuation-stable: re-running against a de-punctuated corpus moves 5 of 386 ratings (1.3%) and un-drops 4 stems. Sentence-dot placement, not doctrine, decides MIXED vs a scalar tier in those cases.',
+          'The drop ledger does not reconcile: 87 native cells were transcribed by the hunts, 85 entered the corpus. 二月定未日 and 十一月執巳日 are correctly discarded as truncated but appear in neither the grid nor _meta.dropped. (二月定未日 has since been independently re-transcribed in the 2026-07-26 pass and IS now in the grid on that basis; 十一月執巳日 is still unaccounted for, and buildCorpus still discards truncated readings without recording them.)',
+          'The derivation is not punctuation-stable, and the effect is CONCENTRATED IN MIXED. Re-measured 2026-07-26 by stripping 。 and 、 from all 192 readings and re-running: 19 of 574 ratings move (3.3%) and 4 dropped stems come back. Every one of the 19 is MIXED collapsing into a scalar (9 →吉, 5 →次吉, 2 →平, 2 →大凶, 1 →大吉), so roughly half of the grid\'s MIXED verdicts exist because of where the printed dots fall — and MIXED is the one tier that means "this day cuts both ways", the reading a user would most act on. Sentence-dot placement, not doctrine, is deciding it. (An earlier version of this note said "5 of 386 (1.3%)". That figure was understated about fourfold: it was measured while a latent bug silently rebuilt the corpus from the un-stripped hunt output, so most of the perturbation was being undone before the run.)',
+          'The scalar tiers 「大作大發」→大吉 and praise-without-scalar→吉 are OUR judgement calls (§9.5), not the classical text\'s own rating. They are documented and defensible; they are not the source speaking.',
+          'Defect classes D, E and F of §9.4 (permission-idiom precedence; scoped prohibitions collected same-sentence-only, so MIXED is under-detected; a cell-level verdict standing after the last named stem reaching no stem) are OPEN. None of them was touched by the 2026-07-26 provenance work.',
+        ],
+        fixed: [
+          {
+            was: 'DROP REASON "printed witnesses disagree" is false for 5 of the 6 cells carrying it — the code compared ratings and never consulted reading.witnesses.',
+            now: 'classifyDisagreement() compares witness identity. A drop is now labelled transcription-disagreement (one print, read twice, read differently — ours to fix by re-reading) or witness-disagreement (two prints that genuinely differ) or mixed-disagreement, and the drop record carries the class, the witnesses and which reading produced which rating. Counts per class are in _meta.provenance.disagreementDropsByClass.',
+          },
+          {
+            was: 'coverage.note said the untranscribed native cells "were never read from the prints" — describing unfinished transcription as an unavailable source.',
+            now: 'coverage.note states the shortfall is untranscribed, that both prints cover all 144 cells and that both PDFs are in hand. The 2026-07-26 pass transcribed 39 of those cells off page images already on disk, which is the demonstration.',
+          },
+          {
+            was: 'A sole-basis provenance gate was promised in a comment and absent from the code: `const usable = tagged.length ? perReading : perReading` had two identical branches, and the summary stated 8 inferred cells where the file carried 25.',
+            now: 'The gate is implemented: every stem resting only on inferred-attribution readings is flagged `soleBasisInferredWitness` and counted in _meta.provenance.soleBasisInferredWitness — a computed number, so it cannot go stale. The dead ternary is gone.',
+          },
+          {
+            was: 'corroboratingReadings counted a second transcription of the same print as corroboration by two witnesses.',
+            now: 'Replaced by readingsAgreeing + witnessesAgreeing + a `corroboration` label of independent-witnesses / one-witness-transcribed-more-than-once / single-reading, with the split totalled in _meta.provenance.keptGanzhiCellsBySupport.',
+          },
         ],
       },
       dropped,
@@ -1128,6 +1382,48 @@ function main() {
       }
       return { ok: bad.length === 0, got: bad.join(',') || 'none' };
     }],
+    // §9.4 A/B — provenance invariants. These test the CLAIMS the file makes about its sources,
+    // which is the class of defect the §8.5 harness could not see.
+    ['no drop is labelled a witness disagreement unless more than one witness is involved', () => {
+      const bad = dropped.filter((d) => d.disagreementClass === 'witness-disagreement' && (d.witnesses || []).length < 2);
+      return { ok: bad.length === 0, got: bad.map((d) => `${d.month}|${d.ganzhi}`).join(',') || 'none' };
+    }],
+    ['every drop carries a class, and every reading-disagreement drop names the witnesses it was classified from', () => {
+      const bad = dropped.filter((d) => !d.dropClass || (/-disagreement$/.test(d.dropClass) && !d.witnesses));
+      return { ok: bad.length === 0, got: bad.map((d) => `${d.month}|${d.ganzhi}`).join(',') || 'none' };
+    }],
+    ['no kept cell is labelled independent-witnesses on a single witness (the corroboratingReadings defect)', () => {
+      const bad = [];
+      for (const m of Object.keys(ordered)) for (const gz of Object.keys(ordered[m])) {
+        const c = ordered[m][gz];
+        if (c.corroboration === 'independent-witnesses' && c.witnesses.length < 2) bad.push(`${m}|${gz}`);
+        if (c.corroboration === 'one-witness-transcribed-more-than-once' && (c.witnesses.length !== 1 || c.readingsAgreeing < 2)) bad.push(`${m}|${gz}`);
+      }
+      return { ok: bad.length === 0, got: bad.join(',') || 'none' };
+    }],
+    ['a cell is never reported as corroborated while its readings disagree about a character, unflagged', () => {
+      const bad = [];
+      for (const cell of corpus) {
+        if (cell.readings.length < 2) continue;
+        const bare = cell.readings.map((r) => r.text.replace(/。/g, ''));
+        if (new Set(bare).size === 1) continue;
+        for (const gz of ganzhiFor(cell.dayBranch)) {
+          const c = ordered[cell.month] && ordered[cell.month][gz];
+          if (!c) continue;
+          if (!c.cellReadingVariance || c.cellReadingVariance.level !== 'characters-differ') bad.push(`${cell.month}|${gz}`);
+        }
+      }
+      return { ok: bad.length === 0, got: bad.join(',') || `${provenance.multiReadingCellsByTextAgreement['characters-differ']} flagged` };
+    }],
+    ['the sole-basis gate actually fires: every kept cell whose readings are all inferred is flagged', () => {
+      const bad = [];
+      for (const m of Object.keys(ordered)) for (const gz of Object.keys(ordered[m])) {
+        const c = ordered[m][gz];
+        const flagged = c.soleBasisInferredWitness === true;
+        if ((c.witnessAttribution === 'inferred') !== flagged) bad.push(`${m}|${gz}`);
+      }
+      return { ok: bad.length === 0, got: bad.join(',') || `${provenance.soleBasisInferredWitness} flagged` };
+    }],
     ['every MIXED cell has both a praised and a forbidden activity (§8.5 #4 definition)', () => {
       const bad = [];
       for (const m of Object.keys(ordered)) for (const gz of Object.keys(ordered[m])) {
@@ -1142,6 +1438,9 @@ function main() {
   console.log(`\ncorpus: ${corpusOrigin}`);
   console.log(`native cells with printed text: ${nativeCellsWithText}/144`);
   console.log(`ganzhi cells kept: ${kept}   dropped: ${dropped.length}`);
+  console.log(`support for kept cells: ${JSON.stringify(provenance.keptGanzhiCellsBySupport)}`);
+  console.log(`sole-basis inferred-witness cells: ${provenance.soleBasisInferredWitness}`);
+  console.log(`disagreement drops by class: ${JSON.stringify(provenance.disagreementDropsByClass)}`);
   console.log(`rating distribution: ${JSON.stringify(dist)}`);
   console.log(`\n§8.5 regression self-checks:`);
   let fails = 0;
@@ -1155,4 +1454,8 @@ function main() {
   if (fails) process.exit(1);
 }
 
-main();
+// Run only when invoked directly. The module also exports normaliseWitnessText so a merge
+// script can normalise new transcriptions through the SAME pipeline the corpus was built with,
+// instead of a private copy that would silently drift.
+const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedDirectly) main();
