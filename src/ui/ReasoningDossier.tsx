@@ -10,7 +10,6 @@ import {
   whyThisDay,
 } from "../engine/index.ts";
 import { ConfidencePanel } from "./meters.tsx";
-import { UpgradePrompt } from "./billing/UpgradePrompt.tsx";
 import { scoreColor, scoreTextColor } from "./format.ts";
 
 const LAYER_TITLE: Record<RuleFired["layer"], string> = {
@@ -27,34 +26,23 @@ function classicalCite(citation: string): string {
 }
 
 /**
- * The reasoning dossier, split along an honesty line.
- *
- * WHAT IS FREE, AND WHY: the app's whole claim is that it doesn't ask to be taken
- * on trust. Three things carry that claim and are therefore never gated —
- * the plain-English summary, **the complete list of where the traditions
- * disagree**, and the reproducibility block. Charging to see the disagreements
- * after telling a user they exist would reproduce this category's single biggest
- * trust complaint inside the product, with a price on the resolution. It would
- * read as engineered doubt, and it would be beneath the rest of the app.
- *
- * WHAT IS PAID: the practitioner audit trail — per-factor score decomposition
- * with weights, every rule with its classical citation, and the full
- * twelve-hour table. That's depth for people working professionally, not the
- * evidence that the reading is honest.
+ * The reasoning dossier — the app's whole claim is that it doesn't ask to be
+ * taken on trust, so everything is here for everyone: the plain-English
+ * summary, the complete list of where the traditions disagree, the
+ * reproducibility block, and the full practitioner audit trail (per-factor
+ * score decomposition with weights, every rule with its classical citation,
+ * and the full twelve-hour table).
  */
 export function ReasoningDossier({
   rec,
   objective,
   hash,
   versions,
-  detailed,
 }: {
   rec: DayRecommendation;
   objective: Objective;
   hash: string;
   versions: Versions;
-  /** False on the free tier: keeps the honesty half, drops the audit half. */
-  detailed: boolean;
 }) {
   const subs = subScoreNarrative(rec, objective.weights);
   const bullets = whyThisDay(rec);
@@ -76,8 +64,8 @@ export function ReasoningDossier({
           ))}
         </ul>
 
-        {/* The conflicts sit ABOVE the paid section deliberately: a user who has
-            been told the traditions disagree must always be able to read how. */}
+        {/* The conflicts sit at the top deliberately: a user who has been told
+            the traditions disagree must always be able to read how. */}
         {rec.conflicts.length > 0 && (
           <>
             <h4>Where the traditions disagree</h4>
@@ -100,16 +88,13 @@ export function ReasoningDossier({
           <code>{versions.tongshuRulePack}</code>
         </div>
 
-        {!detailed && <UpgradePrompt feature="reasoning_dossier" compact />}
-        {!detailed ? null : (
-          <DetailedAudit rec={rec} subs={subs} grouped={grouped} />
-        )}
+        <DetailedAudit rec={rec} subs={subs} grouped={grouped} />
       </div>
     </details>
   );
 }
 
-/** The practitioner audit trail — depth, not evidence of honesty. Pro only. */
+/** The practitioner audit trail — the full depth behind the score. */
 function DetailedAudit({
   rec,
   subs,

@@ -1,5 +1,14 @@
 # Billing & plans — setup
 
+> **RETIRED — July 2026 (Phase 15).** The owner removed the Pro/Lifetime tiers:
+> there is one free tier and every feature is accessible to every user. The
+> Stripe scaffolding this document describes (`functions/src/billing.ts`,
+> `src/billing/api.ts`, the pricing and billing pages, `VITE_BILLING_URL`) was
+> deleted in that phase and is recoverable from git history if ever needed.
+> What survives of this machinery is quota only: the AI advisor's daily message
+> ceiling and the shared `plans.ts` catalogue, both purely as abuse/structural
+> bounds. This file is kept for history and no longer describes the app.
+
 How the Free/Pro split is implemented, and what to configure to take payments.
 
 The app works with **none** of this configured: no Firebase, no Stripe, no Cloud

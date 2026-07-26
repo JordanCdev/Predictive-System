@@ -145,9 +145,9 @@ firebase deploy --only firestore:rules
 ```
 
 `firestore.rules` grants read/write under `users/{uid}/…` to that user only, **except**
-`users/{uid}/billing`, which is read-only to the user and written solely by the Stripe
-webhook / chat function via the Admin SDK (which bypasses rules). Everything outside
-`users/{uid}` is denied, including the server-only `stripeCustomers/{id}` mirror.
+`users/{uid}/billing` (now just the AI usage meter), which is read-only to the user and
+written solely by the chat function via the Admin SDK (which bypasses rules). Everything
+outside `users/{uid}` is denied.
 
 Data model, all under `users/{uid}` (see `src/firebase/client.ts`):
 
@@ -156,14 +156,14 @@ Data model, all under `users/{uid}` (see `src/firebase/client.ts`):
 | `meta/people` | `{ people, activeId }` — the cast of birth profiles (**this is the doc to look for in §7**) |
 | `meta/profile` | `{ person }` — the legacy single profile |
 | `meta/journal` | `{ entries }` — saved decisions + outcomes |
-| `billing/…` | plan + entitlement + AI meter — **server-written only** |
+| `billing/usage` | the AI usage meter (the daily abuse bound) — **server-written only** |
 | `goals`, `saved_events`, `saved_reports`, `verification_runs`, `ai_threads` | generic per-user collections with a ready data layer (`listDocs`/`putDoc`/`removeDoc`) |
 
-## 6. Server-side AI proxy + billing (optional, later)
+## 6. Server-side AI proxy (optional, later)
 
-`functions/` holds two HTTPS functions: `chat` (holds the Anthropic key server-side,
-verifies the caller's Firebase ID token, meters usage) and `billing` (Stripe Checkout,
-customer portal, webhook → entitlements). Neither is required for accounts to work.
+`functions/` holds one HTTPS function: `chat` (holds the Anthropic key server-side,
+verifies the caller's Firebase ID token, meters usage against the daily abuse bound).
+It is not required for accounts to work.
 
 ```bash
 firebase functions:secrets:set ANTHROPIC_API_KEY
@@ -171,9 +171,9 @@ cd functions && npm install && cd ..
 firebase deploy --only functions
 ```
 
-Then set `VITE_AI_PROXY_URL=https://us-central1-<project>.cloudfunctions.net/chat`
-(and `VITE_BILLING_URL` for billing — see `docs/BILLING_SETUP.md`). The browser still runs
-the whole tool loop locally; only chat text + small engine tool-results transit the network.
+Then set `VITE_AI_PROXY_URL=https://us-central1-<project>.cloudfunctions.net/chat`.
+The browser still runs the whole tool loop locally; only chat text + small engine
+tool-results transit the network.
 `REQUIRE_AUTH=false` exists for local function testing — leave it on in production, and
 consider enabling **Firebase App Check** too.
 
@@ -194,7 +194,7 @@ In order. Each step tells you which of the previous ones failed.
    whole path works: config → auth → rules → write.
 4. **Rules work.** Still in the console, use the **Rules Playground** to simulate a read of
    `users/<someone-else-uid>/meta/people` as your uid — it must be **denied**. Simulate a
-   write to `users/{your-uid}/billing/entitlement` as yourself — that must be denied too.
+   write to `users/{your-uid}/billing/usage` as yourself — that must be denied too.
 5. **Cross-device.** Sign in on a second browser; the profile hydrates from Firestore.
 
 ## 8. Before this expands — the DPIA

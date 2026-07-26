@@ -16,10 +16,7 @@ import { ChatPage } from "./pages/ChatPage.tsx";
 import { ProfilePage } from "./pages/ProfilePage.tsx";
 import { GroupPage } from "./pages/GroupPage.tsx";
 import { LandingPage } from "./pages/LandingPage.tsx";
-import { PricingPage } from "./pages/PricingPage.tsx";
-import { BillingPage } from "./pages/BillingPage.tsx";
 import { PrivacyPage, TermsPage } from "./pages/LegalPages.tsx";
-import { PlanBadge } from "./ui/billing/UpgradePrompt.tsx";
 
 /** Week/Month/Year nav targets follow the date currently on screen — on
  *  /day/2026-12-25 the Month tab means December 2026, not whatever month the app
@@ -120,7 +117,6 @@ function NavBar() {
           <>
             <span className="dot" style={{ background: "var(--jade)" }} />
             {elementPlain(chart.dayMaster.dayMaster.phase)} · {person?.birthDate.slice(0, 4)}
-            <PlanBadge />
           </>
         ) : (
           <>+ Add profile</>
@@ -152,11 +148,9 @@ export function App() {
               <Route path="/date-finder" element={<DateFinderPage />} />
               <Route path="/group" element={<GroupPage />} />
               <Route path="/chat" element={<ChatPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/settings/profile" element={<ProfilePage />} />
-              <Route path="/settings/billing" element={<BillingPage />} />
               <Route path="*" element={<Navigate to="/today" replace />} />
             </Routes>
             </ErrorBoundary>
@@ -179,8 +173,6 @@ function Footer() {
       judgement too.
       <nav className="foot-links">
         <NavLink to="/welcome">About</NavLink>
-        <NavLink to="/pricing">Plans</NavLink>
-        <NavLink to="/settings/billing">Billing</NavLink>
         <NavLink to="/privacy">Privacy</NavLink>
         <NavLink to="/terms">Terms</NavLink>
       </nav>

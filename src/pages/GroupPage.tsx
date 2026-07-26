@@ -22,15 +22,12 @@ import {
 } from "../engine/index.ts";
 import type { GroupDay } from "../engine/group.ts";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
-import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
-import { UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
 import { NeedsProfile } from "./NeedsProfile.tsx";
 
 const LADDER = WINDOW_DAYS as readonly number[];
 
 export function GroupPage() {
   const { usablePeople, evaluateFor } = useProfile();
-  const { can, clamp } = useEntitlements();
 
   const [objectiveId, setObjectiveId] = useState(OBJECTIVES[0].id);
   const [windowDays, setWindowDays] = useState(92);
@@ -40,9 +37,9 @@ export function GroupPage() {
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  // The plan's horizon still applies here, so a Free user can't reach a five-year
-  // window through this page when the date finder caps them at two months.
-  const { days: effectiveWindow, capped } = clamp(windowDays);
+  // The engine's search horizon applies here exactly as it does in the date
+  // finder — it's a performance boundary, and the ladder never exceeds it.
+  const effectiveWindow = Math.min(windowDays, MAX_WINDOW_DAYS);
 
   const party = useMemo(
     () => usablePeople.filter((p) => selected.includes(p.id)),
@@ -61,18 +58,6 @@ export function GroupPage() {
   }, [party, objectiveId, effectiveWindow, evaluateFor]);
 
   if (usablePeople.length === 0) return <NeedsProfile what="find a date for a group" />;
-
-  if (!can("group_dates")) {
-    return (
-      <>
-        <Head />
-        <UpgradePrompt feature="group_dates" />
-        <p className="ask-note" style={{ marginTop: 12 }}>
-          Your own readings are unaffected — this only adds other people's charts to the same search.
-        </p>
-      </>
-    );
-  }
 
   const ruledOutCount = ranked ? ranked.all.length - ranked.all.filter((d) => !d.ruledOut).length : 0;
 
@@ -120,11 +105,6 @@ export function GroupPage() {
           </div>
         </div>
 
-        {capped && (
-          <div className="warn" style={{ marginTop: 10 }}>
-            <span aria-hidden="true">⚠</span> Your plan searches {windowPlain(effectiveWindow)}; the longer window needs Pro.
-          </div>
-        )}
       </div>
 
       {party.length < 2 ? (

@@ -44,14 +44,14 @@ The tools ([`src/ai/tools.ts`](../src/ai/tools.ts)), each a deterministic engine
 | `get_natal_chart` | `BaziChart` table lookups | the full chart: four pillars (hanzi + pinyin + animals), hidden stems (藏干) with Ten Gods, Na Yin, palaces, five-element balance, functional element map, seasonal state + rooting, personal stars (天乙貴人/桃花/驛馬) — **free: transparency is never gated** |
 | `get_profile_fits` | `analyzeProfile` | the full ranking of all 11 objectives, best and worst fits with reasons — **free** |
 | `get_priorities` | `sharedForAi` + `deriveSignals` | what the user SAID matters: ranked life areas, stated intentions, optional context, aggregate journal counts — **free**, and field-level consent-gated (below) |
-| `get_luck_pillars` | `buildPeriodsReport` | 大運 decades with theme, valence, which is active (Pro) |
-| `get_period_summary` | `buildPeriodsReport` | 流年 (+ optional 流月): theme, valence, 太歲, tendencies (non-current year: Pro) |
+| `get_luck_pillars` | `buildPeriodsReport` | 大運 decades with theme, valence, which is active |
+| `get_period_summary` | `buildPeriodsReport` | 流年 (+ optional 流月): theme, valence, 太歲, tendencies — any year |
 | `find_best_days` | `evaluateDecision` | ranked days with score, verdict, best hour |
 | `evaluate_specific_day` | `evaluateDecision` (1-day window) | one day's pillar, officer, day-god, sub-scores, life areas. `objectiveId` is optional — omitted, it falls back to the neutral `general_day` reading, so "how is 14 Oct 2027 for me?" just works |
 
-Tier note: the Pro gates above mirror the UI exactly (the advisor can't route around a
-paywall), and per the settled tier rule, paid buys **range/breadth/storage — never
-transparency**: everything about the user's own natal chart is free.
+There are no tiers (Phase 15): every tool answers for every user. The only ceiling anywhere
+in the chat stack is the hosted proxy's daily message allowance — an abuse bound on metered
+token spend, not a product; BYOK chat never touches it.
 
 `executeTool` is pure and unit-tested ([`tests/aiTools.test.ts`](../tests/aiTools.test.ts));
 the streaming loop is tested with a stubbed SSE transport
@@ -117,9 +117,8 @@ as interpretation, never prediction.
 
 The empty-thread suggestions are built from the user's **actual chart**
 ([`src/ui/chatChips.ts`](../src/ui/chatChips.ts)): their top objective fit, their weakest
-fit (or chart caution), hidden stems, today's reading. A free user is never handed a chip
-whose answer is a paywall — the one Pro-flavoured chip (luck decade) appears for Pro
-users only, marked "Pro".
+fit (or chart caution), hidden stems, today's reading. Every chip leads to a full answer
+for every user — no chip is conditional on anything.
 
 When priorities are set, `ChatPanel` prepends chips for the user's **top-ranked area** and their
 first **intention** (both free, both consent-gated, list still capped at six), so the panel opens

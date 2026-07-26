@@ -5,9 +5,9 @@ import { TARGET, expectedContents } from "../scripts/sync-shared.mjs";
 
 /**
  * The Cloud Functions carry a generated copy of the plan catalogue (see
- * scripts/sync-shared.mjs). If someone changes a limit, price or feature list on
- * the client without re-syncing, the server would keep enforcing the old rules —
- * a user could pay for Pro and still be metered as Free. Fail loudly instead.
+ * scripts/sync-shared.mjs). If someone changes a limit on the client without
+ * re-syncing, the server would keep enforcing the old bounds — the UI would
+ * promise one allowance and the meter would enforce another. Fail loudly.
  */
 describe("shared plan catalogue", () => {
   it("is in sync between the app and the Cloud Functions", () => {

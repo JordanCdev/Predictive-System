@@ -39,10 +39,11 @@ VERIFY_LIVE_JPL=1 npm test -- tests/verification/solarTerms.live.test.ts
 ```
 
 Everything runs with no configuration: no account, no backend, no keys. Accounts
-and cloud sync ([docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md)) and
-subscriptions ([docs/BILLING_SETUP.md](docs/BILLING_SETUP.md)) are optional
-layers on top — with neither configured the app is fully usable on the free tier
-and every upgrade affordance hides itself.
+and cloud sync ([docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md)) are an optional
+layer on top — without them the app is fully usable from localStorage alone.
+The app is free with a single tier: every feature for every user
+(docs/DECISIONS.md §11; the retired billing scaffold is described in
+[docs/BILLING_SETUP.md](docs/BILLING_SETUP.md) for history).
 
 ## How it works (the experience)
 

@@ -2,8 +2,8 @@
  * "Back up your data" — download everything this app knows about you as a single
  * JSON file, and restore it later or on another device.
  *
- * FREE for everyone, deliberately: portability is a right, and losing your data
- * is not a paid feature. No plan gate, no upgrade prompt.
+ * For everyone, deliberately: portability is a right, not a feature — like
+ * everything else here, it just works.
  *
  * The panel takes no props — it reads and writes storage itself through the pure
  * helpers in backup.ts, so it can be dropped anywhere on the profile page.

@@ -38,9 +38,6 @@ import type { JournalSignals } from "../ui/priorities/deriveSignals.ts";
 
 /** Everything a tool needs to answer, all deterministic and client-side. */
 export interface AiToolContext {
-  /** Feature gate, so a tool cannot hand back Pro-only content the UI paywalls.
-   *  Defaults to permissive when absent (tests, non-billing deployments). */
-  can?: (feature: "luck_pillars" | "year_forecast") => boolean;
   /** The user's STATED priorities, if they've set any. Never read raw for output:
    *  `get_priorities` projects it through `sharedForAi`, the store's single
    *  consent gate. Absent = the user hasn't set any. */
@@ -318,8 +315,7 @@ export function executeTool(name: string, rawInput: unknown, ctx: AiToolContext)
       }
 
       case "get_priorities": {
-        // FREE, by settled tier decision: knowing what the user wants is not a
-        // paid feature. Consent is enforced by `sharedForAi` — the one gate.
+        // Consent is enforced by `sharedForAi` — the one gate.
         const p = ctx.priorities ?? null;
         const shared = p ? sharedForAi(p) : null;
         // Derived LOCALLY (deriveSignals is pure and client-side) so "is there a
@@ -375,14 +371,6 @@ export function executeTool(name: string, rawInput: unknown, ctx: AiToolContext)
       }
 
       case "get_luck_pillars": {
-        // The 大運 scrubber is a Pro feature; the advisor must not route around it.
-        if (ctx.can && !ctx.can("luck_pillars")) {
-          return {
-            unavailable: "luck_pillars",
-            message:
-              "The ten-year luck-pillar reading is part of Pro. Tell the user that plainly, don't describe their decades, and offer what you CAN do on their plan.",
-          };
-        }
         const year = Number(ctx.todayIso.slice(0, 4));
         const report = buildPeriodsReport({ chart: ctx.chart, dayun: ctx.dayun, birth: ctx.birth, targetYear: year });
         return {
@@ -399,15 +387,6 @@ export function executeTool(name: string, rawInput: unknown, ctx: AiToolContext)
       case "get_period_summary": {
         const year = Number(input.year);
         if (!Number.isFinite(year)) return { error: "year must be a number, e.g. 2026" };
-        // The current year is free; any OTHER year is Pro, matching YearlyPage.
-        const thisYear = Number(ctx.todayIso.slice(0, 4));
-        if (year !== thisYear && ctx.can && !ctx.can("year_forecast")) {
-          return {
-            unavailable: "year_forecast",
-            year,
-            message: `Reading a year other than ${thisYear} is part of Pro. Say so plainly, don't describe ${year}, and offer the current year instead.`,
-          };
-        }
         const report = buildPeriodsReport({ chart: ctx.chart, dayun: ctx.dayun, birth: ctx.birth, targetYear: year });
         const out: Record<string, unknown> = {
           year,

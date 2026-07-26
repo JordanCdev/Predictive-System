@@ -11,8 +11,8 @@
  *     (so a deploy is picked up immediately, but offline still boots).
  *   - same-origin static assets → cache-first (Vite content-hashes filenames, so
  *     a cached hit is always the right bytes and can never go stale).
- *   - everything else (Anthropic, Stripe, Firebase, the billing/chat functions)
- *     → not touched. Never cache a request that spends money or carries a token.
+ *   - everything else (Anthropic, Firebase, the chat function) → not touched.
+ *     Never cache a request that spends money or carries a token.
  *
  * No build-time precache manifest: the cache fills from real navigation, which
  * keeps this a plain static file with no plugin in the build.

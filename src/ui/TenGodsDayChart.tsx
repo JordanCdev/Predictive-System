@@ -1,5 +1,5 @@
 /**
- * Personal Ten-Gods energy chart for one day (free tier — display only).
+ * Personal Ten-Gods energy chart for one day (display only).
  *
  * Horizontal signed bars from a centre axis: how strongly today's pillar
  * "wakes" each of the chart's Ten Gods (engine `tenGodDayActivation` — the day

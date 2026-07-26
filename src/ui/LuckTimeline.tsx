@@ -16,15 +16,9 @@ export interface LuckEntry {
 export function LuckTimeline({
   entries,
   natalGanzhi,
-  teaser = false,
 }: {
   entries: LuckEntry[];
   natalGanzhi: string[];
-  /** Preview mode for the paywall: show the SHAPE of the timeline — the decades,
-   *  their spans and their colours — but withhold the written decade reading.
-   *  A CSS blur is not a gate: the text stays in the DOM, selectable, and read
-   *  aloud by a screen reader. */
-  teaser?: boolean;
 }) {
   const activeIdx = entries.findIndex((e) => e.active);
   const [open, setOpen] = useState<number | null>(activeIdx >= 0 ? activeIdx : null);
@@ -110,7 +104,7 @@ export function LuckTimeline({
         })}
       </div>
 
-      {!teaser && open !== null && entries[open] && <PeriodSummaryBlock s={entries[open].summary} />}
+      {open !== null && entries[open] && <PeriodSummaryBlock s={entries[open].summary} />}
     </div>
   );
 }

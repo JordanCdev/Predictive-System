@@ -1,5 +1,5 @@
 /**
- * The person-first hero of the daily view (free tier — presentation only).
+ * The person-first hero of the daily view (presentation only).
  *
  * The Power Planner insight, applied: the reader comes before the calendar.
  * This card leads with WHO the day is read for (their label and the date), then

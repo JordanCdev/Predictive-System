@@ -7,7 +7,7 @@
  * another app read that difference as OUR error unless we show both readings
  * and say plainly which school each belongs to.
  *
- * FREE for everyone — honesty and transparency are never gated (tier rule).
+ * For everyone, like everything else — honesty and transparency are never gated.
  */
 import {
   ConventionSet,

@@ -16,7 +16,6 @@ import { Person } from "../PersonalizeCard.tsx";
 import { healBirthTimezone } from "../birthZoneDefaults.ts";
 import { DEFAULT_TZ, TODAY_CIVIL, ageOn, birthCivilOf, buildRequest, canonicalFor } from "../shared.ts";
 import { useAuth } from "./AuthContext.tsx";
-import { useEntitlements } from "./EntitlementsContext.tsx";
 import {
   EMPTY_PEOPLE,
   PeopleState,
@@ -36,6 +35,18 @@ import {
  *  build (or a rollback) keeps finding a profile where it expects one. */
 const PERSON_STORE = "wei_person_v1";
 const PEOPLE_STORE = "wei_people_v1";
+
+/** Structural cap on stored people — a generous storage sanity bound that
+ *  applies to everyone. Not a plan limit; there are no plans. */
+const PROFILE_LIMIT = 12;
+
+/** The engine's search horizon (~5 years + a leap day of slack). A performance
+ *  boundary enforced for every caller — never a paywall. */
+const ENGINE_MAX_WINDOW_DAYS = 1827;
+
+/** Clamp a requested window to the engine boundary (same semantics the old
+ *  horizon clamp used: floor, then bound to [1, max]). */
+const clampWindow = (requestedDays: number) => Math.max(1, Math.min(Math.floor(requestedDays), ENGINE_MAX_WINDOW_DAYS));
 
 function readJson(key: string): unknown {
   try {
@@ -91,13 +102,13 @@ export interface ProfileValue {
   setPerson: (p: Person | null) => void;
 
   // ── the cast ───────────────────────────────────────────────────────────────
-  /** Everyone stored, including any parked by a plan downgrade. */
+  /** Everyone stored, including any beyond the structural cap. */
   people: StoredPerson[];
-  /** Those the current plan can actually use. */
+  /** Those within the structural cap — the usable cast. */
   usablePeople: StoredPerson[];
   activeId: string | null;
   activeStored: StoredPerson | null;
-  /** True when the plan's profile limit is reached — drives the upgrade prompt. */
+  /** True when the structural profile cap is reached — drives the plain cap note. */
   atProfileLimit: boolean;
   profileLimit: number;
   isLocked: (id: string) => boolean;
@@ -143,9 +154,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     if (boot.changed) persist(boot.state);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { enabled, user } = useAuth();
-  const { entitlement, clamp } = useEntitlements();
 
-  const profileLimit = entitlement.plan.limits.profiles;
+  const profileLimit = PROFILE_LIMIT;
 
   /** Apply a state change: persist locally, then write through to the cloud. */
   const commit = useCallback(
@@ -195,8 +205,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const usablePeople = useMemo(() => allowedPeople(state, profileLimit), [state, profileLimit]);
 
-  // If a downgrade parked the active person, fall back to one the plan allows —
-  // otherwise the app would keep reading a chart the user no longer pays for.
+  // Defensive: if the active person somehow sits beyond the structural cap,
+  // fall back to one inside it rather than reading an out-of-cap chart.
   useEffect(() => {
     if (!state.activeId || usablePeople.length === 0) return;
     if (usablePeople.some((p) => p.id === state.activeId)) return;
@@ -232,7 +242,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const selectPerson = useCallback(
     (id: string) => {
-      if (isPersonLocked(state, id, profileLimit)) return; // parked by a downgrade
+      if (isPersonLocked(state, id, profileLimit)) return; // beyond the structural cap
       commit(setActiveIn(state, id));
     },
     [state, commit, profileLimit],
@@ -284,20 +294,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   }, [active]);
 
-  // The plan horizon is enforced HERE, at the shared evaluator, not at each call
-  // site. Gating only the date-finder UI left two open doors: the AI advisor's
-  // find_best_days tool and the ProfilePanel ask box both called evaluate()
-  // directly and happily returned a five-year search on a 60-day free plan. A
-  // boundary check closes those and any future caller by construction.
+  // The engine's window boundary is enforced HERE, at the shared evaluator, not
+  // at each call site — the AI advisor's find_best_days tool, the ProfilePanel
+  // ask box and any future caller all pass through it by construction. It is a
+  // performance boundary (~5 years is the deterministic search horizon), the
+  // same for everyone.
   const evaluate = useCallback(
     (objectiveId: string, windowDays: number, options: DecisionRequest["options"] = { sweeps: false }) =>
-      evaluateDecision(buildRequest(objectiveId, clamp(windowDays).days, active, options)),
-    [active, clamp],
+      evaluateDecision(buildRequest(objectiveId, clampWindow(windowDays), active, options)),
+    [active],
   );
   const evaluateWindow = useCallback(
     (objectiveId: string, start: { year: number; month: number; day: number }, days: number, options: DecisionRequest["options"] = { sweeps: false }) =>
-      evaluateDecision(buildRequest(objectiveId, clamp(days).days, active, options, start)),
-    [active, clamp],
+      evaluateDecision(buildRequest(objectiveId, clampWindow(days), active, options, start)),
+    [active],
   );
   const evaluateDay = useCallback(
     (objectiveId: string, iso: string, options: DecisionRequest["options"] = { sweeps: false }) => {
@@ -308,8 +318,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   );
   const evaluateFor = useCallback(
     (p: Person, objectiveId: string, windowDays: number, options: DecisionRequest["options"] = { sweeps: false }) =>
-      evaluateDecision(buildRequest(objectiveId, clamp(windowDays).days, p, options)),
-    [clamp],
+      evaluateDecision(buildRequest(objectiveId, clampWindow(windowDays), p, options)),
+    [],
   );
 
   const value: ProfileValue = useMemo(

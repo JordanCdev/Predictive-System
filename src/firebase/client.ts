@@ -24,7 +24,7 @@ import {
 import { firebaseConfig } from "./config.ts";
 import type { Person } from "../ui/PersonalizeCard.tsx";
 import type { JournalEntry } from "../ui/journalStore.ts";
-import type { BillingRecord, UsageRecord } from "../billing/plans.ts";
+import type { UsageRecord } from "../billing/plans.ts";
 import type { PeopleState } from "../ui/profile/peopleStore.ts";
 
 let app: FirebaseApp | null = null;
@@ -111,18 +111,7 @@ export async function saveJournalCloud(uid: string, entries: JournalEntry[]): Pr
   await setDoc(doc(ensure().db, "users", uid, "meta", "journal"), { entries, updatedAt: serverTimestamp() });
 }
 
-// ── billing (written only by the Stripe webhook; the client just reads) ───────
-
-/** users/{uid}/billing/subscription — live entitlement. Subscribed rather than
- *  fetched so the UI flips to Pro the moment the webhook lands, without the user
- *  having to reload after returning from Stripe Checkout. */
-export function watchBilling(uid: string, cb: (record: BillingRecord | null) => void): () => void {
-  return onSnapshot(
-    doc(ensure().db, "users", uid, "billing", "subscription"),
-    (snap) => cb(snap.exists() ? (snap.data() as BillingRecord) : null),
-    () => cb(null), // permission/network failure → Free, never a locked UI
-  );
-}
+// ── AI usage meter (written only by the chat Cloud Function; the client reads) ─
 
 /** users/{uid}/billing/usage — the AI meter the Cloud Function increments. Read
  *  here only to show "N messages left today"; the server remains the authority. */

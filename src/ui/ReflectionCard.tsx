@@ -8,13 +8,13 @@
  * Self-contained by design: it reads and writes the reflections store itself,
  * so a page mounts it with nothing but the day (`<ReflectionCard iso={...} />`).
  *
- * TIER DECISION (settled): reflections and decision entries draw on ONE shared
- * plan allowance (`journalEntries`). When it's used up, a NEW reflection is
- * blocked with the same honest cap message as the decision journal — existing
- * rows are never trimmed, and editing the day's existing reflection always works.
+ * SETTLED: reflections and decision entries draw on ONE shared allowance
+ * (`journalEntries`) — a high abuse bound, not a product tier. When it's used
+ * up, a NEW reflection is blocked with the same honest cap message as the
+ * decision journal — existing rows are never trimmed, and editing the day's
+ * existing reflection always works.
  */
 import { useMemo, useState } from "react";
-import { UpgradePrompt } from "./billing/UpgradePrompt.tsx";
 import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import { TODAY_ISO, addDaysIso } from "./shared.ts";
 import {
@@ -161,13 +161,11 @@ export function ReflectionCard({ iso }: { iso: string }) {
           </button>
         </div>
       ) : capped ? (
-        <>
-          <p style={{ margin: "0 0 8px", fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>
-            Your journal is at the {entitlement.plan.limits.journalEntries}-entry allowance — decisions and reflections
-            share it. Everything you've saved stays exactly as it is; adding a new day needs room.
-          </p>
-          <UpgradePrompt feature="journal_unlimited" compact />
-        </>
+        <p style={{ margin: 0, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>
+          Your journal is at its {entitlement.plan.limits.journalEntries}-entry allowance — decisions and reflections
+          share it. Everything you've saved stays exactly as it is; remove an entry you no longer need to make room for
+          a new day.
+        </p>
       ) : (
         form
       )}

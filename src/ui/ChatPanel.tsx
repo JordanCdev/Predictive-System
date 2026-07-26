@@ -118,7 +118,7 @@ export function ChatPanel({
   const threadRef = useRef<HTMLDivElement>(null);
 
   const auth = useAuth();
-  const { quota, entitlement, noteAiMessage, releaseAiMessage, billingAvailable, can, clamp } = useEntitlements();
+  const { quota, noteAiMessage, releaseAiMessage } = useEntitlements();
   const configured = Boolean(PROXY_URL || apiKey);
   // Metering only exists behind the hosted relay. A BYOK user is spending their
   // own Anthropic key, so it isn't ours to ration.
@@ -150,7 +150,6 @@ export function ChatPanel({
       evaluate,
       evaluateDay,
       boundary,
-      can,
       priorities,
       // Read lazily at tool-call time so the advisor sees the current journal.
       // Deriving is local and pure; get_priorities only EMITS anything from it
@@ -158,7 +157,7 @@ export function ChatPanel({
       // journal notes never leave the device under any setting.
       journalSignals: () => deriveSignals(loadJournal()),
     }),
-    [chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary, can, priorities],
+    [chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary, priorities],
   );
 
   /**
@@ -186,12 +185,11 @@ export function ChatPanel({
   }, [priorities]);
 
   // Suggested chips come from the user's ACTUAL chart (their top fit, their
-  // weakest fit) — and a free user is never handed a chip that paywalls.
-  const isPro = can("luck_pillars");
+  // weakest fit) — every chip leads to a full answer.
   const chips = useMemo(() => {
-    const base = buildChatChips(chart, isPro);
-    // Fold in what they've told us they care about. Free-tier safe by
-    // construction: these route to get_priorities + find_best_days, both free.
+    const base = buildChatChips(chart);
+    // Fold in what they've told us they care about: these route to
+    // get_priorities + find_best_days.
     const mine: ChatChip[] = [];
     // Consent-gated: a chip that names a field the user chose not to share would
     // put it in the transcript anyway, which is the same leak by another route.
@@ -208,7 +206,7 @@ export function ChatPanel({
       mine.push({ label: "Timing for what I'm working on", prompt: `I'm working on: ${intention}. When are the supportive windows for that?` });
     }
     return [...mine, ...base].slice(0, 6);
-  }, [chart, isPro, priorities]);
+  }, [chart, priorities]);
 
   // ── Offline deterministic advisor (no key, no proxy — never a dead end) ────
   const profile = useMemo(() => analyzeProfile(chart), [chart]);
@@ -221,21 +219,10 @@ export function ChatPanel({
       const intent = parseAdvisorQuery(q);
       let answer: AdvisorAnswer;
       if (intent.kind === "timing" && intent.objectiveId) {
-        // The answer must describe the window that was actually SEARCHED — the
-        // plan clamp caps length, so claiming the requested horizon would lie
-        // to a free user who asked about "next year".
-        const requested = intent.windowDays ?? OFFLINE_WINDOW_DAYS;
-        const { days: win, capped } = clamp(requested);
+        // parseAdvisorQuery already snaps windows to the engine's five-year
+        // horizon, so the answer describes exactly the window searched.
+        const win = intent.windowDays ?? OFFLINE_WINDOW_DAYS;
         answer = composeTimingAnswer(objectiveById(intent.objectiveId), evaluate(intent.objectiveId, win), todayIso, win);
-        if (capped) {
-          answer = {
-            ...answer,
-            paragraphs: [
-              ...answer.paragraphs,
-              `Searched the next ${win} days — your plan's horizon. A Pro plan searches up to five years out.`,
-            ],
-          };
-        }
       } else if (intent.kind === "profile") {
         answer = composeProfileAnswer(profile);
       } else {
@@ -244,7 +231,7 @@ export function ChatPanel({
       setOfflineExchanges((prev) => [...prev, { id: offlineId.current++, question: q, answer }]);
       setInput("");
     },
-    [evaluate, profile, todayIso, clamp],
+    [evaluate, profile, todayIso],
   );
 
   const enable = () => {
@@ -558,11 +545,6 @@ export function ChatPanel({
               Retry
             </button>
           )}
-          {outOfQuota && !entitlement.active && billingAvailable && (
-            <Link className="btn-text" style={{ padding: 0, color: "var(--warn-ink)", fontWeight: 600 }} to="/pricing">
-              See Pro
-            </Link>
-          )}
         </div>
       )}
 
@@ -584,10 +566,10 @@ export function ChatPanel({
         )}
       </div>
 
-      {blocked && !entitlement.active && (
+      {blocked && (
         <p className="ask-note" style={{ marginTop: 8 }}>
-          Your free allowance resets at midnight UTC. The rest of the app — every reading, score and forecast — keeps
-          working; only the AI narration is metered.
+          Daily allowance reached — it resets at midnight UTC. The rest of the app — every reading, score and forecast —
+          keeps working; only the AI narration is metered.
         </p>
       )}
 
@@ -595,7 +577,7 @@ export function ChatPanel({
         <div className="qa-suggest">
           {chips.map((c) => (
             <button key={c.label} className="chip ghost" disabled={busy || blocked} onClick={() => send(c.prompt)}>
-              {c.pro ? <><b>Pro</b> · {c.label}</> : c.label}
+              {c.label}
             </button>
           ))}
         </div>

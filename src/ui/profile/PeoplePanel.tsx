@@ -9,7 +9,6 @@
 import { useState } from "react";
 import { CONVENTION_PRESETS } from "../../engine/index.ts";
 import { Person, PersonalizeCard } from "../PersonalizeCard.tsx";
-import { UpgradePrompt } from "../billing/UpgradePrompt.tsx";
 import { DEFAULT_TZ } from "../shared.ts";
 import { useProfile } from "./ProfileContext.tsx";
 import { StoredPerson } from "./peopleStore.ts";
@@ -72,7 +71,7 @@ export function PeoplePanel() {
                   disabled={locked}
                   onClick={() => selectPerson(p.id)}
                   aria-pressed={p.id === activeId}
-                  title={locked ? "Included in Pro" : `Read against ${p.label}'s chart`}
+                  title={locked ? `Beyond the ${profileLimit}-person limit — remove someone to use this chart` : `Read against ${p.label}'s chart`}
                 >
                   <span className="person-dot" aria-hidden="true" />
                   <span className="person-name">
@@ -81,25 +80,21 @@ export function PeoplePanel() {
                   </span>
                   <span className="person-dob">{p.birthDate}</span>
                 </button>
-                {locked ? (
-                  <span className="person-locked-tag">Pro</span>
-                ) : (
-                  <span className="person-actions">
-                    <button className="btn-text" onClick={() => startEdit(p)}>Edit</button>
-                    <button className="btn-text danger" onClick={() => deletePerson(p.id)}>Remove</button>
-                  </span>
-                )}
+                <span className="person-actions">
+                  {!locked && <button className="btn-text" onClick={() => startEdit(p)}>Edit</button>}
+                  <button className="btn-text danger" onClick={() => deletePerson(p.id)}>Remove</button>
+                </span>
               </li>
             );
           })}
         </ul>
       )}
 
-      {/* A downgrade parks people rather than deleting them — say so plainly. */}
+      {/* Charts beyond the structural cap stay stored — nothing is ever deleted. */}
       {people.some((p) => isLocked(p.id)) && (
         <p className="people-parked">
-          {people.filter((p) => isLocked(p.id)).length} stored {people.filter((p) => isLocked(p.id)).length === 1 ? "chart is" : "charts are"} paused
-          on the free plan. Nothing was deleted — they return the moment you're on Pro.
+          {people.filter((p) => isLocked(p.id)).length} stored {people.filter((p) => isLocked(p.id)).length === 1 ? "chart is" : "charts are"} beyond
+          the {profileLimit}-person limit. Nothing was deleted — remove someone to bring them back into use.
         </p>
       )}
 
@@ -120,15 +115,15 @@ export function PeoplePanel() {
       )}
 
       {atProfileLimit && !formOpen && (
-        <div style={{ marginTop: 12 }}>
-          <UpgradePrompt feature="multi_profile" compact />
-        </div>
+        <p className="people-hint" style={{ marginTop: 12 }}>
+          The app stores up to {profileLimit} people. Remove someone you no longer need to add another.
+        </p>
       )}
 
       {!atProfileLimit && people.length <= 1 && !formOpen && (
         <p className="people-hint">
           Adding a partner, family member or co-founder lets you find a date that works for all of you — not just for you.
-          Their details are stored the same way yours are, and limited to {profileLimit} {profileLimit === 1 ? "person" : "people"} on your plan.
+          Their details are stored the same way yours are, up to {profileLimit} people.
         </p>
       )}
     </div>

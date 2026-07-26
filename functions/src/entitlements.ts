@@ -1,35 +1,28 @@
 /**
- * Server-side entitlement + metering helpers.
+ * Server-side AI metering.
  *
- * The browser draws gates from the same catalogue, but the browser is not a
- * security boundary: anything that costs money (AI tokens) is decided here,
- * against the Firestore billing document that only the Stripe webhook can write.
+ * There is one plan and every user is on it, so there is nothing to "entitle" —
+ * what remains here is the abuse bound on the hosted proxy's real token spend.
+ * The browser mirrors the same limits for display, but the browser is not a
+ * security boundary: anything that costs money (AI tokens) is decided here.
  */
 import { getFirestore } from "firebase-admin/firestore";
 import {
-  BillingRecord,
+  ENTITLEMENT,
   Entitlement,
-  FREE_ENTITLEMENT,
   QuotaVerdict,
   UsageRecord,
   checkQuota,
   requestCeilingReached,
-  resolveEntitlement,
   usageDayKey,
 } from "./shared/plans";
 
-const billingDoc = (uid: string) => getFirestore().doc(`users/${uid}/billing/subscription`);
 const usageDoc = (uid: string) => getFirestore().doc(`users/${uid}/billing/usage`);
 
-/** Resolve a user's live entitlement. A read failure degrades to Free — the AI
- *  is still usable at the free allowance rather than erroring outright. */
-export async function entitlementFor(uid: string): Promise<Entitlement> {
-  try {
-    const snap = await billingDoc(uid).get();
-    return resolveEntitlement(snap.exists ? (snap.data() as BillingRecord) : null, Date.now());
-  } catch {
-    return FREE_ENTITLEMENT;
-  }
+/** Every user holds the same, full entitlement. Kept as a function so the chat
+ *  handler's call shape is stable. */
+export async function entitlementFor(_uid: string): Promise<Entitlement> {
+  return ENTITLEMENT;
 }
 
 export interface ConsumeResult extends QuotaVerdict {

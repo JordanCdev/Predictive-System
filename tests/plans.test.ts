@@ -1,255 +1,142 @@
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  BillingRecord,
-  FREE_PLAN,
-  LIFETIME_PLAN,
-  PRO_PLAN,
+  ALL_FEATURES,
+  ENTITLEMENT,
+  PLAN,
   ROUNDS_PER_MESSAGE,
   checkQuota,
   clampHorizon,
-  formatPrice,
   hasFeature,
   requestCeilingReached,
   requestLimit,
-  resolveEntitlement,
   usageDayKey,
-  yearlySavingPercent,
 } from "../src/billing/plans.ts";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0); // 2026-07-19T12:00Z
 const DAY = 86_400_000;
 
-const pro = (over: Partial<BillingRecord> = {}): BillingRecord => ({
-  plan: "pro",
-  status: "active",
-  currentPeriodEnd: NOW + 30 * DAY,
-  ...over,
-});
-
-describe("resolveEntitlement", () => {
-  it("falls back to Free for a missing, malformed or free record", () => {
-    for (const rec of [null, undefined, { plan: "free" } as BillingRecord]) {
-      const ent = resolveEntitlement(rec, NOW);
-      expect(ent.planId).toBe("free");
-      expect(ent.active).toBe(false);
+describe("the single plan", () => {
+  it("includes every catalogued feature — there is nothing to unlock", () => {
+    for (const f of ALL_FEATURES) {
+      expect(PLAN.features).toContain(f);
+      expect(hasFeature(ENTITLEMENT, f)).toBe(true);
     }
+    expect(PLAN.features).toHaveLength(ALL_FEATURES.length);
   });
 
-  it("grants Pro for a live subscription", () => {
-    const ent = resolveEntitlement(pro(), NOW);
-    expect(ent.planId).toBe("pro");
-    expect(ent.active).toBe(true);
-    expect(ent.plan.features.length).toBeGreaterThan(0);
+  it("carries the documented structural and abuse bounds, not product limits", () => {
+    // The engine's 5-year search boundary (MAX_WINDOW_DAYS territory), a
+    // generous profile bound, a high journal abuse bound, and the AI spend
+    // ceiling on the hosted proxy. None of these is a tier.
+    expect(PLAN.limits.horizonDays).toBe(1827);
+    expect(PLAN.limits.profiles).toBe(12);
+    expect(PLAN.limits.journalEntries).toBe(5000);
+    expect(PLAN.limits.aiMessagesPerDay).toBe(200);
   });
 
-  it("keeps access while Stripe retries a failed payment, and during a trial", () => {
-    expect(resolveEntitlement(pro({ status: "past_due" }), NOW).active).toBe(true);
-    expect(resolveEntitlement(pro({ status: "trialing" }), NOW).active).toBe(true);
-  });
-
-  it("revokes access for a cancelled or unpaid subscription", () => {
-    expect(resolveEntitlement(pro({ status: "canceled" }), NOW).active).toBe(false);
-    expect(resolveEntitlement(pro({ status: "unpaid" }), NOW).active).toBe(false);
-    expect(resolveEntitlement(pro({ status: "incomplete_expired" }), NOW).active).toBe(false);
-  });
-
-  it("keeps access until the period end after a cancel-at-period-end", () => {
-    const rec = pro({ cancelAtPeriodEnd: true, currentPeriodEnd: NOW + DAY });
-    expect(resolveEntitlement(rec, NOW).active).toBe(true);
-    // …and drops it once that period has lapsed, even if no webhook ever arrived.
-    expect(resolveEntitlement(rec, NOW + 2 * DAY).active).toBe(false);
-  });
-
-  it("treats a record with no period end as open-ended (comped accounts)", () => {
-    const ent = resolveEntitlement({ plan: "pro", status: "active" }, NOW + 9999 * DAY);
-    expect(ent.active).toBe(true);
+  it("never gates the engine — the bounds always leave the app fully usable", () => {
+    expect(PLAN.limits.horizonDays).toBeGreaterThanOrEqual(1826); // full 5-year search
+    expect(PLAN.limits.profiles).toBeGreaterThanOrEqual(1);
+    expect(PLAN.limits.journalEntries).toBeGreaterThan(0);
+    expect(PLAN.limits.aiMessagesPerDay).toBeGreaterThan(0);
   });
 });
 
-describe("lifetime purchase", () => {
-  const bought = (over: Partial<BillingRecord> = {}): BillingRecord => ({
-    plan: "free",
-    status: "canceled",
-    lifetimePurchasedAt: NOW - 400 * DAY,
-    ...over,
+describe("clampHorizon (the engine's search boundary)", () => {
+  it("lets everyone span the full five years", () => {
+    expect(clampHorizon(ENTITLEMENT, 1825)).toEqual({ days: 1825, capped: false });
+    expect(clampHorizon(ENTITLEMENT, 1827)).toEqual({ days: 1827, capped: false });
   });
 
-  it("grants the deterministic features outright, with no expiry", () => {
-    const ent = resolveEntitlement(bought(), NOW + 10_000 * DAY);
-    expect(ent.planId).toBe("lifetime");
-    expect(ent.active).toBe(true);
-    expect(ent.lifetime).toBe(true);
-    for (const f of PRO_PLAN.features) expect(hasFeature(ent, f)).toBe(true);
-  });
-
-  it("keeps the AI at the free allowance — the one metered resource", () => {
-    // The whole reason a lifetime tier is sustainable: the engine runs in the
-    // browser and costs nothing, but AI messages cost money on every use. If this
-    // ever inherits Pro's allowance, one payment buys unbounded spend forever.
-    const ent = resolveEntitlement(bought(), NOW);
-    expect(ent.plan.limits.aiMessagesPerDay).toBe(FREE_PLAN.limits.aiMessagesPerDay);
-    expect(ent.plan.limits.aiMessagesPerDay).toBeLessThan(PRO_PLAN.limits.aiMessagesPerDay);
-  });
-
-  it("survives a subscription that was cancelled afterwards", () => {
-    // The bug this guards: a customer.subscription.deleted event overwriting the
-    // record and erasing something the user bought outright.
-    const ent = resolveEntitlement(bought({ plan: "pro", status: "canceled" }), NOW);
-    expect(ent.active).toBe(true);
-    expect(ent.planId).toBe("lifetime");
-  });
-
-  it("resolves to Pro while a subscription is also live, keeping the lifetime flag", () => {
-    // Holding both is legitimate — a lifetime owner may subscribe purely for the
-    // bigger AI allowance. They should get the superset, and still be recorded
-    // as an owner so we never re-sell them the thing they own.
-    const ent = resolveEntitlement(
-      bought({ plan: "pro", status: "active", currentPeriodEnd: NOW + 30 * DAY }),
-      NOW,
-    );
-    expect(ent.planId).toBe("pro");
-    expect(ent.plan.limits.aiMessagesPerDay).toBe(PRO_PLAN.limits.aiMessagesPerDay);
-    expect(ent.lifetime).toBe(true);
-  });
-
-  it("is unaffected by a stale subscription period", () => {
-    const ent = resolveEntitlement(bought({ plan: "pro", status: "active", currentPeriodEnd: NOW - DAY }), NOW);
-    expect(ent.planId).toBe("lifetime");
-    expect(ent.active).toBe(true);
-  });
-
-  it("ignores a malformed purchase stamp rather than granting access", () => {
-    const ent = resolveEntitlement({ plan: "free", status: "canceled", lifetimePurchasedAt: undefined }, NOW);
-    expect(ent.active).toBe(false);
-  });
-
-  it("is priced as a one-off, not a recurring charge", () => {
-    expect(LIFETIME_PLAN.priceOneOff).toBeGreaterThan(0);
-    expect(LIFETIME_PLAN.priceMonthly).toBe(0);
-    expect(LIFETIME_PLAN.priceYearly).toBe(0);
-    // Worth more than a year of Pro, or the annual plan makes no sense.
-    expect(LIFETIME_PLAN.priceOneOff!).toBeGreaterThan(PRO_PLAN.priceYearly);
-  });
-});
-
-describe("feature gates", () => {
-  it("gives Pro every catalogued feature and Free none", () => {
-    const free = resolveEntitlement(null, NOW);
-    const paid = resolveEntitlement(pro(), NOW);
-    for (const f of PRO_PLAN.features) {
-      expect(hasFeature(paid, f)).toBe(true);
-      expect(hasFeature(free, f)).toBe(false);
-    }
-  });
-
-  it("never gates the engine itself — free limits are horizon/storage only", () => {
-    // A guard against a future gate that would paywall a *reading*. Free must
-    // always keep a usable window, one profile and some journal history.
-    expect(FREE_PLAN.limits.horizonDays).toBeGreaterThanOrEqual(30);
-    expect(FREE_PLAN.limits.profiles).toBeGreaterThanOrEqual(1);
-    expect(FREE_PLAN.limits.journalEntries).toBeGreaterThan(0);
-    expect(FREE_PLAN.limits.aiMessagesPerDay).toBeGreaterThan(0);
-  });
-});
-
-describe("clampHorizon", () => {
-  it("caps a free request at the free horizon and flags the cut", () => {
-    const free = resolveEntitlement(null, NOW);
-    expect(clampHorizon(free, 30)).toEqual({ days: 30, capped: false });
-    expect(clampHorizon(free, 1825)).toEqual({ days: FREE_PLAN.limits.horizonDays, capped: true });
-  });
-
-  it("lets Pro span five years", () => {
-    const paid = resolveEntitlement(pro(), NOW);
-    expect(clampHorizon(paid, 1825)).toEqual({ days: 1825, capped: false });
+  it("caps beyond the boundary and flags the cut", () => {
+    expect(clampHorizon(ENTITLEMENT, 5000)).toEqual({ days: 1827, capped: true });
   });
 
   it("never returns a zero or negative window", () => {
-    const free = resolveEntitlement(null, NOW);
-    expect(clampHorizon(free, 0).days).toBe(1);
-    expect(clampHorizon(free, -5).days).toBe(1);
+    expect(clampHorizon(ENTITLEMENT, 0).days).toBe(1);
+    expect(clampHorizon(ENTITLEMENT, -5).days).toBe(1);
   });
 });
 
-describe("AI quota", () => {
-  const free = resolveEntitlement(null, NOW);
-  const paid = resolveEntitlement(pro(), NOW);
+describe("AI quota (the abuse bound, not a product)", () => {
   const today = usageDayKey(NOW);
+  const limit = PLAN.limits.aiMessagesPerDay;
 
-  it("allows messages up to the plan limit", () => {
-    expect(checkQuota(free, null, NOW).allowed).toBe(true);
-    expect(checkQuota(free, { day: today, count: FREE_PLAN.limits.aiMessagesPerDay - 1 }, NOW).remaining).toBe(1);
+  it("allows messages up to the daily allowance", () => {
+    expect(checkQuota(ENTITLEMENT, null, NOW).allowed).toBe(true);
+    expect(checkQuota(ENTITLEMENT, { day: today, count: limit - 1 }, NOW).remaining).toBe(1);
   });
 
-  it("blocks at the limit with an upgrade-aware message", () => {
-    const v = checkQuota(free, { day: today, count: FREE_PLAN.limits.aiMessagesPerDay }, NOW);
+  it("blocks at the ceiling with copy that never mentions upgrading or plans", () => {
+    const v = checkQuota(ENTITLEMENT, { day: today, count: limit }, NOW);
     expect(v.allowed).toBe(false);
     expect(v.remaining).toBe(0);
-    expect(v.message).toMatch(/upgrade to pro/i);
-  });
-
-  it("does not tell a paying user to upgrade when they hit the abuse ceiling", () => {
-    const v = checkQuota(paid, { day: today, count: PRO_PLAN.limits.aiMessagesPerDay }, NOW);
-    expect(v.allowed).toBe(false);
-    expect(v.message).not.toMatch(/upgrade/i);
+    expect(v.message).toMatch(/resets at midnight UTC/i);
+    expect(v.message).not.toMatch(/upgrade|pro\b|plan|price|subscri/i);
   });
 
   it("rolls the bucket over at UTC midnight without a reset job", () => {
     const yesterday = { day: usageDayKey(NOW - DAY), count: 999 };
-    expect(checkQuota(free, yesterday, NOW).allowed).toBe(true);
-    expect(checkQuota(free, yesterday, NOW).used).toBe(0);
+    expect(checkQuota(ENTITLEMENT, yesterday, NOW).allowed).toBe(true);
+    expect(checkQuota(ENTITLEMENT, yesterday, NOW).used).toBe(0);
   });
 
   it("ignores a corrupt negative count", () => {
-    expect(checkQuota(free, { day: today, count: -50 }, NOW).used).toBe(0);
+    expect(checkQuota(ENTITLEMENT, { day: today, count: -50 }, NOW).used).toBe(0);
   });
 });
 
 describe("request ceiling (the enforceable spend bound)", () => {
-  const free = resolveEntitlement(null, NOW);
-  const paid = resolveEntitlement(pro(), NOW);
   const today = usageDayKey(NOW);
 
-  it("bounds a plan at messages × rounds", () => {
-    expect(requestLimit(free)).toBe(FREE_PLAN.limits.aiMessagesPerDay * ROUNDS_PER_MESSAGE);
-    expect(requestLimit(paid)).toBeGreaterThan(requestLimit(free));
+  it("bounds a day at messages × rounds", () => {
+    expect(requestLimit(ENTITLEMENT)).toBe(PLAN.limits.aiMessagesPerDay * ROUNDS_PER_MESSAGE);
   });
 
   it("still blocks once the ceiling is hit even though messages look untouched", () => {
     // The attack the ceiling exists for: fake every request as a tool
     // continuation so the message counter never moves. `count: 0` here is
     // exactly what that looks like server-side — and it must not help.
-    const usage = { day: today, count: 0, requests: requestLimit(free) };
-    expect(checkQuota(free, usage, NOW).allowed).toBe(true); // message counter says fine…
-    expect(requestCeilingReached(free, usage, NOW)).toBe(true); // …the real bound says no.
+    const usage = { day: today, count: 0, requests: requestLimit(ENTITLEMENT) };
+    expect(checkQuota(ENTITLEMENT, usage, NOW).allowed).toBe(true); // message counter says fine…
+    expect(requestCeilingReached(ENTITLEMENT, usage, NOW)).toBe(true); // …the real bound says no.
   });
 
   it("allows normal tool-loop usage well within the ceiling", () => {
     const usage = { day: today, count: 1, requests: ROUNDS_PER_MESSAGE };
-    expect(requestCeilingReached(free, usage, NOW)).toBe(false);
+    expect(requestCeilingReached(ENTITLEMENT, usage, NOW)).toBe(false);
   });
 
   it("treats a missing or corrupt request count as zero, never as unlimited", () => {
-    expect(requestCeilingReached(free, { day: today, count: 0 }, NOW)).toBe(false);
-    expect(requestCeilingReached(free, { day: today, count: 0, requests: -99 }, NOW)).toBe(false);
+    expect(requestCeilingReached(ENTITLEMENT, { day: today, count: 0 }, NOW)).toBe(false);
+    expect(requestCeilingReached(ENTITLEMENT, { day: today, count: 0, requests: -99 }, NOW)).toBe(false);
   });
 
   it("rolls the ceiling over with the UTC day", () => {
     const yesterday = { day: usageDayKey(NOW - DAY), count: 0, requests: 99_999 };
-    expect(requestCeilingReached(free, yesterday, NOW)).toBe(false);
+    expect(requestCeilingReached(ENTITLEMENT, yesterday, NOW)).toBe(false);
   });
 });
 
-describe("pricing presentation", () => {
-  it("formats whole and fractional prices", () => {
-    expect(formatPrice(0)).toBe("Free");
-    expect(formatPrice(700)).toBe("£7");
-    expect(formatPrice(5450)).toBe("£54.50");
-  });
-
-  it("quotes a real annual saving", () => {
-    const saving = yearlySavingPercent(PRO_PLAN);
-    expect(saving).toBeGreaterThan(0);
-    expect(PRO_PLAN.priceYearly).toBeLessThan(PRO_PLAN.priceMonthly * 12);
+describe("tier removal is complete", () => {
+  it("no source file under src/ still references the removed tier machinery", () => {
+    // The owner's decision: one free tier, everything accessible. If any of
+    // these tokens reappears under src/, a gate or a sales surface is creeping
+    // back in — name the file so the regression is obvious.
+    const FORBIDDEN = /UpgradePrompt|PlanBadge|priceMonthly|Stripe|LIFETIME_PLAN|PRO_PLAN/;
+    const root = join(__dirname, "..", "src");
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = join(dir, name);
+        if (statSync(full).isDirectory()) walk(full);
+        else if (/\.(ts|tsx|css|html|md)$/.test(name) && FORBIDDEN.test(readFileSync(full, "utf8")))
+          offenders.push(full.slice(root.length - 3));
+      }
+    };
+    walk(root);
+    expect(offenders, `tier machinery reference found in: ${offenders.join(", ")}`).toEqual([]);
   });
 });

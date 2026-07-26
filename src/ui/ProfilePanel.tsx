@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import {
   AdvisorAnswer,
   BaziChart,
@@ -53,7 +52,6 @@ export function ProfilePanel({
   personalized: boolean;
   onOpenReading: (objectiveId: string, windowDays: number) => void;
 }) {
-  const { clamp } = useEntitlements();
   const profile = useMemo(() => analyzeProfile(chart), [chart]);
 
   // Best day for each top recommendation, scanned over the chosen horizon.
@@ -77,17 +75,11 @@ export function ProfilePanel({
       const intent = parseAdvisorQuery(q);
       let answer: AdvisorAnswer;
       if (intent.kind === "timing" && intent.objectiveId) {
-        // Describe the window actually searched: the plan clamp caps length,
-        // so a free user asking about "next year" must be told the truth.
-        const { days: win, capped } = clamp(intent.windowDays ?? defaultWindowDays);
+        // parseAdvisorQuery snaps windows to the engine's five-year horizon,
+        // so the answer describes exactly the window searched.
+        const win = intent.windowDays ?? defaultWindowDays;
         const result = evaluate(intent.objectiveId, win);
         answer = composeTimingAnswer(objectiveById(intent.objectiveId), result, todayIso, win);
-        if (capped) {
-          answer = {
-            ...answer,
-            paragraphs: [...answer.paragraphs, `Searched the next ${win} days — your plan's horizon. A Pro plan searches up to five years out.`],
-          };
-        }
       } else if (intent.kind === "profile") {
         answer = composeProfileAnswer(profile);
       } else {
@@ -96,7 +88,7 @@ export function ProfilePanel({
       setExchanges((prev) => [...prev, { id: nextId.current++, question: q, answer }]);
       setQuery("");
     },
-    [defaultWindowDays, evaluate, profile, todayIso, clamp],
+    [defaultWindowDays, evaluate, profile, todayIso],
   );
 
   return (

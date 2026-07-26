@@ -40,7 +40,6 @@ import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { useJournalSync } from "../ui/profile/useJournalSync.ts";
 import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
-import { UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
 import { DEFAULT_TZ, TODAY_ISO, addDaysIso, buildRequest, civilOfIso, isValidIso } from "../ui/shared.ts";
 
 const WINDOW_LADDER = WINDOW_DAYS as readonly number[];
@@ -87,14 +86,14 @@ function validObjectiveParam(id: string | null): string | null {
 
 export function DateFinderPage() {
   const { person, setPerson, birthCivil, currentAge, warnings, evaluate, evaluateDay, boundary, primaryPillars } = useProfile();
-  const { clamp, entitlement } = useEntitlements();
+  const { entitlement } = useEntitlements();
   const nav = useNavigate();
 
   // ── The URL is the source of truth for an open reading ─────────────────────
   // /date-finder?obj=contract_signing&win=92&start=2027-03-01&day=2027-03-14
   // restores the exact reading on refresh, makes readings shareable links, and
   // lets the browser's back button toggle between ask and answer. Window
-  // PLACEMENT (`start`) is free on every plan; only LENGTH passes the plan clamp.
+  // LENGTH is bounded by the engine's search horizon; placement (`start`) is not.
   const [searchParams, setSearchParams] = useSearchParams();
   const objectiveId = validObjectiveParam(searchParams.get("obj"));
   const winRaw = Number(searchParams.get("win") ?? NaN);
@@ -135,8 +134,8 @@ export function DateFinderPage() {
 
   // Global top-bar search: /date-finder?q=… pre-selects the objective and opens
   // the reading. It also reads a timeframe out of the phrase — "sign a contract
-  // next year" really searches a year (the plan clamp still has the last word on
-  // length). The q param is folded into obj/win (replace) so the URL that remains
+  // next year" really searches a year (the engine's horizon still has the last
+  // word on length). The q param is folded into obj/win (replace) so the URL that remains
   // is the shareable, restorable one.
   const qParam = searchParams.get("q");
   const [unmatchedQuery, setUnmatchedQuery] = useState<string | null>(null);
@@ -164,13 +163,14 @@ export function DateFinderPage() {
     setUnmatchedQuery(a ? null : qParam);
   }, [qParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // The plan's horizon is enforced here, at the one place the window reaches the
-  // engine — so no UI path (the chip row, `widen()`, a stale state, a shared URL)
-  // can search further than the plan allows. Length only: `start` is never gated.
-  const { days: effectiveWindow, capped: horizonCapped } = clamp(windowDays);
-  // "Widen the search" must stop at whichever comes first: the engine's ceiling
-  // or the plan's — otherwise the button promises days it won't return.
-  const maxWindow = Math.min(MAX_WINDOW_DAYS, clamp(MAX_WINDOW_DAYS).days);
+  // The engine's search horizon is enforced here, at the one place the window
+  // reaches the engine — so no UI path (the chip row, `widen()`, a stale state,
+  // a shared URL) can search further than the engine goes. Length only: `start`
+  // is never bounded.
+  const effectiveWindow = Math.min(windowDays, MAX_WINDOW_DAYS);
+  // "Widen the search" must stop at the engine's ceiling — otherwise the button
+  // promises days it won't return.
+  const maxWindow = MAX_WINDOW_DAYS;
 
   const startCivil = useMemo(() => (startIso ? civilOfIso(startIso) : undefined), [startIso]);
 
@@ -262,7 +262,7 @@ export function DateFinderPage() {
   // a silent lie — go to the day view for the entry's actual date instead.
   const openJournalEntry = (id: string, iso: string) => {
     const windowStart = startIso ?? TODAY_ISO;
-    const windowEnd = addDaysIso(windowStart, clamp(windowDays).days - 1);
+    const windowEnd = addDaysIso(windowStart, Math.min(windowDays, MAX_WINDOW_DAYS) - 1);
     if (iso < windowStart || iso > windowEnd) {
       nav(`/day/${iso}`);
       return;
@@ -273,12 +273,11 @@ export function DateFinderPage() {
   const journalBlock = (
     <>
       {showJournalPrompt && (
-        <>
-          <UpgradePrompt feature="journal_unlimited" compact />
-          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--muted)" }}>
-            Saved decisions and daily reflections share the same allowance.
-          </p>
-        </>
+        <div className="warn">
+          <span aria-hidden="true">⚠</span> Your journal has reached its {entitlement.plan.limits.journalEntries}-entry
+          ceiling — remove an entry you no longer need to save a new one. Saved decisions and daily reflections count
+          toward the same total.
+        </div>
       )}
       {journalSyncError && (
         <div className="warn" style={{ marginTop: 8 }}>
@@ -355,9 +354,6 @@ export function DateFinderPage() {
     return (
       <>
         {contextBar}
-        {/* Say so when the search was shortened — a silently truncated window would
-            read as "there's nothing good further out", which isn't what happened. */}
-        {horizonCapped && <UpgradePrompt feature="horizon_5y" compact />}
         {primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} compact />}
         {todayRec && <TodayCard chart={result.subjectChart} today={todayRec} />}
         <VetoState objective={objective} windowDays={effectiveWindow} onWiden={widen} canWiden={effectiveWindow < maxWindow} />
@@ -423,9 +419,6 @@ export function DateFinderPage() {
     <>
       {contextBar}
 
-      {/* Say so when the search was shortened — a silently truncated window would
-          read as "there's nothing good further out", which isn't what happened. */}
-      {horizonCapped && <UpgradePrompt feature="horizon_5y" compact />}
       {primaryPillars && <BoundaryNotice alternatives={boundary} primary={primaryPillars} compact />}
 
       {todayRec && <TodayCard chart={result.subjectChart} today={todayRec} />}

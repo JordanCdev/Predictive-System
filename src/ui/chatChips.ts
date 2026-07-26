@@ -3,8 +3,8 @@
  *
  * Built from the user's ACTUAL chart via the same deterministic profile ranking
  * the tools use, so the suggestions point at their real best/worst fits instead
- * of generic examples. Free users are never handed a chip whose answer is a
- * paywall: the only Pro-flavoured chip (luck decade) appears for Pro users only.
+ * of generic examples. Every chip leads to a full answer for every user — no
+ * chip is conditional on a plan or tier.
  */
 
 import { BaziChart, analyzeProfile, objectivePlain } from "../engine/index.ts";
@@ -12,11 +12,9 @@ import { BaziChart, analyzeProfile, objectivePlain } from "../engine/index.ts";
 export interface ChatChip {
   label: string;
   prompt: string;
-  /** True for the (at most one) chip that leans on a Pro feature. */
-  pro?: boolean;
 }
 
-export function buildChatChips(chart: BaziChart, isPro: boolean): ChatChip[] {
+export function buildChatChips(chart: BaziChart): ChatChip[] {
   const profile = analyzeProfile(chart);
   const best = profile.fits[0];
   const worst = profile.fits[profile.fits.length - 1];
@@ -42,9 +40,7 @@ export function buildChatChips(chart: BaziChart, isPro: boolean): ChatChip[] {
 
   chips.push({ label: "Explain my hidden stems", prompt: "Explain my hidden stems and what they add to my chart." });
   chips.push({ label: "What does my chart suit?", prompt: "What kinds of moves does my chart suit right now?" });
-
-  // Pro users only — a free user tapping this would land straight in a paywall reply.
-  if (isPro) chips.push({ label: "What's my luck decade about?", prompt: "What is my current 10-year luck decade about?", pro: true });
+  chips.push({ label: "What's my luck decade about?", prompt: "What is my current 10-year luck decade about?" });
 
   return chips.slice(0, 6);
 }

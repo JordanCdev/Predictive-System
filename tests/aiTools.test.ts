@@ -118,6 +118,13 @@ describe("executeTool — the deterministic engine bridge", () => {
     expect(r.pillars.filter((p: any) => p.active).length).toBe(1);
   });
 
+  it("get_luck_pillars always answers — the decade reading is never withheld", () => {
+    const r = executeTool("get_luck_pillars", {}, ctx) as any;
+    expect(r.unavailable).toBeUndefined();
+    expect(r.error).toBeUndefined();
+    expect(r.pillars.length).toBeGreaterThan(0);
+  });
+
   it("get_period_summary classifies 2026 as the 本命年 (值太歲) for a 午 native", () => {
     const r = executeTool("get_period_summary", { year: 2026 }, ctx) as any;
     expect(r.year).toBe(2026);
@@ -130,6 +137,18 @@ describe("executeTool — the deterministic engine bridge", () => {
     const r = executeTool("get_period_summary", { year: 2026, month: 1 }, ctx) as any;
     expect(r.month).toBeDefined();
     expect(r.month.ganzhi.length).toBeGreaterThan(0);
+  });
+
+  it("get_period_summary always answers for years other than the current one", () => {
+    // todayIso is 2026-07-08 — past and future years both read in full.
+    for (const year of [2024, 2028]) {
+      const r = executeTool("get_period_summary", { year }, ctx) as any;
+      expect(r.unavailable).toBeUndefined();
+      expect(r.error).toBeUndefined();
+      expect(r.year).toBe(year);
+      expect(r.yearSummary.ganzhi.length).toBeGreaterThan(0);
+      expect(["supportive", "mixed", "challenging", "neutral"]).toContain(r.yearSummary.valence);
+    }
   });
 
   it("find_best_days ranks days with scores and validates its input", () => {

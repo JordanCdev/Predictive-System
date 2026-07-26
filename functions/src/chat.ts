@@ -8,10 +8,10 @@
  * Two gates sit in front of the relay:
  *   1. **Auth** — a valid Firebase ID token, so only users of THIS project can
  *      spend the key.
- *   2. **Quota** — the caller's plan allowance, consumed atomically before the
- *      upstream call. This is what makes the key's spend bounded and is the
- *      enforcement point for the Free/Pro split; the browser's copy of the same
- *      limits is presentation only.
+ *   2. **Quota** — the daily abuse bound, consumed atomically before the
+ *      upstream call. This is what makes the key's spend bounded; the browser's
+ *      copy of the same limits is presentation only. It is not a product tier —
+ *      there are no tiers — just a ceiling on metered token spend.
  *
  * A *continuation* (a request whose last message carries tool results) is not
  * metered: the engine's tool round-trips belong to the message the user already

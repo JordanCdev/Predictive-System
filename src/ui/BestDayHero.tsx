@@ -17,8 +17,6 @@ import {
 } from "../engine/index.ts";
 import { ConfidenceChip, ConfidencePanel, GoodMeter } from "./meters.tsx";
 import { ReasoningDossier } from "./ReasoningDossier.tsx";
-import { UpgradePrompt } from "./billing/UpgradePrompt.tsx";
-import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import { downloadICS } from "./ics.ts";
 import { scoreColor } from "./format.ts";
 
@@ -53,8 +51,6 @@ export function BestDayHero({
   onDownloadReport?: () => void;
 }) {
   const [confOpen, setConfOpen] = useState(false);
-  const { can } = useEntitlements();
-  const canAudit = can("reasoning_dossier");
   const conflict = rec.conflicts[0];
 
   return (
@@ -162,17 +158,14 @@ export function BestDayHero({
         </div>
       )}
 
-      <ReasoningDossier rec={rec} objective={objective} hash={meta.calculationHash} versions={meta.engineVersions} detailed={canAudit} />
+      <ReasoningDossier rec={rec} objective={objective} hash={meta.calculationHash} versions={meta.engineVersions} />
     </div>
   );
 }
 
 /**
- * The action row under a reading.
- *
- * Logging a decision stays free — it's the honest-feedback loop, and metering it
- * would corrupt the data the app learns from. Taking the day *out* of the app
- * (calendar file, written report) is the Pro line.
+ * The action row under a reading — log it, add it to a calendar, or take the
+ * written report with you. All of it available to everyone.
  */
 function ExportActions({
   rec,
@@ -187,30 +180,22 @@ function ExportActions({
   onToggleLog?: () => void;
   onDownloadReport?: () => void;
 }) {
-  const { can } = useEntitlements();
-  const canExport = can("export");
-
   return (
-    <>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {canExport && (
-          <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={() => downloadICS(rec, objective)}>
-            <span aria-hidden="true">＋</span> Add to calendar
-          </button>
-        )}
-        {onToggleLog && (
-          <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onToggleLog} aria-pressed={logged}>
-            <span aria-hidden="true">{logged ? "✓" : "誌"}</span> {logged ? "Saved to journal" : "Log this decision"}
-          </button>
-        )}
-        {canExport && onDownloadReport && (
-          <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onDownloadReport}>
-            <span aria-hidden="true">⇩</span> Download report
-          </button>
-        )}
-      </div>
-      {!canExport && <UpgradePrompt feature="export" compact />}
-    </>
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={() => downloadICS(rec, objective)}>
+        <span aria-hidden="true">＋</span> Add to calendar
+      </button>
+      {onToggleLog && (
+        <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onToggleLog} aria-pressed={logged}>
+          <span aria-hidden="true">{logged ? "✓" : "誌"}</span> {logged ? "Saved to journal" : "Log this decision"}
+        </button>
+      )}
+      {onDownloadReport && (
+        <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onDownloadReport}>
+          <span aria-hidden="true">⇩</span> Download report
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -232,8 +217,6 @@ export function RuledOutCard({
   pickIso: string | null;
   onBackToPick?: () => void;
 }) {
-  const { can } = useEntitlements();
-  const canAudit = can("reasoning_dossier");
   return (
     <div className="card hero">
       <div className="rel" style={{ color: "var(--cinnabar)" }}>
@@ -246,7 +229,7 @@ export function RuledOutCard({
           See our top pick instead
         </button>
       )}
-      <ReasoningDossier rec={rec} objective={objective} hash={hash} versions={versions} detailed={canAudit} />
+      <ReasoningDossier rec={rec} objective={objective} hash={hash} versions={versions} />
     </div>
   );
 }

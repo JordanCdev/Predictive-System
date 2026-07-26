@@ -100,16 +100,18 @@ describe("mutations", () => {
   });
 });
 
-describe("plan limits", () => {
-  it("keeps every person under the limit", () => {
-    expect(allowedPeople(state(["a", "b"]), 6)).toHaveLength(2);
+describe("the structural profile bound", () => {
+  // There are no tiers: 12 is a generous structural cap that keeps the profile
+  // picker and group scoring usable, not a product limit.
+  it("keeps every person under the 12-profile bound", () => {
+    expect(allowedPeople(state(["a", "b"]), 12)).toHaveLength(2);
   });
 
-  it("parks the overflow on downgrade but never deletes it", () => {
+  it("parks overflow beyond a cap but never deletes it", () => {
     const s = state(["a", "b", "c", "d"], "c");
     const allowed = allowedPeople(s, 1);
     expect(allowed).toHaveLength(1);
-    // The *active* person survives a downgrade — never an arbitrary first entry,
+    // The *active* person survives — never an arbitrary first entry,
     // or the app would suddenly be reading someone else's chart.
     expect(allowed[0].id).toBe("c");
     // …and nothing was removed from the stored state.

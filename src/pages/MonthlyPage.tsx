@@ -13,8 +13,6 @@ import { PeriodSummaryBlock } from "../ui/PeriodSummaryBlock.tsx";
 import { scoreColor, scoreTextColor } from "../ui/format.ts";
 import { loadJournal } from "../ui/journalStore.ts";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
-import { useEntitlements } from "../ui/profile/EntitlementsContext.tsx";
-import { UpgradePrompt } from "../ui/billing/UpgradePrompt.tsx";
 import { TODAY_ISO } from "../ui/shared.ts";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -43,11 +41,6 @@ export function MonthlyPage() {
   const nav = useNavigate();
   const { year, month } = parseYm(params.ym);
   const { chart, dayun, birthCivil, personalized, evaluateWindow } = useProfile();
-  const { can } = useEntitlements();
-  // Same rule as PeriodsPanel/YearlyPage: 流月 forecasts outside the current
-  // year are the year_forecast feature. (The civil year is the gate key — the
-  // card describes the solar month containing mid-month, same year.)
-  const monthLocked = year !== Number(TODAY_ISO.slice(0, 4)) && !can("year_forecast");
 
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const days = useMemo(
@@ -165,23 +158,13 @@ export function MonthlyPage() {
         </div>
       </div>
 
-      {/* Month's 10-Gods energy (solar-month pillar vs your chart). Months
-          outside the current year sit behind the same year_forecast gate as
-          YearlyPage — the month jump input must not become a free side door to
-          the identical 流月 content one route over. The CALENDAR above stays
-          free for any month: day placement is deliberately ungated. */}
+      {/* Month's 10-Gods energy (solar-month pillar vs your chart), for any
+          month the calendar can reach. */}
       {monthSummary ? (
-        monthLocked ? (
-          <div className="card" style={{ padding: 20, marginTop: 12 }}>
-            <div className="section-title" style={{ marginBottom: 2 }}>This month's energy (流月)</div>
-            <UpgradePrompt feature="year_forecast" compact />
-          </div>
-        ) : (
         <div className="card" style={{ padding: 20, marginTop: 12 }}>
           <div className="section-title" style={{ marginBottom: 2 }}>This month's energy (流月)</div>
           <PeriodSummaryBlock s={monthSummary} />
         </div>
-        )
       ) : (
         !personalized && (
           <div className="card" style={{ padding: 16, marginTop: 12 }}>

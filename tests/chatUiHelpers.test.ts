@@ -46,8 +46,8 @@ describe("profile-aware suggested chips", () => {
   const chart = buildBaziChart(buildFourPillars(birth, ZIPING_DEFAULT));
 
   it("builds 4–6 chips from the actual chart, deterministically", () => {
-    const a = buildChatChips(chart, false);
-    const b = buildChatChips(chart, false);
+    const a = buildChatChips(chart);
+    const b = buildChatChips(chart);
     expect(a).toEqual(b);
     expect(a.length).toBeGreaterThanOrEqual(4);
     expect(a.length).toBeLessThanOrEqual(6);
@@ -55,10 +55,9 @@ describe("profile-aware suggested chips", () => {
     expect(a.some((c) => c.label === "Explain my hidden stems")).toBe(true);
   });
 
-  it("never hands a free user a Pro chip; Pro users get at most one, marked", () => {
-    const free = buildChatChips(chart, false);
-    expect(free.every((c) => !c.pro)).toBe(true);
-    const pro = buildChatChips(chart, true);
-    expect(pro.filter((c) => c.pro).length).toBeLessThanOrEqual(1);
+  it("carries no plan or tier flags — every chip is for every user", () => {
+    for (const chip of buildChatChips(chart)) {
+      expect(Object.keys(chip).sort()).toEqual(["label", "prompt"]);
+    }
   });
 });

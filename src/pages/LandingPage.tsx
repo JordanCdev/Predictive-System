@@ -3,11 +3,10 @@
  *
  * The pitch is the product's actual differentiator: every other app in this space
  * is a black box that tells you your day is "lucky". This one shows the rule that
- * fired, the schools that disagree, and how confident it is. That claim is the
- * whole reason someone would pay, so it leads.
+ * fired, the schools that disagree, and how confident it is — and all of it is
+ * free, so that claim leads.
  */
 import { Link } from "react-router-dom";
-import { PRO_PLAN, formatPrice } from "../billing/plans.ts";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 
 const PROOF = [
@@ -47,7 +46,6 @@ export function LandingPage() {
           <Link className="btn" to={personalized ? "/today" : "/settings/profile?start=1"}>
             {personalized ? "Open today's reading" : "Get my reading — free"}
           </Link>
-          <Link className="btn-ghost" to="/pricing">See plans</Link>
         </div>
         <p className="hero-note">
           Free, no account needed to start. Your birth details stay in your browser until you choose to sign in.
@@ -95,17 +93,14 @@ export function LandingPage() {
       </section>
 
       <section className="landing-block landing-pro">
-        <h2>Free is a real plan.</h2>
+        <h2>Free means everything.</h2>
         <p className="landing-lede">
-          The engine, the scores, the conflicts and the disclaimers are identical on every tier. Pro widens the range:
-          five years of search instead of two months, your annual and ten-year readings, everyone involved in the
-          decision rather than only you, and the full audit trail behind each score.
+          There are no tiers and nothing to unlock. Five years of date search, your annual and ten-year readings,
+          everyone involved in the decision rather than only you, calendar export, and the full audit trail behind
+          each score — all of it, for every user. The engine runs in your browser, so serving you costs nothing.
         </p>
         <div className="hero-cta">
-          <Link className="btn" to="/pricing">
-            Pro from {formatPrice(Math.round(PRO_PLAN.priceYearly / 12))}/month
-          </Link>
-          <Link className="btn-ghost" to="/today">Start free</Link>
+          <Link className="btn" to="/today">Start now</Link>
         </div>
       </section>
 
@@ -118,7 +113,7 @@ export function LandingPage() {
           probability that something will happen. Use your own judgement too.
         </p>
         <p className="landing-legal">
-          <Link to="/privacy">Privacy</Link> · <Link to="/terms">Terms</Link> · <Link to="/pricing">Plans</Link>
+          <Link to="/privacy">Privacy</Link> · <Link to="/terms">Terms</Link>
         </p>
       </section>
     </div>

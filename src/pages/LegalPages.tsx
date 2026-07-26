@@ -3,16 +3,16 @@
  *
  * These describe what the app actually does — client-side computation, local-only
  * storage (accounts and cloud sync are implemented but not configured, so they are
- * described in the conditional), Stripe-handled payments, free data export/import,
- * and a chat feature that sends a derived chart summary plus per-field-consented
- * priority context to Anthropic. Keep them accurate: if the data flows change,
- * these change with them. In particular: raw journal note text is never sent to
- * the model, there is no toggle for it, and no wording here may imply otherwise.
+ * described in the conditional), free data export/import, and a chat feature that
+ * sends a derived chart summary plus per-field-consented priority context to
+ * Anthropic. There are no payments: the app is free, with no tiers and nothing
+ * for sale. Keep them accurate: if the data flows change, these change with
+ * them. In particular: raw journal note text is never sent to the model, there
+ * is no toggle for it, and no wording here may imply otherwise.
  *
  * NOTE FOR THE OPERATOR: this is plain-English, accurate documentation of the
- * product's behaviour, not legal advice. Before taking payments in a given
- * jurisdiction, have a solicitor review both documents and fill in the contact
- * and company details in CONTACT below.
+ * product's behaviour, not legal advice. Have a solicitor review both documents
+ * and fill in the contact and company details in CONTACT below.
  */
 import { Link } from "react-router-dom";
 
@@ -102,9 +102,8 @@ export function PrivacyPage() {
 
       <h3>Payments</h3>
       <p>
-        Subscriptions are handled by Stripe. Card details go directly to Stripe and never reach our servers. We store the
-        identifiers Stripe gives us — a customer id, a subscription id, its status and renewal date — so we know which
-        plan you're on.
+        There are none. The app is free — no tiers, no subscriptions, nothing for sale — so we hold no payment details
+        and no billing records about you.
       </p>
 
       <h3>What we don't do</h3>
@@ -139,9 +138,8 @@ export function PrivacyPage() {
 
       <h3>Retention</h3>
       <p>
-        Your data is local-only today, so it is kept until you clear it — by us, not at all. Billing records are kept as
-        long as tax and accounting law requires. If accounts are enabled later, account records would be kept while the
-        account exists.
+        Your data is local-only today, so it is kept until you clear it — by us, not at all. If accounts are enabled
+        later, account records would be kept while the account exists.
       </p>
     </LegalShell>
   );
@@ -176,17 +174,12 @@ export function TermsPage() {
         <li>Don't attempt to circumvent usage limits, resell access, or scrape the service in bulk.</li>
       </ul>
 
-      <h3>Subscriptions</h3>
-      <ul>
-        <li>Pro is billed in advance, monthly or yearly, and renews automatically until cancelled.</li>
-        <li>Cancel any time from billing settings. You keep Pro until the end of the period you've paid for.</li>
-        <li>Prices may change; we'll tell you before a change affects a renewal, and you can cancel instead.</li>
-        <li>
-          If the service materially fails to work for you, contact us — we'd rather refund you than keep money you feel
-          you didn't get value for. Statutory refund rights apply regardless.
-        </li>
-        <li>Cancelling doesn't delete your data. Charts and entries beyond free limits are paused, not erased.</li>
-      </ul>
+      <h3>Price</h3>
+      <p>
+        The service is free. There are no tiers, no subscriptions and no purchases, and every feature is available to
+        every user. Usage ceilings that exist (such as the AI advisor's daily message allowance) are abuse bounds on
+        metered third-party costs, not products.
+      </p>
 
       <h3>Availability</h3>
       <p>

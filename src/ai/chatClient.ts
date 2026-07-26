@@ -212,7 +212,7 @@ async function readSse(stream: ReadableStream<Uint8Array>, onEvent: (event: stri
 }
 
 /** Thrown when the proxy refuses because the caller is out of daily allowance,
- *  so the UI can offer an upgrade instead of a generic "try again". */
+ *  so the UI can say when the abuse bound resets instead of a generic "try again". */
 export class QuotaError extends Error {
   readonly quota: { used: number; limit: number; plan: string } | null;
   constructor(message: string, quota: QuotaError["quota"]) {

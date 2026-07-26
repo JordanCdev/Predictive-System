@@ -92,16 +92,17 @@ export function upsertEntry(entry: JournalEntry): JournalEntry[] {
 }
 
 /**
- * Is the plan's entry allowance used up?
+ * Is the journal's entry allowance used up?
  *
- * Only ever blocks *new* entries. Existing ones are never trimmed to fit a
- * smaller plan — a downgrade must not destroy someone's decision history, and
- * the outcome log is what the honest-feedback loop is built on. Re-saving an
- * entry that already exists is always allowed.
+ * The allowance is a high abuse bound (5000) protecting localStorage and sync
+ * payloads — not a product limit; there are no tiers. Only ever blocks *new*
+ * entries. Existing ones are never trimmed — nothing may destroy someone's
+ * decision history, and the outcome log is what the honest-feedback loop is
+ * built on. Re-saving an entry that already exists is always allowed.
  *
- * TIER DECISION (settled): decision entries and daily reflections share ONE
- * `journalEntries` allowance, so reflections count here too. Callers that don't
- * pass them get the stored list, defensively read; tests can inject their own.
+ * SETTLED: decision entries and daily reflections share ONE `journalEntries`
+ * allowance, so reflections count here too. Callers that don't pass them get
+ * the stored list, defensively read; tests can inject their own.
  */
 export function isJournalFull(
   list: JournalEntry[],
@@ -267,16 +268,16 @@ export function removeReflection(isoDate: string): Reflection[] {
 }
 
 /**
- * Is the plan's allowance used up for a NEW reflection on `isoDate`?
+ * Is the journal's allowance used up for a NEW reflection on `isoDate`?
  *
- * TIER DECISION (settled): reflections and decision entries draw on ONE shared
- * `journalEntries` allowance — a single honest lever, and the free tier keeps its
- * floor. So the count here is decisions + reflections together, exactly like
- * `isJournalFull` on the decision side.
+ * SETTLED: reflections and decision entries draw on ONE shared `journalEntries`
+ * allowance — a single honest lever, and it is an abuse bound rather than a
+ * product limit. So the count here is decisions + reflections together, exactly
+ * like `isJournalFull` on the decision side.
  *
  * Same guarantees as `isJournalFull`: only NEW rows are ever blocked. Re-saving
- * the day's existing reflection is always allowed, and nothing already stored is
- * ever trimmed to fit a smaller plan — a downgrade must not destroy history.
+ * the day's existing reflection is always allowed, and nothing already stored
+ * is ever trimmed — nothing may destroy history.
  */
 export function isReflectionFull(
   decisions: JournalEntry[],

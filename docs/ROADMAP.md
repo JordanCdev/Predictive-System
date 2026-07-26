@@ -219,6 +219,20 @@ Many are partly built already; this is the prioritized backlog.
 > charging to see where the traditions disagree, after telling the user they do, was the category's
 > worst trust failure reproduced inside the product.
 >
+> **Phase 15 — one free tier (2026-07-26, OWNER decision).** The Pro/Lifetime tiers are
+> removed entirely: every feature is accessible to every user, with no upsells, no locks and
+> no pricing surface. The pricing/billing pages, `UpgradePrompt`/`PlanBadge`, the Stripe
+> Cloud Function, the checkout client and `VITE_BILLING_URL` are deleted (recoverable from
+> git); `docs/BILLING_SETUP.md` is retired in place. What survives is not a product:
+> the AI advisor's 200/day message ceiling as a pure abuse bound on hosted-proxy token spend
+> (BYOK untouched, blocked copy names the midnight-UTC reset and nothing else), the 1827-day
+> horizon as the engine's performance boundary for everyone, the journal cap raised to a
+> 5000-entry abuse bound, and the profile cap widened to a 12-person structural bound.
+> Downgrade-parking semantics die with the tiers and nothing deletes user data in the
+> process. The old "paid buys range" rule is retired; its honesty half still governs:
+> nothing may ever gate the correctness, transparency or honesty of a reading
+> (DECISIONS.md §11). Engine untouched — scores and hashes byte-identical.
+>
 > **Phase 14 — daily-view completeness (2026-07-26).** Closed the verified gaps against the
 > competitor's daily planner, all deterministic and free: the third-party almanac's full
 > 吉神/凶煞 day-star lists as glossed chips plus per-hour stars (hour god, 吉/凶, hour 宜/忌),

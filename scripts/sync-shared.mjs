@@ -2,12 +2,12 @@
 /**
  * Copy the plan catalogue into the Cloud Functions source tree.
  *
- * `src/billing/plans.ts` is the single source of truth for what each tier
- * unlocks, and both sides need it: the browser to draw gates, the functions to
- * enforce quotas and map Stripe prices. The functions build has its own
- * `rootDir` and can't reach up into the app tree, so the file is copied rather
- * than imported — and `tests/sharedSync.test.ts` fails the build if the copy
- * ever drifts from the original.
+ * `src/billing/plans.ts` is the single source of truth for the app's structural
+ * and abuse bounds (there are no tiers), and both sides need it: the browser to
+ * mirror the AI meter, the functions to enforce it. The functions build has its
+ * own `rootDir` and can't reach up into the app tree, so the file is copied
+ * rather than imported — and `tests/sharedSync.test.ts` fails the build if the
+ * copy ever drifts from the original.
  *
  * Run `npm run sync:shared` after editing the catalogue.
  */
@@ -22,7 +22,7 @@ export const TARGET = resolve(root, "functions/src/shared/plans.ts");
 
 export const HEADER = `// ⚠️  GENERATED FILE — DO NOT EDIT.
 // Copied verbatim from src/billing/plans.ts by scripts/sync-shared.mjs so the
-// browser and the Cloud Functions enforce exactly the same plan rules.
+// browser and the Cloud Functions enforce exactly the same quota rules.
 // Edit the original, then run: npm run sync:shared
 
 `;

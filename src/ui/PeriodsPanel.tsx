@@ -6,8 +6,6 @@ import {
 } from "../engine/index.ts";
 import { PeriodSummaryBlock } from "./PeriodSummaryBlock.tsx";
 import { LuckEntry, LuckTimeline } from "./LuckTimeline.tsx";
-import { Gate, UpgradePrompt } from "./billing/UpgradePrompt.tsx";
-import { useEntitlements } from "./profile/EntitlementsContext.tsx";
 import { valenceColor } from "./format.ts";
 
 /** Year & month tendency analysis (大運 / 流年 / 流月) tied to the chart, with a
@@ -44,11 +42,6 @@ export function PeriodsPanel({
   }, [dayun, report]);
 
   const natalGanzhi = chart.pillars.map((p) => p.ganzhi.hanzi);
-  // Same rule as YearlyPage: the CURRENT year reads free, any other year is Pro.
-  // Without this the stepper here rendered a full 流年 + twelve 流月 for 2029 —
-  // byte-identical to the content YearlyPage paywalls, one route over.
-  const { can } = useEntitlements();
-  const yearLocked = targetYear !== currentYear && !can("year_forecast");
 
   return (
     <div className="card" style={{ padding: 20, marginTop: 18 }}>
@@ -66,22 +59,11 @@ export function PeriodsPanel({
 
       {/* Life-spanning luck scrubber — the decade active for the selected year is
           highlighted and opened; tap any decade to read it. */}
-      <Gate feature="luck_pillars" compact preview={<LuckTimeline entries={luckEntries} natalGanzhi={natalGanzhi} teaser />}>
-        <LuckTimeline entries={luckEntries} natalGanzhi={natalGanzhi} />
-      </Gate>
+      <LuckTimeline entries={luckEntries} natalGanzhi={natalGanzhi} />
 
-      {yearLocked ? (
-        <>
-          <UpgradePrompt feature="year_forecast" compact />
-          <p className="ask-note" style={{ marginTop: 4 }}>
-            {currentYear} reads in full on every plan — press “Today” above.
-          </p>
-        </>
-      ) : (
-        <>
-          <p style={{ margin: "14px 0 0", fontSize: 14, color: "var(--ink)", lineHeight: 1.55 }}>{report.interaction}</p>
+      <p style={{ margin: "14px 0 0", fontSize: 14, color: "var(--ink)", lineHeight: 1.55 }}>{report.interaction}</p>
 
-          <PeriodSummaryBlock s={report.year} />
+      <PeriodSummaryBlock s={report.year} />
 
       <div className="section-title" style={{ marginTop: 16, marginBottom: 6 }}>The twelve solar months</div>
       <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
@@ -105,12 +87,10 @@ export function PeriodsPanel({
         ))}
       </div>
 
-          {openMonth && (() => {
-            const m = report.months.find((x) => x.label === openMonth);
-            return m ? <PeriodSummaryBlock s={m} /> : null;
-          })()}
-        </>
-      )}
+      {openMonth && (() => {
+        const m = report.months.find((x) => x.label === openMonth);
+        return m ? <PeriodSummaryBlock s={m} /> : null;
+      })()}
 
       <div className="disclaimer" style={{ marginTop: 14 }}>{report.disclaimer}</div>
     </div>

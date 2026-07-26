@@ -388,5 +388,38 @@ substitute for — the DPIA that gates expanding **cloud storage** of these fiel
 
 ---
 
+## 11. One free tier — everything accessible (2026-07-26, OWNER decision)
+
+**Decision.** The Pro and Lifetime tiers are removed entirely. There is one plan, it is
+free, and **every feature is accessible to every user**: the full five-year date search,
+year and luck-pillar forecasts for any year, multi-profile and group dates, calendar/report
+export, the complete reasoning dossier. No upsells, no locks, no pricing surface — the
+pricing and billing pages, the Stripe Cloud Function and the checkout client are deleted
+(recoverable from git history).
+
+**What survives, and why it is not a tier:**
+
+- **The AI advisor's daily message ceiling (200/day)** survives purely as an **abuse bound**:
+  it meters real token spend on the hosted-proxy path only; BYOK chat is untouched. Its
+  blocked-state copy says when the allowance resets and nothing more — it must never mention
+  upgrading, Pro, or plans.
+- **The 5-year search horizon (1827 days)** survives as the **engine's performance
+  boundary** for everyone — `MAX_WINDOW_DAYS` territory, not a paywall.
+- **The journal/reflection entry cap** becomes a high **abuse bound (5000)** protecting
+  localStorage and sync payloads — never an upsell.
+- **The multi-profile cap** becomes a generous **structural bound (12)**.
+
+**What is retired with the tiers:** the Phase 9 rule *"paid tiers buy range, breadth and
+storage"* is retired — there are no paid tiers to buy anything. Its second half stands on
+its own and still governs: **nothing may ever gate the correctness, transparency or honesty
+of a reading.** Downgrade-parking semantics die with the tiers; nothing deletes user data in
+the process (`allowedPeople` remains only as the structural cap's non-destructive
+enforcement).
+
+*Enforcement:* `tests/plans.test.ts` asserts the single plan carries every feature and the
+documented bounds, that quota copy is upsell-free, and that no source file under `src/`
+references the removed tier machinery (UpgradePrompt, PlanBadge, prices, Stripe, PRO/LIFETIME
+plans). `docs/BILLING_SETUP.md` is retired and kept for history.
+
 ### File reference index
 `src/engine/astronomy.ts` · `sexagenary.ts` · `conventions.ts` · `symbols.ts` · `bazi.ts` · `tongshu.ts` · `objectives.ts` · `decision.ts` · `plainEnglish.ts` · `advisor.ts` · `version.ts` · `hash.ts`
