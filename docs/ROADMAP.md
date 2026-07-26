@@ -219,6 +219,22 @@ Many are partly built already; this is the prioritized backlog.
 > charging to see where the traditions disagree, after telling the user they do, was the category's
 > worst trust failure reproduced inside the product.
 >
+> **Phase 14 — daily-view completeness (2026-07-26).** Closed the verified gaps against the
+> competitor's daily planner, all deterministic and free: the third-party almanac's full
+> 吉神/凶煞 day-star lists as glossed chips plus per-hour stars (hour god, 吉/凶, hour 宜/忌),
+> labelled as one publisher's cross-check with an honest publishers-differ note; a personal
+> Ten Gods energy chart (day stem + hidden stems signed by the chart's favourable elements —
+> display-only, guard-tested never to feed a score); a day-type badge and the date's
+> year/month pillars; and daily reflections (mood + a line, past days only, one per day,
+> sharing the journal allowance, in backups as schema v2 with v1 files restoring unchanged).
+> Dong Gong was researched rather than shipped: three cross-checked transcriptions produced a
+> 673/720-cell double-sourced draft (disagreements absent, never guessed), the finding that
+> the competitor's "Dong Gong Rating" scalar is proprietary rather than classical, and a
+> printed-edition spot-check as the ship gate (docs/research/DONG_GONG_SOURCING.md). Review:
+> 12 findings, 9 confirmed and fixed — the majors were the backup panel understating what v2
+> backups contain and what Replace destroys. Deliberately not copied: daily hexagram, Qi Men
+> wheel, Flying Star (separate systems — strategy, not gap-fill).
+>
 > **Phase 13 — person-first presentation (2026-07-25).** Owner feedback: the app computed
 > personally but presented calendar-first, so it "didn't feel tailored". Verified against the
 > competitor's public daily-view order (name → day rating → activities → hours) and inverted:
