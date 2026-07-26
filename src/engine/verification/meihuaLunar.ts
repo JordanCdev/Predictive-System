@@ -34,8 +34,12 @@ export interface MeihuaLunarDateDetail extends MeihuaLunarDate {
    *  this app follows — the one lunar-javascript and the printed almanacs use —
    *  a 閏月 carries the same number as the month it follows, so `month` is
    *  unaffected and the flag exists so the UI can say which of the two it
-   *  means. Not checked against a primary text; other numbering schemes for
-   *  intercalary months exist. */
+   *  means. Not checked against a primary text: 《梅花易數》卷一「年月日時起例」 is
+   *  silent on 閏月, and its worked example (觀梅占) falls in an ordinary month.
+   *  The alternatives in circulation are to count a leap month as the FOLLOWING
+   *  month's number, or to split it at 望 and take the first half under its own
+   *  number and the second under the next. Both shift 上卦/下卦 by one trigram
+   *  and the 動爻 by one line for the whole month. */
   isLeapMonth: boolean;
   /** 29 (小月) or 30 (大月) — how many days this lunar month actually has.
    *  Undefined only if the installed library cannot supply it. Consumers that
