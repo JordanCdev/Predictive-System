@@ -256,14 +256,30 @@ wording appears at:
 that matters legally — **`src/pages/LegalPages.tsx:98-99`**: "The text of your journal notes
 is never sent to the model under any setting… because it never leaves your device."
 
-**D5 — The published privacy notice denies the existence of the processing being assessed.**
-`src/pages/LegalPages.tsx:53-56` states "there is currently no sign-in on this site and no
-copy of your data on our servers"; `:58-62` and `:63-66` describe accounts in the
-conditional ("If we do turn accounts on…"); `:128` states "there is no account to create";
-`:140-143` states "Your data is local-only today". Last-updated stamp: 25 July 2026
-(`:23`), one day before accounts shipped. The contact address is an **unfilled placeholder**,
-`support@example.com` (`:22`), which means there is currently no working route for a
-data-subject request. This is the highest-priority remediation item in the document (R7).
+**D5 — The published privacy notice denied the existence of the processing being assessed.**
+✅ **RESOLVED 2026-07-26** (commits `920f84f`, and the contact address in the commit that
+follows it). Recorded here rather than deleted, because the *pattern* is the finding and it
+will recur: a capability shipped, and the user-facing claims about data were not re-read in
+the same change.
+
+What it said, as published: `src/pages/LegalPages.tsx:53-56` stated "there is currently no
+sign-in on this site and no copy of your data on our servers"; `:58-62` and `:63-66`
+described accounts in the conditional ("If we do turn accounts on…"); `:128` stated "there
+is no account to create"; `:140-143` stated "Your data is local-only today". The
+last-updated stamp read 25 July 2026 (`:23`) — one day before accounts shipped. The contact
+address was the unfilled placeholder `support@example.com` (`:22`), so there was no working
+route for a data-subject request at all.
+
+Now: the notice describes accounts, names Firestore and its region, states which three
+stores sync and which three do not, declares the per-account AI message counter, narrows the
+journal claim to "never sent to the model", says plainly that signing out is not deletion,
+carries a section on third-party data subjects, and reaches a real monitored address
+(`jordan@otherpath.co.uk`).
+
+**The standing rule this generates:** any change to what the app *stores* or *sends* must
+re-read `src/pages/LegalPages.tsx` and the code comments that seed its claims, in the same
+commit. A false privacy claim is worse for this product than a wrong calculation — every
+other honesty claim it makes depends on that page being true.
 
 Two further statements in the same notice are now false and are easy to miss because they
 sit under headings that look unrelated to accounts:
@@ -482,7 +498,7 @@ in the "remains" column exists today.
 | **M4** | R4 | Server-side model allow-list and token ceiling (`functions/src/chat.ts:45`, `:52`, `:155-156`); body-size and message-count caps (`:60-61`, `:120-125`); the relay streams the upstream body straight through and does **not** log or persist message content in this code (`:160-178`). Auth gate on the relay (`:97-110`). | Establish and record Anthropic's retention and training posture (OQ-9), the transfer mechanism for us-central1 (OQ-10), and name Anthropic in the notice with its role. If the relay is live, consider moving the function to a UK/EU region. | Reduced | ☐ |
 | **M5** | R5, R17 | Firestore rules scope every document to its owner and make `billing` server-write-only, in a deliberately single-rule design that cannot be re-opened by an OR'd sibling grant (`firestore.rules:11-37`). The catch-all denies everything else (`:35-36`). Sign-in link parameters are stripped from the URL via `history.replaceState` so a burned code does not persist in history (`src/ui/profile/AuthContext.tsx:47-54`). Quota transaction fails **closed** (`functions/src/entitlements.ts:93-106`). | **Verify in the console** that these rules are actually deployed and that `REQUIRE_AUTH` is not `"false"` on the deployed function (OQ-12, OQ-13). Run the Rules Playground check already documented at `docs/FIREBASE_SETUP.md:222-224`. Consider MFA guidance for the account holder. | Reduced | ☐ |
 | **M6** | R6, R10 | Strong existing honesty controls: the terms state plainly that scores are "not probabilities, forecasts of events, or assurances of any outcome" and that this is not medical/legal/financial advice (`src/pages/LegalPages.tsx:157-168`). Confidence is labelled per tool result (`src/ai/tools.ts:254`, `:309`). Priorities provably never touch the classical score (`src/ui/priorities/prioritiesStore.ts:9-14`). Boundary ambiguity is surfaced to the advisor so it cannot narrate an uncertain chart as settled (`src/ai/tools.ts:253`). | Re-show the AI disclosure when the user changes what would be shared (today it renders only pre-opt-in, `src/ui/ChatPanel.tsx:884`). Disclose the `withheld` / `hasJournal` / `lastUpdated` metadata, or derive `hasJournal` only when consent is on (`src/ai/tools.ts:340`). | Reduced | ☐ |
-| **M7** | R7 | The legal module carries its own standing instruction to stay accurate (`src/pages/LegalPages.tsx:9-11`). | **Rewrite the privacy notice to describe accounts, Firestore, Anthropic, GitHub Pages and the backup file as they are.** Narrow every "never leaves your device" claim to "never sent to the AI model" (`src/ai/tools.ts:47-48`, `:362`; `src/ui/ChatPanel.tsx:519`; `src/pages/LegalPages.tsx:98-99`). **Replace `support@example.com` (`:22`) with a real address.** Update the stamp at `:23`. Also correct **`:103-107`** ("no billing records about you" — `users/{uid}/billing/usage` is exactly that) and **`:118`** ("remove any stored person… at any time" — true locally, false of `meta/profile`), and add the `.ics` / report exports and the Google request-metadata flow (§2.2.3). Fix the stale comments at `src/ui/chat/useThreadSync.ts:6-9` and `src/ui/ChatPanel.tsx:68-69`. **This is the single highest-priority item.** | Eliminated | ☐ |
+| **M7** | R7 | The legal module carries its own standing instruction to stay accurate (`src/pages/LegalPages.tsx:9-11`). | **Rewrite the privacy notice to describe accounts, Firestore, Anthropic, GitHub Pages and the backup file as they are.** Narrow every "never leaves your device" claim to "never sent to the AI model" (`src/ai/tools.ts:47-48`, `:362`; `src/ui/ChatPanel.tsx:519`; `src/pages/LegalPages.tsx:98-99`). ~~Replace `support@example.com` with a real address~~ ✅ **done** — `jordan@otherpath.co.uk`, rendered as a `mailto:` on both legal pages via `LegalShell` (`:35-37`), so Privacy and Terms both carry it. ~~Update the stamp at `:23`~~ ✅ **done** (26 July 2026). Also correct **`:103-107`** ("no billing records about you" — `users/{uid}/billing/usage` is exactly that) and **`:118`** ("remove any stored person… at any time" — true locally, false of `meta/profile`), and add the `.ics` / report exports and the Google request-metadata flow (§2.2.3). Fix the stale comments at `src/ui/chat/useThreadSync.ts:6-9` and `src/ui/ChatPanel.tsx:68-69`. **This is the single highest-priority item.** | Eliminated | ☐ |
 | **M8** | R8, R9 | `deleteThreadCloud` exists and is wired to explicit deletes and to local pruning (`src/firebase/client.ts:260-262`; `src/ui/ChatPanel.tsx:437`, `:620`). Deleting a person rewrites the whole `meta/people` document, so deletions propagate there (`src/ui/profile/ProfileContext.tsx:241`). Reflections and priorities are local-only, which is genuine minimisation. | **Build a "delete my account and everything in it" path** covering `meta/people`, `meta/profile`, `meta/journal`, all `ai_threads`, `billing/usage` (server-side, since the client cannot write it) and the Auth record. **Call `clearProfile()` — or delete the `meta/profile` write path entirely** (OQ-3). Make the error-recovery reset either clear the account copy too or say plainly that it is device-only (D8, `src/ui/ErrorBoundary.tsx:7-19`). Until then, write down and test the manual console procedure so an Art 17 request can actually be honoured. | Reduced | ☐ |
 | **M9** | R11 | The backup panel warns accurately and specifically that the file is plain JSON containing people, journal, reflections, priority profile and full AI transcripts, and is "readable by you, and by anyone you send it to" (`src/ui/BackupPanel.tsx:161-163`). Credentials are excluded (`src/ui/backup.ts:58-64`), by an allowlist rather than a denylist (`:235-239`) — the safer design. | Treat as an accepted, disclosed risk. Two notes for the record: the `EXCLUDED_KEYS` guarantee is enforced only by the allowlist's *shape*, so a future change to enumerate `localStorage` would silently defeat it; and `wei_priority_dismissed_v1` is in neither the backup nor the cloud, so a restore silently loses dismissals. Optional passphrase encryption would reduce this further. | Accepted | ☐ |
 | **M10** | R12 | Device-side bounds exist: 12 people (`src/ui/profile/ProfileContext.tsx:41`), 5000 journal entries (`src/billing/plans.ts:73`), 50 threads / 400 turns (`src/ui/chat/threadStore.ts:900`). Thread pruning does propagate deletions to the cloud (`src/ui/ChatPanel.tsx:435-437`) — partially, since it only runs while signed in with the panel mounted. | **State a retention period** and enforce it: expire `billing/usage` rows, define what happens to an account that goes unused, and decide whether cloud conversations should have a server-side age limit rather than relying on a device-side prune (OQ-4). | Reduced | ☐ |

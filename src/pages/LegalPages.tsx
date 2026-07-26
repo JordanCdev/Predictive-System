@@ -19,7 +19,7 @@ import { Link } from "react-router-dom";
 /** Single place to keep the operator's details; used by both documents. */
 const CONTACT = {
   service: "Wéi",
-  email: "support@example.com",
+  email: "jordan@otherpath.co.uk",
   updated: "26 July 2026",
 };
 
