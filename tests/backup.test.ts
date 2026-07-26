@@ -9,17 +9,21 @@ import {
   PRIORITIES_KEY,
   REFLECTIONS_KEY,
   StorageLike,
+  THREADS_KEY,
   applyBackup,
   backupFilename,
   buildBackup,
   describeApply,
   incomingWinsJournal,
+  localThreadCount,
   mergeJournals,
   mergePeople,
   mergeReflections,
+  mergeThreads,
   parseBackup,
   serializeBackup,
 } from "../src/ui/backup.ts";
+import type { ChatThread } from "../src/ui/chat/threadStore.ts";
 import type { JournalEntry, Reflection } from "../src/ui/journalStore.ts";
 import { SELF_ID, type StoredPerson } from "../src/ui/profile/peopleStore.ts";
 
@@ -86,6 +90,18 @@ const reflection = (isoDate: string, over: Partial<Reflection> = {}): Reflection
   ...over,
 });
 
+/** A saved conversation, in the shape the thread store persists — so a backup
+ *  round trip really does go through that store's own reader unchanged. */
+const thread = (id: string, updatedAt = 1_000, over: Record<string, unknown> = {}): ChatThread =>
+  ({
+    id,
+    title: `Conversation ${id}`,
+    createdAt: 500,
+    updatedAt,
+    turns: [{ kind: "ai", id: `${id}-1`, role: "user", content: `hello from ${id}`, at: 500 }],
+    ...over,
+  }) as unknown as ChatThread;
+
 const NOW = new Date("2026-07-25T09:30:00.000Z");
 
 /** A backup object built by hand, so a test never mutates one the module made. */
@@ -97,6 +113,7 @@ const file = (over: Partial<BackupFile> = {}): BackupFile => ({
   people: { people: [], activeId: null },
   journal: [],
   reflections: [],
+  threads: [],
   priorities: null,
   ...over,
 });
@@ -106,12 +123,13 @@ beforeEach(() => {
   store = new FakeStorage();
 });
 
-function seed(opts: { people?: StoredPerson[]; activeId?: string | null; journal?: JournalEntry[]; reflections?: Reflection[]; priorities?: unknown } = {}) {
+function seed(opts: { people?: StoredPerson[]; activeId?: string | null; journal?: JournalEntry[]; reflections?: Reflection[]; threads?: ChatThread[]; priorities?: unknown } = {}) {
   if (opts.people) {
     store.map.set(PEOPLE_KEY, JSON.stringify({ people: opts.people, activeId: opts.activeId ?? opts.people[0]?.id ?? null }));
   }
   if (opts.journal) store.map.set(JOURNAL_KEY, JSON.stringify(opts.journal));
   if (opts.reflections) store.map.set(REFLECTIONS_KEY, JSON.stringify(opts.reflections));
+  if (opts.threads) store.map.set(THREADS_KEY, JSON.stringify(opts.threads));
   if (opts.priorities !== undefined) store.map.set(PRIORITIES_KEY, JSON.stringify(opts.priorities));
 }
 
@@ -174,10 +192,13 @@ describe("the AI key never leaves the device", () => {
     store.map.set("wei_ai_key", "sk-ant-SUPER-SECRET-VALUE");
     store.map.set("wei_ai_consent", "yes");
     store.map.set("wei_ai_model", "claude-x");
-    seed({ people: [person("a")], journal: [entry("x")] });
+    // A saved conversation IS exported (it is the user's own writing), so this
+    // test has to prove the key stays out even when chat data is in the file.
+    seed({ people: [person("a")], journal: [entry("x")], threads: [thread("t1")] });
 
     const b = buildBackup({ storage: store, now: NOW });
     const text = serializeBackup(b);
+    expect(text).toContain("hello from t1");
     expect(text).not.toContain("SUPER-SECRET-VALUE");
     expect(text).not.toContain("sk-ant");
     expect(text).not.toContain("wei_ai_key");
@@ -191,6 +212,7 @@ describe("the AI key never leaves the device", () => {
       "people",
       "journal",
       "reflections",
+      "threads",
       "priorities",
     ]);
   });
@@ -753,6 +775,223 @@ describe("reflections in backups (schema v2)", () => {
     const merged = applyBackup(file({ reflections: [reflection("2026-07-22"), reflection("2026-07-23")] }), "merge", { storage: store });
     expect(describeApply(merged)).toMatch(/2 new reflections/);
     expect(describeApply(merged)).toMatch(/you now have .*3 reflections/i);
+  });
+});
+
+describe("saved AI conversations in backups (schema v3)", () => {
+  /** A byte-faithful v1 file: version 1, no `reflections` and no `threads`. */
+  const v1Text = () =>
+    JSON.stringify({
+      schemaVersion: 1,
+      exportedAt: NOW.toISOString(),
+      appVersion: "0.3.0",
+      engineVersions: {},
+      people: { people: [person("a")], activeId: "a" },
+      journal: [entry("x", { note: "old note" })],
+      priorities: null,
+    });
+
+  /** A byte-faithful v2 file: reflections present, `threads` absent entirely. */
+  const v2Text = () =>
+    JSON.stringify({
+      schemaVersion: 2,
+      exportedAt: NOW.toISOString(),
+      appVersion: "0.3.0",
+      engineVersions: {},
+      people: { people: [person("a")], activeId: "a" },
+      journal: [entry("x")],
+      reflections: [reflection("2026-07-20", { mood: 3, note: "as it was" })],
+      priorities: null,
+    });
+
+  it("reads a v1 file exactly as before — absent conversations read as an empty list", () => {
+    const r = parseBackup(v1Text());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.schemaVersion).toBe(1);
+    expect(r.data.threads).toEqual([]);
+    expect(r.data.reflections).toEqual([]);
+    expect(r.summary).toMatchObject({ people: 1, journal: 1, reflections: 0, threads: 0 });
+  });
+
+  it("reads a v2 file exactly as before, reflections and all", () => {
+    const r = parseBackup(v2Text());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.schemaVersion).toBe(2);
+    expect(r.data.reflections).toHaveLength(1);
+    expect(r.data.threads).toEqual([]);
+    expect(r.summary).toMatchObject({ people: 1, journal: 1, reflections: 1, threads: 0 });
+
+    const s = applyBackup(r.data, "merge", { storage: store });
+    expect(s.storageError).toBeNull();
+    expect(s.reflectionsAdded).toBe(1);
+    expect(s.threadsAdded).toBe(0);
+    expect(JSON.parse(store.getItem(REFLECTIONS_KEY)!)).toHaveLength(1);
+  });
+
+  it("an old file merged in never touches the conversations already on the device", () => {
+    for (const text of [v1Text(), v2Text()]) {
+      store = new FakeStorage();
+      seed({ threads: [thread("mine", 5_000)] });
+      const r = parseBackup(text);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      applyBackup(r.data, "merge", { storage: store });
+      expect(JSON.parse(store.getItem(THREADS_KEY)!)).toEqual([thread("mine", 5_000)]);
+    }
+  });
+
+  it("accepts version 3 and refuses only what is above it", () => {
+    expect(BACKUP_SCHEMA_VERSION).toBe(3);
+    const raw = JSON.parse(v1Text()) as Record<string, unknown>;
+    raw.schemaVersion = 3;
+    expect(parseBackup(JSON.stringify(raw)).ok).toBe(true);
+    raw.schemaVersion = 4;
+    const r = parseBackup(JSON.stringify(raw));
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.error).toContain("newer version of the app");
+      expect(r.error).toContain("reads up to 3");
+      expect(r.error).toMatch(/nothing has been changed/i);
+    }
+  });
+
+  it("round-trips a v3 export with conversations byte-for-byte", () => {
+    seed({
+      people: [person("a")],
+      journal: [entry("x")],
+      reflections: [reflection("2026-07-24")],
+      threads: [thread("t2", 9_000), thread("t1", 4_000)],
+    });
+    const b = buildBackup({ storage: store, now: NOW });
+    expect(b.schemaVersion).toBe(3);
+    const parsed = parseBackup(serializeBackup(b));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.summary.threads).toBe(2);
+
+    const fresh = new FakeStorage();
+    applyBackup(parsed.data, "merge", { storage: fresh });
+    expect(buildBackup({ storage: fresh, now: NOW })).toEqual(b);
+  });
+
+  it("a conversations-only file is restorable", () => {
+    const r = parseBackup(JSON.stringify(file({ threads: [thread("t1")] })));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.summary.threads).toBe(1);
+    const s = applyBackup(r.data, "merge", { storage: store });
+    expect(s.threadsAdded).toBe(1);
+    expect(JSON.parse(store.getItem(THREADS_KEY)!)).toEqual([thread("t1")]);
+  });
+
+  it("drops corrupt conversation rows rather than importing junk", () => {
+    const r = parseBackup(
+      JSON.stringify(
+        file({ threads: [thread("t1"), null, 42, "nope", { title: "no id" }, { id: "" }, ["array"]] as unknown as ChatThread[] }),
+      ),
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.threads).toEqual([thread("t1")]);
+  });
+
+  it("merges by id with the newer updatedAt winning, in both directions", () => {
+    const older = thread("t1", 1_000, { title: "as backed up" });
+    const newer = thread("t1", 9_000, { title: "carried on since" });
+
+    // Incoming is newer → it lands.
+    const a = mergeThreads([older], [newer]);
+    expect(a.merged).toEqual([newer]);
+    expect(a.counts).toEqual({ added: 0, updated: 1, kept: 0 });
+
+    // Local is newer → an old backup must not roll the conversation back.
+    const b = mergeThreads([newer], [older]);
+    expect(b.merged).toEqual([newer]);
+    expect(b.counts).toEqual({ added: 0, updated: 0, kept: 1 });
+
+    // Dead tie → incoming wins, matching the convention everywhere else.
+    const tie = mergeThreads([thread("t1", 1_000, { title: "mine" })], [thread("t1", 1_000, { title: "theirs" })]);
+    expect((tie.merged[0] as unknown as { title: string }).title).toBe("theirs");
+  });
+
+  it("never drops a conversation the file has never seen, and sorts newest first", () => {
+    const { merged, counts } = mergeThreads(
+      [thread("local-only", 7_000), thread("shared", 1_000)],
+      [thread("shared", 8_000), thread("from-file", 3_000)],
+    );
+    expect(merged.map((t) => t.id)).toEqual(["shared", "local-only", "from-file"]);
+    expect(counts).toEqual({ added: 1, updated: 1, kept: 0 });
+  });
+
+  it("treats a thread with a missing or junk stamp as oldest instead of throwing", () => {
+    const undated = thread("t1", 0, { updatedAt: undefined });
+    const dated = thread("t1", 5_000);
+    expect(mergeThreads([undated], [dated]).merged).toEqual([dated]);
+    expect(mergeThreads([dated], [undated]).counts).toEqual({ added: 0, updated: 0, kept: 1 });
+  });
+
+  it("merges through applyBackup without destroying anything local", () => {
+    seed({ threads: [thread("mine", 5_000), thread("shared", 5_000, { title: "newer here" })] });
+    const s = applyBackup(
+      file({ threads: [thread("shared", 1_000, { title: "stale" }), thread("theirs", 2_000)] }),
+      "merge",
+      { storage: store },
+    );
+    expect(s.threadsAdded).toBe(1);
+    expect(s.threadsKept).toBe(1);
+    expect(s.threadsTotal).toBe(3);
+    const stored = JSON.parse(store.getItem(THREADS_KEY)!) as { id: string; title: string }[];
+    expect(stored.find((t) => t.id === "shared")!.title).toBe("newer here");
+    expect(stored.map((t) => t.id).sort()).toEqual(["mine", "shared", "theirs"]);
+  });
+
+  it("replace keeps only the file's conversations — and a v2 file clears them, like priorities", () => {
+    seed({ people: [person("a")], threads: [thread("mine")] });
+    const s = applyBackup(file({ people: { people: [person("b")], activeId: "b" }, threads: [thread("theirs")] }), "replace", { storage: store });
+    expect(s.threadsTotal).toBe(1);
+    expect(JSON.parse(store.getItem(THREADS_KEY)!).map((t: ChatThread) => t.id)).toEqual(["theirs"]);
+
+    const v2 = parseBackup(v2Text());
+    expect(v2.ok).toBe(true);
+    if (!v2.ok) return;
+    applyBackup(v2.data, "replace", { storage: store });
+    expect(JSON.parse(store.getItem(THREADS_KEY)!)).toEqual([]);
+  });
+
+  it("rolls conversations back too when a later write fails", () => {
+    seed({ people: [person("a")], threads: [thread("mine")] });
+    const before = store.getItem(THREADS_KEY)!;
+    store.blocked.add(PRIORITIES_KEY); // everything lands, then the last write throws
+
+    const s = applyBackup(file({ threads: [thread("theirs")], priorities: { theirs: true } }), "replace", { storage: store });
+    expect(s.storageError).toBeTruthy();
+    expect(s.storageRolledBack).toBe(true);
+    expect(store.getItem(THREADS_KEY)).toBe(before);
+  });
+
+  it("names conversations in the summary line, in both modes", () => {
+    const replaced = applyBackup(file({ journal: [entry("x")], threads: [thread("t1")] }), "replace", { storage: store });
+    expect(describeApply(replaced)).toMatch(/1 saved conversation\b/);
+
+    store = new FakeStorage();
+    const merged = applyBackup(file({ threads: [thread("t1"), thread("t2")] }), "merge", { storage: store });
+    expect(describeApply(merged)).toMatch(/2 new conversations/);
+    expect(describeApply(merged)).toMatch(/you now have .*2 saved conversations/i);
+
+    // …and a merge that keeps the local copy says so rather than staying silent.
+    const kept = applyBackup(file({ threads: [thread("t1", 1)] }), "merge", { storage: store });
+    expect(kept.threadsKept).toBe(1);
+    expect(describeApply(kept)).toMatch(/kept as the better copy/);
+  });
+
+  it("counts what this device holds, for the Replace warning", () => {
+    expect(localThreadCount({ storage: store })).toBe(0);
+    seed({ threads: [thread("a"), thread("b")] });
+    expect(localThreadCount({ storage: store })).toBe(2);
+    store.map.set(THREADS_KEY, "{ not json");
+    expect(localThreadCount({ storage: store })).toBe(0);
+    expect(localThreadCount({ storage: null })).toBe(0);
   });
 });
 

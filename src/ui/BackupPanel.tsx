@@ -8,7 +8,7 @@
  * The panel takes no props — it reads and writes storage itself through the pure
  * helpers in backup.ts, so it can be dropped anywhere on the profile page.
  */
-import { ChangeEvent, CSSProperties, useRef, useState } from "react";
+import { ChangeEvent, CSSProperties, useMemo, useRef, useState } from "react";
 import { firebaseEnabled } from "../firebase/config.ts";
 import {
   ApplySummary,
@@ -19,6 +19,7 @@ import {
   applyBackup,
   describeApply,
   downloadBackup,
+  localThreadCount,
   parseBackup,
 } from "./backup.ts";
 import { loadReflections } from "./journalStore.ts";
@@ -45,6 +46,12 @@ export function BackupPanel() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<ApplySummary | null>(null);
   const [savedAs, setSavedAs] = useState<string | null>(null);
+
+  // How many conversations this device would lose to a Replace. Memoised on the
+  // picked file rather than read inline: counting means parsing every stored
+  // transcript, which is the largest thing in local storage, and the warning
+  // below would otherwise do it three times on every keystroke-driven render.
+  const threadsHere = useMemo(() => (pending ? localThreadCount() : 0), [pending]);
 
   const reset = () => {
     setPending(null);
@@ -119,15 +126,16 @@ export function BackupPanel() {
       <p style={{ margin: "8px 0 12px", fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
         {firebaseEnabled ? (
           <>
-            Your people and your decision journal are kept in this browser, and synced to your account when you're signed
-            in. A downloaded backup is still worth having — it's the only copy you control, and it's the way to move
-            everything to another browser or account.
+            Your people, your decision journal and your saved AI conversations are kept in this browser, and synced to
+            your account when you're signed in. A downloaded backup is still worth having — it's the only copy you
+            control, and it's the way to move everything to another browser or account.
           </>
         ) : (
           <>
-            Everything you've entered — your people and your whole decision journal — is stored{" "}
-            <b>only in this browser</b>. There is no cloud copy. If you clear site data, use a private window, or switch
-            device, it is gone and cannot be recovered. Downloading a backup is the only protection against that.
+            Everything you've entered — your people, your whole decision journal and every AI conversation you've saved —
+            is stored <b>only in this browser</b>. There is no cloud copy. If you clear site data, use a private window,
+            or switch device, it is gone and cannot be recovered. Downloading a backup is the only protection against
+            that.
           </>
         )}
       </p>
@@ -150,9 +158,9 @@ export function BackupPanel() {
       </div>
 
       <p style={{ margin: "8px 0 0", fontSize: 11.5, color: "var(--faint)", lineHeight: 1.45 }}>
-        The file is plain JSON containing your saved people, your journal, your daily reflections and your priority
-        profile — readable by you, and by anyone you send it to, so keep it somewhere private. Your AI settings and
-        API key are never included.
+        The file is plain JSON containing your saved people, your journal, your daily reflections, your priority profile
+        and the full text of your saved AI conversations — including the questions you asked. It's readable by you, and
+        by anyone you send it to, so keep it somewhere private. Your AI settings and API key are never included.
       </p>
 
       {savedAs && (
@@ -184,6 +192,13 @@ export function BackupPanel() {
             <li>
               {pending.summary.reflections} daily {pending.summary.reflections === 1 ? "reflection" : "reflections"}
             </li>
+            <li>
+              {pending.summary.threads} saved AI{" "}
+              {pending.summary.threads === 1 ? "conversation" : "conversations"}
+              {pending.summary.threads > 0 && (
+                <span style={{ color: "var(--faint)" }}> (the full text of what was asked and answered)</span>
+              )}
+            </li>
             <li>{pending.summary.hasPriorities ? "A saved priority profile" : "No priority profile"}</li>
           </ul>
           <div style={{ fontSize: 11.5, color: "var(--faint)", marginBottom: 10 }}>
@@ -207,8 +222,9 @@ export function BackupPanel() {
               <span>
                 <b>Merge</b> (recommended) — add what's in the file to what's already here. Nothing of yours is deleted.
                 Where the same record exists in both, the file's copy wins, except that a journal entry with a logged
-                outcome is kept over one without, and a person whose birth details differ from yours is added as a new
-                person rather than replacing you — so restoring someone else's backup can't overwrite your chart.
+                outcome is kept over one without, a conversation is taken from whichever copy was added to most
+                recently, and a person whose birth details differ from yours is added as a new person rather than
+                replacing you — so restoring someone else's backup can't overwrite your chart.
               </span>
             </label>
             <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13 }}>
@@ -238,13 +254,23 @@ export function BackupPanel() {
                 style={{ marginTop: 3 }}
               />
               <span>
-                I understand this will permanently delete the people, journal entries, daily reflections and priority
-                profile currently stored in this browser.
+                I understand this will permanently delete the people, journal entries, daily reflections, saved AI
+                conversations and priority profile currently stored in this browser.
                 {pending.summary.reflections === 0 && loadReflections().length > 0 && (
                   <>
                     {" "}
                     <b>This file contains no reflections</b> — replacing will erase the{" "}
                     {loadReflections().length} stored here.
+                  </>
+                )}
+                {/* Same warning, for the data type added in schema v3: a v1 or v2
+                    backup carries no conversations at all, so replacing with one
+                    silently wipes every chat on this device unless we say so. */}
+                {pending.summary.threads === 0 && threadsHere > 0 && (
+                  <>
+                    {" "}
+                    <b>This file contains no AI conversations</b> — replacing will erase the {threadsHere}{" "}
+                    {threadsHere === 1 ? "conversation" : "conversations"} saved here.
                   </>
                 )}
               </span>
@@ -285,7 +311,7 @@ export function BackupPanel() {
               {firebaseEnabled && (
                 <div style={{ fontSize: 11.5, color: "var(--faint)", marginTop: 6 }}>
                   If you're signed in, your account's copy may sync back over this after a reload — check your people
-                  list before deleting the backup file.
+                  list and your saved conversations before deleting the backup file.
                 </div>
               )}
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>

@@ -18,6 +18,14 @@ service cloud.firestore {
     // owner reads their meter, but only the chat function (Admin SDK, which
     // bypasses these rules entirely) may write it. Otherwise a user could zero
     // out their own usage counter.
+    //
+    // Saved AI conversations (users/{uid}/ai_threads/{threadId}) need NO new
+    // rule and got none: {coll} binds to 'ai_threads' and {document=**} to the
+    // thread id, so they are already owner-only read and write, and the
+    // coll != 'billing' exclusion is untouched by them. Adding a second match
+    // for them would be actively harmful — rules are OR'd, so a broader
+    // sibling grant could re-open the metering documents. A conversation
+    // contains the user's own questions, so owner-only is exactly the intent.
     match /users/{uid}/{coll}/{document=**} {
       allow read: if isOwner(uid);
       allow write: if isOwner(uid) && coll != 'billing';

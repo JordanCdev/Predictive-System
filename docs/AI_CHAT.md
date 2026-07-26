@@ -58,6 +58,155 @@ the streaming loop is tested with a stubbed SSE transport
 ([`tests/aiChatClient.test.ts`](../tests/aiChatClient.test.ts)); the chat-UI helpers
 (date tokens, suggested chips) in [`tests/chatUiHelpers.test.ts`](../tests/chatUiHelpers.test.ts).
 
+## Memory — the transcript is ours, not the provider's
+
+A conversation survives a reload, a route change, and a change of model, because
+**this app stores the thread and replays it**. There is no provider-side conversation
+state anywhere in the stack: the Messages API is stateless, every request carries the
+history in its own body, and no request references a server-held conversation id.
+
+### What is stored
+
+The whole transcript — user turns, assistant turns, and the `tool_use` / `tool_result`
+blocks between them — plus, per turn, **when** it happened (`at`, epoch ms) and, for
+assistant turns, **which model wrote it** (`model`). Offline-advisor exchanges are stored
+in the same thread as a third turn kind, so a conversation survives switching between the
+offline advisor and AI chat.
+
+Storage is **local-first** (`localStorage`), and syncs to Firestore
+`users/{uid}/ai_threads/{threadId}` **only while someone is signed in**. With Firebase unconfigured, or nobody signed in, the local
+path is fully functional on its own and nothing is uploaded. Both destinations are the
+user's own: their device and their account, and nowhere else. UI copy must track that
+distinction — "stays on this device" is only true when sync is off, so the panel adds
+"and in your account" exactly when `auth.enabled && auth.user`
+([`ChatPanel.tsx`](../src/ui/ChatPanel.tsx), [`ChatPage.tsx`](../src/pages/ChatPage.tsx)).
+The offline advisor is local in the sense that matters most — the *answer* is computed on
+device and no model is called — but its transcript is stored on exactly the same terms,
+so it makes the same conditional claim, not a blanket one.
+
+### What is replayed
+
+A **bounded window** of that transcript, on every request, rebuilt from scratch each time
+(`replayWindow` → `prepareHistory`). Selection walks backwards from the newest
+exchange, taking **whole exchanges** while the token budget allows, so a boundary never
+falls between a `tool_use` and its `tool_result`. When the newest exchange alone is over
+budget it is sent whole anyway and flagged `overBudget` — splitting it would break a pair,
+which the API rejects outright. The full thread stays visible in the UI; where the boundary
+fell, the UI says so and the model is told too (defence 3 below) — context the user can
+still see is never silently dropped.
+
+### What is deliberately NOT there
+
+- **No provider-side memory.** Nothing is retained between requests by the API. If it
+  isn't in the array we just sent, the model does not have it.
+- **No cross-conversation recall.** Threads are isolated; nothing leaks from one to
+  another, and nothing is summarized into a hidden profile.
+- **No hidden history.** The system prompt states this outright, so the model cannot imply
+  it remembers something outside the transcript it was handed.
+- **No date markers in storage.** The `(sent …)` prefixes exist only on the wire, so they
+  can't accumulate across re-sends. `prepareHistory` is pure; the stored transcript is
+  never mutated.
+
+**Switching models continues the thread — because we hold the transcript.**
+`claude-sonnet-5` → `claude-opus-4-8` → `claude-haiku-4-5` mid-conversation all pick up the
+same context; the context was never the provider's to hold, so there is nothing to migrate.
+The choice is per turn, not per thread. Each assistant turn records the model that wrote it,
+the replay window carries that `model` through, and `historyContextBlock` names any earlier
+model in the request — so the UI can show who said what and the model is told plainly that
+some earlier turns were not its own. The prompt turns that into a rule: continue normally,
+but claim no memory of writing them.
+
+### The caps are abuse bounds
+
+Nothing about memory is a tier — every cap here exists to bound storage and metered token
+spend, and none of them is a thing to buy:
+
+| Bound | Value | Why |
+|---|---|---|
+| Replay window | `DEFAULT_REPLAY_BUDGET_TOKENS` = 12,000 est. tokens | request size; the rest of the thread stays on screen |
+| Threads kept | `DEFAULT_THREAD_LIMITS.maxThreads` = 50 | `localStorage` is finite; oldest unpinned go first, pinned threads are never pruned |
+| Turns per thread | `maxTurnsPerThread` = 400 | one runaway thread can't evict every other one |
+| Hosted-proxy messages/day | see above | metered spend on a relay we pay for; BYOK chat never touches it |
+
+Pruning is never silent: `pruneNote` names what was dropped, and `replayWindow` reports
+`omittedTurns` / `omittedFrom` / `omittedThrough`, which the panel turns into a line saying
+where the boundary fell. `pruneThreads` also guarantees a pinned thread is never removed
+and that at least one unpinned thread always survives, so the conversation someone is in the
+middle of can't be deleted out from under them.
+
+### The staleness rule — an old reading is never today's answer
+
+This is the correctness risk the memory feature creates, and it matters more here than
+in a general chatbot: a thread from three weeks ago contains tool results computed for
+*that* date and an assistant turn that said *"your best day is [2026-08-14]"*. Replayed
+carelessly, a decision-timing app would restate it as current. The rule: **a reading
+computed on an earlier date is never today's answer.** Four defences hold it up.
+
+1. **The payload stamp — `computedOn`, and it is the load-bearing one.** `executeTool`
+   ([`tools.ts`](../src/ai/tools.ts)) stamps each object result with the date it was
+   produced, so staleness is checkable from the payload itself rather than inferred from
+   where a block sits in the transcript. It is the only defence that survives every
+   transformation the replay path performs — merging, windowing, sanitizing — which is why
+   the prompt is written to lean on it and to treat a result **without** a `computedOn`
+   (an older stored thread, or the synthesized "result was lost" marker) as undated, and
+   therefore as stale.
+2. **The wire marker — `(sent YYYY-MM-DD)` on user turns the app can date.** `dateTurn`
+   ([`chatClient.ts`](../src/ai/chatClient.ts)) prefixes a user turn with
+   `turnDateMarker` ([`systemPrompt.ts`](../src/ai/systemPrompt.ts)) when the turn carries a
+   recorded `at` whose day is not today — so "earlier" is a concrete day. Deliberately
+   **not** the `[YYYY-MM-DD]` form, which is reserved for dates the model writes and the UI
+   renders as tappable day links. This defence is a **hint, not a guarantee**, and the
+   prompt says so: a turn carrying `tool_result` blocks is never marked (plumbing, not
+   something the user said), a turn with no recorded `at` cannot be marked, and merging
+   adjacent same-role turns keeps only the first turn's date. **An unmarked turn is
+   therefore undated, not "today"** — nothing may be dated from a missing prefix. The marker
+   exists **only on the wire**: `prepareHistory` is pure, the stored transcript stays clean,
+   and markers can't accumulate across re-sends.
+3. **A per-request context block** (`historyContextBlock`) states today's date, how far
+   back the replayed window reaches, how many earlier turns were pruned out of *this*
+   request, and which other models wrote part of the thread. It also repeats rule 2's
+   caveat, so the model never reads an unmarked turn as current.
+4. **The system prompt makes the rule non-negotiable**: today's date is authoritative and
+   overrides any date in the transcript; a result whose `computedOn` is not today (or that
+   has none) is stale and may not be quoted as current; an earlier **assistant** turn is
+   dated evidence on the same terms as a tool result; anything time-sensitive — best days,
+   "how is this week", the active 大運 decade, this year's 流年, any window counted from
+   today — must be **re-called**, even if the same question was answered earlier in the
+   same thread, and when the model can't tell how old something is, it re-calls. Referring
+   back is fine when it is dated ("when you asked in June, the engine rated…").
+
+Defences 2 and 3 depend on the replay window carrying each turn's `at` (and, for the model
+note, its `model`) out of storage and into the request. That plumbing is the thing to check
+first if the markers ever go quiet: with `at` dropped, `dateTurn` becomes a no-op that
+*fails silently* — every turn simply looks unmarked. Asserted end-to-end against the request
+bodies in [`tests/aiChatClient.test.ts`](../tests/aiChatClient.test.ts) and
+[`tests/chatThreads.test.ts`](../tests/chatThreads.test.ts).
+
+Stale results are **kept** in the transcript rather than scrubbed: they are what was said
+at the time, and the user can still scroll to them. What changes is how they may be used.
+
+### Replaying a stored transcript without a 400
+
+A persisted thread is not automatically a valid request body. The Messages API rejects an
+unmatched `tool_use`/`tool_result` pair, consecutive same-role messages, empty content, and
+a history that opens on an assistant turn — and a real thread can contain all four (the
+user pressed **Stop** mid-tool-loop; the replay window sliced mid-exchange).
+`sanitizeHistory` ([`chatClient.ts`](../src/ai/chatClient.ts)) repairs rather than
+transmits-and-fails:
+
+| Damage | Repair |
+|---|---|
+| `tool_use` with no recorded result (interrupted turn) | synthesize a *"result was lost, call the tool again"* marker — never a fabricated reading, so the assistant's text survives and the model re-calls |
+| `tool_result` answering nothing (its `tool_use` was pruned away) | drop the block; drop the message if nothing is left |
+| consecutive same-role turns | merge, hoisting `tool_result` blocks to the front (the API requires them first) |
+| window opens on an assistant turn | drop leading assistant turns |
+| empty strings / empty content arrays | drop |
+
+`prepareHistory` = sanitize → date → strip. The strip matters: `at` and `model` are our
+bookkeeping and the API rejects unknown fields on a message. The function is pure — the
+stored transcript is never mutated — and the invariants are asserted directly against the
+request bodies in [`tests/aiChatClient.test.ts`](../tests/aiChatClient.test.ts).
+
 ## The priority layer — stated goals, field-level consent
 
 The app has always known the user's *chart*. `get_priorities`
@@ -130,7 +279,17 @@ With neither a key nor a proxy configured, the panel runs an **offline advisor**
 of showing a key wall: the same input box routes each question through the deterministic
 advisor (`parseAdvisorQuery` → `composeTimingAnswer` / `composeProfileAnswer` /
 `composeUnknownAnswer` in [`src/engine/advisor.ts`](../src/engine/advisor.ts)), with every
-answer labelled *"Offline advisor — deterministic, no AI"* and nothing leaving the device.
+answer labelled *"Offline advisor — deterministic, no AI"*. **No model is called and no
+question is sent anywhere**: the answer is computed on device, from the same engine.
+
+Its *storage* is a separate claim, and the copy must keep the two apart. Offline exchanges
+are written into the same thread as AI ones, so they follow the same rule as everything else
+under *Memory*: local-first, and synced to the signed-in user's account when sync is on.
+"Nothing leaves your browser" is therefore true of the **computation** and false of the
+**transcript** whenever someone is signed in, so the panel says the answer is computed on
+device and no model is called, and states where conversations are kept conditionally —
+the same `auth.enabled && auth.user` test the AI branch already uses.
+
 The AI setup (consent + key + model) lives in a collapsible underneath.
 
 ## Deployment: GitHub Pages (static) → BYOK
@@ -177,3 +336,10 @@ summary (Day Master, elements) is sent, never the birth date, time or city.
 Defaults to **`claude-sonnet-5`** (strong, fast, cheap enough for chat, tool use +
 streaming). `claude-haiku-4-5` is offered as a cheaper option and `claude-opus-4-8`
 as the most capable, selectable in the chat settings.
+
+The choice is **per turn, not per thread**: switch mid-conversation and the same thread
+continues with the same context, because the transcript is ours and the replay window is
+rebuilt for whichever model answers next (see *Memory*, above). Nothing is migrated, because
+nothing was ever held provider-side. Each assistant turn records the model that wrote it, so
+the thread stays readable as a mixed-model conversation rather than pretending one model
+wrote it all — and the next request tells that model plainly which turns were not its own.

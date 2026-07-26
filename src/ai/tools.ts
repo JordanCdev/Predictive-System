@@ -210,9 +210,24 @@ function summarizePeriod(s: PeriodSummary) {
 
 // ── the executor ─────────────────────────────────────────────────────────────
 
-/** Run a tool locally against the deterministic engine. Never throws — bad
- *  input returns an `{ error }` payload the model can recover from. */
+/**
+ * Run a tool locally against the deterministic engine. Never throws — bad input
+ * returns an `{ error }` payload the model can recover from.
+ *
+ * Every result is stamped with `computedOn`, the date it was produced. Threads
+ * are stored by this app and replayed in full on later requests, so a result
+ * from last week can reappear in today's context window. The stamp travels with
+ * the result, so staleness stays checkable from the payload itself rather than
+ * being inferred from where it sits in the transcript — and the system prompt
+ * tells the model to re-call rather than restate anything whose `computedOn` is
+ * not today.
+ */
 export function executeTool(name: string, rawInput: unknown, ctx: AiToolContext): unknown {
+  const result = runTool(name, rawInput, ctx);
+  return result && typeof result === "object" ? { ...(result as object), computedOn: ctx.todayIso } : result;
+}
+
+function runTool(name: string, rawInput: unknown, ctx: AiToolContext): unknown {
   const input = (rawInput ?? {}) as Record<string, unknown>;
   try {
     switch (name) {

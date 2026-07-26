@@ -327,3 +327,28 @@ describe("get_priorities — the consent gate", () => {
     expect(JSON.stringify(executeTool("get_priorities", {}, c))).toBe(JSON.stringify(executeTool("get_priorities", {}, c)));
   });
 });
+
+// ── staleness: every result says when it was computed ────────────────────────
+//
+// Threads persist in this app and are replayed in full on later requests, so a
+// reading produced last week can reappear inside today's context window. The
+// stamp is what stops it being narrated as today's answer.
+describe("tool results are dated", () => {
+  it("stamps every result with the date it was computed", () => {
+    const names = ["list_objectives", "get_chart_summary", "get_natal_chart", "get_profile_fits", "get_priorities", "get_luck_pillars"];
+    for (const name of names) expect((executeTool(name, {}, ctx) as any).computedOn).toBe("2026-07-08");
+    expect((executeTool("get_period_summary", { year: 2027 }, ctx) as any).computedOn).toBe("2026-07-08");
+    expect((executeTool("find_best_days", { objectiveId: "wedding_marriage", windowDays: 30 }, ctx) as any).computedOn).toBe("2026-07-08");
+    expect((executeTool("evaluate_specific_day", { isoDate: "2026-07-20" }, ctx) as any).computedOn).toBe("2026-07-08");
+  });
+
+  it("stamps error payloads too, so a failed call is dated like any other", () => {
+    expect((executeTool("no_such_tool", {}, ctx) as any).computedOn).toBe("2026-07-08");
+    expect((executeTool("find_best_days", { objectiveId: "nope", windowDays: 5 }, ctx) as any)).toMatchObject({ computedOn: "2026-07-08" });
+  });
+
+  it("moves with the date, so the same question on two days is distinguishable", () => {
+    const later: AiToolContext = { ...ctx, todayIso: "2026-07-09" };
+    expect((executeTool("get_chart_summary", {}, later) as any).computedOn).toBe("2026-07-09");
+  });
+});

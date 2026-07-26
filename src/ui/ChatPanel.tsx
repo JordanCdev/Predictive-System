@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BaziChart,
@@ -22,12 +22,46 @@ import { loadJournal } from "./journalStore.ts";
 import { deriveSignals } from "./priorities/deriveSignals.ts";
 import { areaLabel, loadPriorities } from "./priorities/prioritiesStore.ts";
 import type { PriorityProfile } from "./priorities/prioritiesStore.ts";
+import { ThreadList } from "./chat/ThreadList.tsx";
+import { boundaryNote, buildTranscriptRows, voiceNote } from "./chat/transcript.ts";
+import { forTranscript, isVisible, toolLabel, toolLabels } from "./chat/turnView.ts";
+import { useThreadSync } from "./chat/useThreadSync.ts";
+import {
+  DEFAULT_REPLAY_BUDGET_TOKENS,
+  DEFAULT_THREAD_LIMITS,
+  THREADS_STORE_KEY,
+  aiTurn,
+  appendMessages,
+  appendTurn,
+  createThread,
+  deleteThread as deleteThreadIn,
+  loadThreads,
+  messageText,
+  newThreadId,
+  offlineTurn,
+  pruneNote,
+  pruneThreads,
+  renameThread as renameThreadIn,
+  replayWindow,
+  saveThreads,
+  setPinned as setPinnedIn,
+  sortThreads,
+  titleFor,
+  upsertThread,
+} from "./chat/threadStore.ts";
+import type { ChatThread, ChatTurn, SaveOutcome } from "./chat/threadStore.ts";
 import type { AiToolContext } from "../ai/tools.ts";
 import type { ChatMessage, ChatSettings } from "../ai/chatClient.ts";
 
 const KEY_STORE = "wei_ai_key";
 const MODEL_STORE = "wei_ai_model";
 const CONSENT_STORE = "wei_ai_consent";
+/** Which saved conversation this device was last reading, PER CHART. Only a
+ *  pointer — the conversations themselves live in the thread store. Scoped by
+ *  subject because "the conversation I was in" is a different answer for each
+ *  person the app has stored. */
+const ACTIVE_STORE = "wei_ai_active_thread";
+const activeStoreKey = (subjectKey: string) => `${ACTIVE_STORE}:${subjectKey}`;
 const DEFAULT_MODEL = "claude-sonnet-5";
 
 // VITE_AI_PROXY_URL wires the chat through a relay that holds the key server-side
@@ -41,29 +75,25 @@ const MODELS = [
   { id: "claude-opus-4-8", label: "Opus 4.8 — most capable" },
 ];
 
-const TOOL_LABEL: Record<string, string> = {
-  list_objectives: "Listing what I can time",
-  get_chart_summary: "Reading your chart",
-  get_natal_chart: "Reading your full natal chart",
-  get_profile_fits: "Ranking your best fits",
-  get_luck_pillars: "Checking your luck cycle",
-  get_period_summary: "Looking at that period",
-  find_best_days: "Finding your best days",
-  evaluate_specific_day: "Checking that day",
-  get_priorities: "Checking what matters to you",
-};
+/** "Sonnet 5" — the short name, for markers inside the transcript. Falls back to
+ *  the raw id so a thread written by a model this build has never heard of still
+ *  says who wrote it. */
+function modelLabel(id: string): string {
+  const found = MODELS.find((m) => m.id === id);
+  return found ? found.label.split(" — ")[0] : id;
+}
 
 /** Search horizon for the offline (no-key) deterministic advisor. */
 const OFFLINE_WINDOW_DAYS = 92;
 
+/** Said when a reply lands for a conversation the user deleted while it was in
+ *  flight. The delete wins — but silently dropping the answer would look like
+ *  the advisor had failed. */
+const DELETED_MID_FLIGHT =
+  "That conversation was deleted while its reply was still arriving, so the reply was discarded.";
+
 /** Sentence verb for an objective, for building suggestion chips. */
 const offlineVerb = (id: string) => objectivePlain(id).verb;
-
-interface Bubble {
-  role: "user" | "assistant";
-  text: string;
-  tools: string[];
-}
 
 const readLS = (k: string): string | null => {
   try {
@@ -79,6 +109,198 @@ const writeLS = (k: string, v: string) => {
     /* private mode — settings just won't persist */
   }
 };
+
+/**
+ * The messages `runChat` produced for THIS question — everything after the last
+ * copy of the question itself.
+ *
+ * Found by matching the question rather than by `prior.length + 1`: the client is
+ * free to repair or re-shape the history it was handed before sending it (a
+ * stored transcript can need it), and index arithmetic over an array someone else
+ * may legitimately resize is how you end up silently appending replayed history
+ * to a thread as if it were new. The index is kept as a fallback.
+ */
+function messagesAfter(updated: ChatMessage[], question: string, priorLength: number): ChatMessage[] {
+  for (let i = updated.length - 1; i >= 0; i--) {
+    const m = updated[i];
+    if (m.role === "user" && typeof m.content === "string" && m.content === question) return updated.slice(i + 1);
+  }
+  return updated.slice(Math.min(priorLength + 1, updated.length));
+}
+
+// ── which chart a conversation is about ──────────────────────────────────────
+//
+// This app stores several people, and every answer the advisor gives is specific
+// to ONE chart: the same question against a different chart is a different
+// answer. A conversation therefore belongs to the chart it was held about, and
+// switching person must not silently carry on someone else's conversation
+// against the new chart.
+//
+// The subject is carried IN THE THREAD ID rather than as a field on the thread,
+// because the id is the one part of a stored conversation that survives every
+// round-trip we have — `parseThread` rebuilds a thread from a fixed set of
+// fields, and the account copy and the backup file are keyed by id. A field
+// would be dropped on the next load; the id is not.
+
+const SUBJECT_MARK = "~s";
+
+/** 32-bit FNV-1a, base-36. Only ever used to name a chart — never an engine
+ *  input, and never anything the engine's own hashes depend on. */
+function hash36(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(36);
+}
+
+/**
+ * A stable name for "the chart this panel is discussing", derived from the chart
+ * itself (its four pillars) and the birth date behind it. Two people with the
+ * same four pillars AND the same birth date have, for the advisor's purposes,
+ * the same reading — so sharing a conversation between them is not the bug this
+ * guards against.
+ */
+export function subjectKeyOf(chart: BaziChart, birth: { year: number; month: number; day: number }): string {
+  const pillars = Array.isArray(chart?.pillars) ? chart.pillars.map((p) => p?.ganzhi?.index ?? -1).join(",") : "";
+  return hash36(`${birth.year}-${birth.month}-${birth.day}|${pillars}`);
+}
+
+/** The subject stamped into a thread id, or null for a conversation saved
+ *  before conversations were scoped to a chart. */
+export function subjectOf(threadId: string): string | null {
+  if (typeof threadId !== "string") return null;
+  const i = threadId.lastIndexOf(SUBJECT_MARK);
+  if (i < 0) return null;
+  return threadId.slice(i + SUBJECT_MARK.length) || null;
+}
+
+/** Stamp (or re-stamp) a thread id with a subject. */
+export function withSubject(threadId: string, subjectKey: string): string {
+  const i = threadId.lastIndexOf(SUBJECT_MARK);
+  const bare = i < 0 ? threadId : threadId.slice(0, i);
+  return subjectKey ? `${bare}${SUBJECT_MARK}${subjectKey}` : bare;
+}
+
+/**
+ * Is this conversation showable under the current subject?
+ *
+ * Its own subject, yes. An UNSCOPED conversation (saved before this existed) —
+ * also yes: it is the user's own data and hiding it would read as data loss.
+ * What an unscoped conversation never gets is *resumed automatically*
+ * (`resumeThreadId`), and the moment anything is said in one it is adopted into
+ * the chart being discussed (`baseForNewTurn`), so it can never later be
+ * continued against a different chart.
+ */
+export function belongsToSubject(threadId: string, subjectKey: string): boolean {
+  const s = subjectOf(threadId);
+  return s === null || s === subjectKey;
+}
+
+/** Which conversation to open for this subject: the one this device was last
+ *  reading (if it is still this subject's), else this subject's most recent,
+ *  else none — a new conversation. */
+export function resumeThreadId(threads: ChatThread[], subjectKey: string, remembered: string | null): string | null {
+  const mine = threads.filter((t) => subjectOf(t.id) === subjectKey);
+  if (remembered && mine.some((t) => t.id === remembered)) return remembered;
+  return sortThreads(mine)[0]?.id ?? null;
+}
+
+/**
+ * The thread a new turn belongs in, and the id it REPLACES (adoption).
+ *
+ * Three cases:
+ *  - the open conversation is this subject's → carry on in it;
+ *  - it is unscoped (saved before scoping) → adopt it into this subject, which
+ *    means a new id, so `replaces` names the old record to retire;
+ *  - it belongs to someone else, or there is none → start a fresh conversation.
+ */
+export function baseForNewTurn(
+  threads: ChatThread[],
+  activeId: string | null,
+  subjectKey: string,
+  nowMs: number,
+  rand?: () => number,
+): { base: ChatThread; replaces: string | null } {
+  const fresh = () => createThread(nowMs, { id: withSubject(newThreadId(nowMs, rand), subjectKey) });
+  const existing = threads.find((t) => t.id === activeId);
+  if (!existing) return { base: fresh(), replaces: null };
+  const s = subjectOf(existing.id);
+  if (s === subjectKey) return { base: existing, replaces: null };
+  if (s === null) return { base: { ...existing, id: withSubject(existing.id, subjectKey) }, replaces: existing.id };
+  return { base: fresh(), replaces: null };
+}
+
+/**
+ * Undo a send that failed — SURGICALLY, against the list as it is NOW.
+ *
+ * Restoring a whole-list snapshot taken before the request would clobber
+ * everything else that happened while it was in flight: a rename, another
+ * conversation's turn, a delete. So this touches exactly one conversation:
+ *
+ *  - the user deleted it mid-flight → `changed: false`. A deleted conversation
+ *    stays deleted; nothing is resurrected;
+ *  - it existed before the question → put the pre-send copy back;
+ *  - the question is what created it (or adopted it under a new id) → remove it
+ *    again, and restore the pre-send copy under its original id if there was one.
+ *
+ * `push`/`remove` make the undo SYMMETRIC with the account: a failed send must
+ * not leave an unanswered question — or a whole spurious conversation — in the
+ * cloud to come back at the next sign-in.
+ */
+export interface SendRollback {
+  threads: ChatThread[];
+  /** Conversation to write back to the account (null when there is none). */
+  push: ChatThread | null;
+  /** Ids whose account copy must be deleted. */
+  remove: string[];
+  /** False when there is nothing to undo — the conversation is already gone. */
+  changed: boolean;
+}
+
+export function rollbackSend(live: ChatThread[], sentId: string, prior: ChatThread | null): SendRollback {
+  if (!live.some((t) => t.id === sentId)) return { threads: live, push: null, remove: [], changed: false };
+  if (prior && prior.id === sentId) {
+    return { threads: upsertThread(live, prior), push: prior, remove: [], changed: true };
+  }
+  const without = deleteThreadIn(live, sentId);
+  return prior
+    ? { threads: upsertThread(without, prior), push: prior, remove: [sentId], changed: true }
+    : { threads: without, push: null, remove: [sentId], changed: true };
+}
+
+/**
+ * How many of the omitted turns a person can actually SEE.
+ *
+ * The replay boundary tells the user those messages are "still here to read".
+ * Tool-plumbing turns are stored and replayed but never rendered, so counting
+ * them makes the marker claim messages that are not on screen — and a marker
+ * that counts only invisible turns is a marker about nothing.
+ */
+export function visibleOmitted(turns: ChatTurn[], omittedTurns: number): number {
+  const n = Math.max(0, Math.min(Math.floor(omittedTurns) || 0, turns.length));
+  let count = 0;
+  for (let i = 0; i < n; i++) if (isVisible(turns[i])) count++;
+  return count;
+}
+
+/**
+ * What to tell someone whose conversation did not reach this device's storage.
+ *
+ * `saveThreads` reports this rather than swallowing it, and it matters: a
+ * conversation that silently failed to save LOOKS saved, right up until the
+ * reload that loses it. So it is said plainly, with the reason, and with the one
+ * mitigating fact if it applies — the account still has it.
+ */
+export function unsavedNote(reason: SaveOutcome["reason"] | null, inAccount: boolean): string | null {
+  if (!reason) return null;
+  const why = reason === "quota" ? "this device's storage is full" : "this browser isn't allowing storage";
+  return (
+    `This conversation couldn't be saved on this device — ${why}, so it will be gone if you reload.` +
+    (inAccount ? " It is still being saved to your account." : "")
+  );
+}
 
 /** Conversational AI layer over the deterministic reading. Additive: it never
  *  replaces the deterministic Q&A, and stays inert until the user opts in and
@@ -107,15 +329,155 @@ export function ChatPanel({
   const [keyDraft, setKeyDraft] = useState("");
   const [showSettings, setShowSettings] = useState(false);
 
-  const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outOfQuota, setOutOfQuota] = useState(false);
   const [retryText, setRetryText] = useState<string | null>(null);
-  const historyRef = useRef<ChatMessage[]>([]);
+  /** Housekeeping the user is entitled to know about (what pruning removed). */
+  const [notice, setNotice] = useState<string | null>(null);
+  /** Why the last save didn't reach this device's storage (null when it did).
+   *  Said plainly rather than letting the conversation quietly vanish on the
+   *  next reload. */
+  const [unsaved, setUnsaved] = useState<SaveOutcome["reason"] | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+
+  /** The chart this panel is about — conversations are scoped to it. */
+  const subjectKey = useMemo(() => subjectKeyOf(chart, birth), [chart, birth]);
+  const subjectRef = useRef(subjectKey);
+
+  // ── saved conversations ────────────────────────────────────────────────────
+  // THE conversation state. Previously `bubbles` (useState) and `historyRef`
+  // (useRef): both died on reload and on a route change to /today and back, so
+  // "memory" lasted exactly as long as one mounted component. Now the panel
+  // renders a stored thread, and every request replays a transcript WE hold —
+  // which is also why changing model mid-conversation continues it rather than
+  // starting again.
+  const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads());
+  const [activeId, setActiveId] = useState<string | null>(() =>
+    // Only ever resumes a conversation held about THIS chart. One saved before
+    // conversations were scoped stays listed and openable, but is never picked
+    // up automatically — see `belongsToSubject`.
+    resumeThreadId(loadThreads(), subjectKey, readLS(activeStoreKey(subjectKey))),
+  );
+  // The async send path reads these long after the render that closed over them.
+  const threadsRef = useRef(threads);
+  threadsRef.current = threads;
+  const activeIdRef = useRef(activeId);
+  activeIdRef.current = activeId;
+
+  useEffect(() => {
+    if (activeId) writeLS(activeStoreKey(subjectKey), activeId);
+  }, [activeId, subjectKey]);
+
+  // Switching person switches conversation. The pointer is per-subject, so each
+  // chart picks up where IT left off, and a person with no history here starts a
+  // new conversation rather than inheriting the last one.
+  useEffect(() => {
+    if (subjectRef.current === subjectKey) return;
+    subjectRef.current = subjectKey;
+    abortRef.current?.abort();
+    setActiveId(resumeThreadId(threadsRef.current, subjectKey, readLS(activeStoreKey(subjectKey))));
+    setError(null);
+    setRetryText(null);
+    setNotice(null);
+    setInput("");
+  }, [subjectKey]);
+
+  const hydrate = useCallback(() => {
+    const next = loadThreads();
+    threadsRef.current = next;
+    setThreads(next);
+  }, []);
+
+  // Re-read when another tab writes, and when this tab's own store re-emits
+  // (threadStore dispatches a same-tab ping, since `storage` only fires in OTHER
+  // tabs). That is how a sign-in merge and a second open panel stay in step.
+  // Our OWN writes are skipped: we already hold that list, and re-parsing it
+  // mid-send would swap the array identity under an in-flight answer.
+  const selfWrite = useRef(false);
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (selfWrite.current) return;
+      if (e.key === null || e.key === THREADS_STORE_KEY) hydrate();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [hydrate]);
+
+  const sync = useThreadSync({ loadLocal: loadThreads, saveLocal: saveThreads });
+  const syncRef = useRef(sync);
+  syncRef.current = sync;
+
+  /**
+   * Persist a new thread list, enforcing the storage bound and SAYING what that
+   * cost. The bound is an abuse/storage limit — there are no tiers in this app
+   * and nothing here is an upsell.
+   */
+  const commit = useCallback((next: ChatThread[], touched?: ChatThread | null): ChatThread[] => {
+    const pruned = pruneThreads(next, DEFAULT_THREAD_LIMITS, Date.now());
+    const note = pruneNote(pruned);
+    if (note) setNotice(note);
+    threadsRef.current = pruned.threads;
+    setThreads(pruned.threads);
+    // `saveThreads` pings this tab synchronously; the flag keeps that ping from
+    // bouncing straight back into `hydrate`.
+    selfWrite.current = true;
+    let saved: SaveOutcome;
+    try {
+      saved = saveThreads(pruned.threads);
+    } finally {
+      selfWrite.current = false;
+    }
+    // A write that didn't land is not a saved conversation. Say so.
+    setUnsaved(saved.persisted ? null : saved.reason ?? "unavailable");
+    // Pruning removed conversations from this device; the account has to lose
+    // them too, or the next sign-in pulls every one of them straight back.
+    for (const gone of pruned.removedThreads) syncRef.current.remove(gone.id);
+    if (touched && pruned.threads.some((t) => t.id === touched.id)) syncRef.current.push(touched);
+    return pruned.threads;
+  }, []);
+
+  /** The conversations that belong to the chart on screen. */
+  const visibleThreads = useMemo(
+    () => threads.filter((t) => belongsToSubject(t.id, subjectKey)),
+    [threads, subjectKey],
+  );
+
+  const active = useMemo(() => visibleThreads.find((t) => t.id === activeId) ?? null, [visibleThreads, activeId]);
+  const turns = active?.turns ?? [];
+
+  // What of this conversation is actually being replayed to the model. Computed
+  // for display too, so the boundary is visible BEFORE the next question rather
+  // than being explained afterwards.
+  const window_ = useMemo(
+    () => (active ? replayWindow(active, DEFAULT_REPLAY_BUDGET_TOKENS) : null),
+    [active],
+  );
+
+  // The boundary marker counts what is READABLE above it, not the stored turns:
+  // tool_result plumbing is replayed but never drawn, so counting it would
+  // promise messages that aren't on screen. `replayFrom` still places the marker
+  // at the real cut.
+  const omittedTurns = window_?.omittedTurns ?? 0;
+  const rows = useMemo(
+    () =>
+      buildTranscriptRows(turns.map(forTranscript), {
+        replayFrom: omittedTurns,
+        omittedTurns: visibleOmitted(turns, omittedTurns),
+        modelLabel,
+      }),
+    [turns, omittedTurns],
+  );
+
+  /** Label every assistant turn only when the thread actually changed hands —
+   *  a single-model conversation needs no byline on every paragraph. */
+  const mixedVoices = useMemo(() => rows.some((r) => r.kind === "voice"), [rows]);
+
+  /** Live assistant turn. Held OUTSIDE the store while it streams, so a
+   *  half-written answer is never persisted and never replayed. */
+  const [streaming, setStreaming] = useState<{ text: string; tools: string[]; model: string } | null>(null);
 
   const auth = useAuth();
   const { quota, noteAiMessage, releaseAiMessage } = useEntitlements();
@@ -208,10 +570,61 @@ export function ChatPanel({
     return [...mine, ...base].slice(0, 6);
   }, [chart, priorities]);
 
-  // ── Offline deterministic advisor (no key, no proxy — never a dead end) ────
+  const scrollDown = useCallback(() => {
+    requestAnimationFrame(() => threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight }));
+  }, []);
+
+  // ── thread management ──────────────────────────────────────────────────────
+
+  const stop = () => abortRef.current?.abort();
+
+  const newChat = () => {
+    stop();
+    // Deliberately does NOT create an empty thread: a conversation starts
+    // existing when something is said in it. Everything already saved stays.
+    setActiveId(null);
+    setError(null);
+    setRetryText(null);
+    setNotice(null);
+    // Clear the latch too. The server stamps "quota_exceeded" on its fail-CLOSED
+    // path as well as a genuine limit, so a Firestore blip used to switch the
+    // advisor off for the rest of the session with no way back but a reload.
+    setOutOfQuota(false);
+    setInput("");
+  };
+
+  const selectThread = (id: string) => {
+    stop();
+    setActiveId(id);
+    setError(null);
+    setRetryText(null);
+    scrollDown();
+  };
+
+  const rename = (id: string, title: string) => {
+    const next = renameThreadIn(threadsRef.current, id, title, Date.now());
+    commit(next, next.find((t) => t.id === id));
+  };
+
+  /** Pinning is the user saying "keep this" — pruning never removes a pinned
+   *  conversation, which the pruning note already promises. */
+  const pin = (id: string, pinned: boolean) => {
+    const next = setPinnedIn(threadsRef.current, id, pinned, Date.now());
+    commit(next, next.find((t) => t.id === id));
+  };
+
+  const remove = (id: string) => {
+    if (id === activeIdRef.current) stop();
+    const next = deleteThreadIn(threadsRef.current, id);
+    commit(next);
+    syncRef.current.remove(id);
+    if (id === activeIdRef.current) setActiveId(resumeThreadId(next, subjectKey, null));
+  };
+
+  // ── offline deterministic advisor (no key, no proxy — never a dead end) ────
+  // It writes into the SAME thread as the AI, so adding a key later continues
+  // the conversation rather than starting a second one beside it.
   const profile = useMemo(() => analyzeProfile(chart), [chart]);
-  const [offlineExchanges, setOfflineExchanges] = useState<{ id: number; question: string; answer: AdvisorAnswer }[]>([]);
-  const offlineId = useRef(1);
   const askOffline = useCallback(
     (raw: string) => {
       const q = raw.trim();
@@ -228,10 +641,20 @@ export function ChatPanel({
       } else {
         answer = composeUnknownAnswer(profile);
       }
-      setOfflineExchanges((prev) => [...prev, { id: offlineId.current++, question: q, answer }]);
+      const now = Date.now();
+      const { base, replaces } = baseForNewTurn(threadsRef.current, activeIdRef.current, subjectKey, now);
+      const next = appendTurn(base, offlineTurn(q, answer), now);
+      // `replaces` is set when an unscoped conversation was adopted into this
+      // chart: the old record is retired here and in the account, so there is
+      // never a second copy of it under the previous id.
+      const list = replaces ? deleteThreadIn(threadsRef.current, replaces) : threadsRef.current;
+      commit(upsertThread(list, next), next);
+      if (replaces) syncRef.current.remove(replaces);
+      setActiveId(next.id);
       setInput("");
+      scrollDown();
     },
-    [evaluate, profile, todayIso],
+    [commit, evaluate, profile, scrollDown, subjectKey, todayIso],
   );
 
   const enable = () => {
@@ -247,50 +670,109 @@ export function ChatPanel({
     setKeyDraft("");
   };
 
+  // ── sending ────────────────────────────────────────────────────────────────
+
   const send = useCallback(
     async (raw: string) => {
       const text = raw.trim();
       if (!text || busy || blocked) return;
       setError(null);
       setRetryText(null);
+      setNotice(null);
       setInput("");
       if (metered) noteAiMessage(); // move the local counter now; the server is authoritative
-      const assistantIdx = { current: -1 };
-      setBubbles((prev) => {
-        const next = [...prev, { role: "user" as const, text, tools: [] }, { role: "assistant" as const, text: "", tools: [] }];
-        assistantIdx.current = next.length - 1;
-        return next;
-      });
+
+      const now = Date.now();
+      const before = threadsRef.current;
+      const activeBefore = activeIdRef.current;
+      const subjectAtSend = subjectKey;
+      const { base, replaces } = baseForNewTurn(before, activeBefore, subjectAtSend, now);
+      // WHICH conversation this answer belongs to, captured now. Everything that
+      // lands when the request finishes is checked against this id in the LIVE
+      // list — the user may have deleted the conversation while it was in
+      // flight, and a completion must never write a deleted conversation back.
+      const threadId = base.id;
+      /** The conversation exactly as it was before the question — what a failure
+       *  restores. Null when this question is what created it. */
+      const priorThread = before.find((t) => t.id === (replaces ?? base.id)) ?? null;
+      // The window is computed from the thread BEFORE this question: `runChat`
+      // appends the question itself. Everything outside it is still on screen —
+      // the transcript marks the boundary rather than hiding it.
+      const replay = replayWindow(base, DEFAULT_REPLAY_BUDGET_TOKENS);
+      const prior: ChatMessage[] = replay.messages;
+
+      // Persist the question immediately: if the answer fails or the tab dies
+      // mid-stream, what the user asked is not lost.
+      const withQuestion = appendTurn(base, aiTurn("user", text), now);
+      const listBefore = replaces ? deleteThreadIn(before, replaces) : before;
+      commit(upsertThread(listBefore, withQuestion), withQuestion);
+      if (replaces) syncRef.current.remove(replaces);
+      setActiveId(threadId);
+
+      // The model in force for THIS turn, captured now — changing the dropdown
+      // while an answer streams must not relabel the answer already in flight.
+      const turnModel = model;
+      setStreaming({ text: "", tools: [], model: turnModel });
       setBusy(true);
       const controller = new AbortController();
       abortRef.current = controller;
-      const patch = (fn: (b: Bubble) => Bubble) =>
-        setBubbles((prev) => prev.map((b, i) => (i === assistantIdx.current ? fn(b) : b)));
+      let streamed = "";
       try {
         // A secured Cloud-Function proxy verifies the caller's Firebase ID token.
         const authToken = PROXY_URL ? (await auth.getIdToken()) ?? undefined : undefined;
         const mod = await import("../ai/chatClient.ts");
         const updated = await mod.runChat(
-          historyRef.current,
+          prior,
           text,
-          { ...settings, authToken },
+          { ...settings, model: turnModel, authToken },
           ctx,
           {
-            onTextDelta: (t) => patch((b) => ({ ...b, text: b.text + t })),
-            onToolStart: (name) => patch((b) => ({ ...b, tools: [...b.tools, TOOL_LABEL[name] ?? name] })),
+            onTextDelta: (t) => {
+              streamed += t;
+              setStreaming((s) => (s ? { ...s, text: s.text + t } : s));
+            },
+            onToolStart: (name) =>
+              setStreaming((s) => (s ? { ...s, tools: [...s.tools, toolLabel(name)] } : s)),
           },
           controller.signal,
+          // What the window left out. The model is told the same thing the
+          // transcript's boundary marker tells the user, so it can say "that's
+          // outside what I was given" instead of confabulating around the gap.
+          { prunedTurns: replay.omittedTurns },
         );
-        historyRef.current = updated;
-        patch((b) => (b.text ? b : { ...b, text: "(no reply)" }));
+        // Everything after the question we already stored. Each assistant message
+        // is stamped with the model that wrote it — that stamp is what makes a
+        // mid-thread model switch legible instead of invisible.
+        const fresh = messagesAfter(updated, text, prior.length);
+        const answered = appendMessages(
+          withQuestion,
+          fresh.length > 0 ? fresh : [{ role: "assistant", content: "(no reply)" }],
+          turnModel,
+          Date.now(),
+        );
+        if (threadsRef.current.some((t) => t.id === threadId)) {
+          commit(upsertThread(threadsRef.current, answered), answered);
+        } else {
+          setNotice(DELETED_MID_FLIGHT);
+        }
       } catch (e) {
         const aborted = controller.signal.aborted || (e instanceof DOMException && e.name === "AbortError");
         if (aborted) {
           // A stop still consumed the upstream call, but the user got nothing
           // useful — don't bill the local counter for it either.
           if (metered) releaseAiMessage();
-          // Keep whatever streamed before the stop.
-          patch((b) => ({ ...b, text: b.text ? `${b.text} …(stopped)` : "(stopped)" }));
+          // Keep whatever streamed before the stop, as its own turn: it is part
+          // of the conversation, and the transcript is the record of what was said.
+          const stopped = appendTurn(
+            withQuestion,
+            aiTurn("assistant", streamed ? `${streamed} …(stopped)` : "(stopped)", turnModel),
+            Date.now(),
+          );
+          // Same rule as the success path: if the conversation was deleted while
+          // this ran, it stays deleted.
+          if (threadsRef.current.some((t) => t.id === threadId)) {
+            commit(upsertThread(threadsRef.current, stopped), stopped);
+          }
         } else {
           const quotaHit = e instanceof Error && e.name === "QuotaError";
           // Give the optimistic message back unless the SERVER said we're out —
@@ -300,32 +782,97 @@ export function ChatPanel({
           // A quota block isn't retryable — offering "Retry" would just fail again.
           setOutOfQuota(quotaHit);
           setRetryText(quotaHit ? null : text);
-          // Roll back the just-added user + empty assistant bubbles; restore the input.
-          setBubbles((prev) => prev.slice(0, Math.max(0, assistantIdx.current - 1)));
+          // Roll the question back out of the saved conversation and put it back
+          // in the input: an unanswered question sitting in a saved conversation
+          // is worse than no question at all. Surgically, against the list as it
+          // is NOW — a rename, another conversation's turn, or a delete that
+          // happened while this request was in flight all survive — and mirrored
+          // to the account, so the question doesn't come back at the next
+          // sign-in.
+          const roll = rollbackSend(threadsRef.current, threadId, priorThread);
+          if (roll.changed) {
+            commit(roll.threads, roll.push);
+            for (const id of roll.remove) syncRef.current.remove(id);
+            // If the question had just opened a brand-new conversation, that
+            // conversation never existed — go back to whatever was selected.
+            // Only when the panel is still on the same chart and the same
+            // conversation: switching person already chose what to show.
+            if (subjectRef.current === subjectAtSend && activeIdRef.current === threadId) {
+              setActiveId(priorThread ? priorThread.id : activeBefore);
+            }
+          }
           setInput(text);
         }
       } finally {
         abortRef.current = null;
+        setStreaming(null);
         setBusy(false);
-        requestAnimationFrame(() => threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight }));
+        scrollDown();
       }
     },
-    [busy, ctx, settings, auth],
+    [auth, blocked, busy, commit, ctx, metered, model, noteAiMessage, releaseAiMessage, scrollDown, settings, subjectKey],
   );
 
-  const stop = () => abortRef.current?.abort();
-  const newChat = () => {
-    stop();
-    historyRef.current = [];
-    setBubbles([]);
-    setError(null);
-    setRetryText(null);
-    // Clear the latch too. The server stamps "quota_exceeded" on its fail-CLOSED
-    // path as well as a genuine limit, so a Firestore blip used to switch the
-    // advisor off for the rest of the session with no way back but a reload.
-    setOutOfQuota(false);
-    setInput("");
-  };
+  useEffect(scrollDown, [turns.length, scrollDown]);
+
+  // ── shared pieces ──────────────────────────────────────────────────────────
+
+  // What deleting actually does, said accurately.
+  //
+  // Deletion propagates to the account only while signed IN: nothing records a
+  // deletion made while signed out, so the account's copy is still there and
+  // comes back at the next sign-in. Rather than promise "for good" and be wrong,
+  // the confirmation says what will happen. (The alternative — a tombstone
+  // queued locally and replayed on the next sign-in — belongs in the sync layer,
+  // not here; it is noted as a follow-up.)
+  const signedOutWithAccount = Boolean(auth.enabled && !auth.user);
+  const deletePrompt = signedOutWithAccount ? "Delete here? Your account keeps its copy." : "Delete for good?";
+  const deleteHint = signedOutWithAccount
+    ? "You're signed out, so this only removes it from this device — your account's copy comes back the next time you sign in. Sign in first to delete it everywhere."
+    : undefined;
+
+  const threadListNode = (
+    <ThreadList
+      threads={sortThreads(visibleThreads).map((t) => ({
+        id: t.id,
+        title: titleFor(t),
+        updatedAt: t.updatedAt,
+        pinned: t.pinned === true,
+      }))}
+      activeId={activeId}
+      onSelect={selectThread}
+      onRename={rename}
+      onPin={pin}
+      onDelete={remove}
+      onNew={newChat}
+      deletePrompt={deletePrompt}
+      deleteHint={deleteHint}
+    />
+  );
+
+  const transcriptNode = (
+    <Transcript
+      rows={rows}
+      turns={turns}
+      streaming={streaming}
+      showBylines={mixedVoices}
+      innerRef={threadRef}
+    />
+  );
+
+  const notices = [
+    notice,
+    unsavedNote(unsaved, Boolean(auth.enabled && auth.user)),
+    sync.syncError
+      ? `Your saved conversations are on this device. Syncing them to your account failed: ${sync.syncError}`
+      : null,
+  ].filter((s): s is string => Boolean(s));
+
+  const noticeNode = notices.length > 0 && (
+    <div className="ask-note" style={{ textAlign: "left", marginTop: 8 }}>
+      {notices.join(" ")}
+    </div>
+  );
 
   // ── Not configured / not consented → offline deterministic advisor ─────────
   // No key wall: the same input answers questions through the deterministic
@@ -347,30 +894,11 @@ export function ChatPanel({
         </div>
         <p style={{ margin: "10px 0 0", fontSize: 13.5, color: "var(--muted)", lineHeight: 1.55 }}>
           Ask in your own words — answers come straight from the engine on your device. Same question, same answer,
-          every time. Nothing leaves your browser.
+          every time. Nothing leaves your browser. Your conversations are kept here, so you can pick one up later.
         </p>
 
-        {offlineExchanges.length > 0 && (
-          <div className="qa-thread" style={{ marginTop: 12 }}>
-            {offlineExchanges.map((ex) => (
-              <div className="qa-pair" key={ex.id}>
-                <div className="qa-q">{ex.question}</div>
-                <div className="qa-a">
-                  <div className="qa-a-title">{ex.answer.title}</div>
-                  {ex.answer.paragraphs.map((p, i) => (
-                    <p key={i}>{p}</p>
-                  ))}
-                  {ex.answer.action?.pickIso && (
-                    <Link className="btn-text" style={{ paddingLeft: 0 }} to={`/day/${ex.answer.action.pickIso}`}>
-                      Open that day's full reading ›
-                    </Link>
-                  )}
-                  <div style={{ fontSize: 10.5, color: "var(--faint)", marginTop: 4 }}>Offline advisor — deterministic, no AI</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {visibleThreads.length > 0 && threadListNode}
+        {turns.length > 0 && transcriptNode}
 
         <div className="qa-input-row" style={{ marginTop: 10 }}>
           <input
@@ -385,7 +913,9 @@ export function ChatPanel({
           <button className="btn qa-send" disabled={!input.trim()} onClick={() => askOffline(input)}>Ask</button>
         </div>
 
-        {offlineExchanges.length === 0 && (
+        {noticeNode}
+
+        {turns.length === 0 && (
           <div className="qa-suggest">
             {offlineChips.map((s) => (
               <button key={s} className="chip ghost" onClick={() => askOffline(s)}>{s}</button>
@@ -399,11 +929,12 @@ export function ChatPanel({
             <p style={{ margin: "10px 0 0", fontSize: 13.5, color: "var(--muted)", lineHeight: 1.55 }}>
               Ask open-ended questions and get a conversational explanation. The AI is a narrator over this engine — it
               <b> never calculates</b>; it calls the same deterministic tools you see here and cites what they return.
+              It picks up in the conversation you're already in.
             </p>
             <div style={{ margin: "12px 0", padding: "10px 12px", background: "var(--warn-bg)", border: "1px solid var(--warn-border)", borderRadius: 10, fontSize: 12.5, color: "var(--warn-ink)", lineHeight: 1.5 }}>
               <b>Before you start:</b> chatting sends the following to Anthropic's Claude so it can explain your reading:
               <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-                <li>your question, and the earlier messages in that chat;</li>
+                <li>your question, and the earlier messages in that chat — including anything you asked the offline advisor in the same conversation;</li>
                 <li>
                   your <i>derived chart summary</i> — Day Master, elements, pillars and the scores this app already
                   computed on your device. <b>Never</b> your birth date, time or city;
@@ -471,9 +1002,6 @@ export function ChatPanel({
               {quota.remaining} left today
             </span>
           )}
-          {bubbles.length > 0 && (
-            <button className="btn-text" onClick={newChat}>New chat</button>
-          )}
           <button className="btn-text" style={{ paddingRight: 0 }} onClick={() => setShowSettings((s) => !s)}>
             {showSettings ? "Close" : "Settings"}
           </button>
@@ -490,6 +1018,11 @@ export function ChatPanel({
               ))}
             </select>
           </label>
+          <span style={{ fontSize: 11.5, color: "var(--faint)" }}>
+            Switching model keeps this conversation. The transcript is stored on your device and replayed with every
+            question, so whichever model you pick carries on from the same context — and the reply is marked with the
+            model that wrote it.
+          </span>
           {!PROXY_URL && (
             <button
               className="btn-text"
@@ -501,41 +1034,22 @@ export function ChatPanel({
           )}
           <span style={{ fontSize: 11.5, color: "var(--faint)" }}>
             {PROXY_URL ? "Using a hosted relay — no key stored." : "Your key is stored only in this browser."}
+            {" "}Your saved conversations stay on this device
+            {auth.enabled && auth.user ? " and in your account." : "."}
           </span>
         </div>
       )}
 
-      <div className="qa-thread" ref={threadRef} style={{ maxHeight: 420, overflowY: "auto", marginTop: 12 }}>
-        {bubbles.length === 0 && (
-          <p style={{ fontSize: 13, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.55 }}>
-            Ask me anything about your timing — I'll pull the numbers from the engine and explain them.
-          </p>
-        )}
-        {bubbles.map((b, i) =>
-          b.role === "user" ? (
-            <div className="qa-pair" key={i}>
-              <div className="qa-q">{b.text}</div>
-            </div>
-          ) : (
-            <div className="qa-a" key={i} style={{ marginBottom: 12 }}>
-              {b.tools.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 6 }}>
-                  {b.tools.map((t, j) => (
-                    <span key={j} style={{ fontSize: 11, color: "var(--muted)", border: "1px solid var(--hairline)", borderRadius: 999, padding: "1px 8px" }}>
-                      ◷ {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {b.text ? (
-                <RichText text={b.text} />
-              ) : (
-                <p style={{ margin: 0, color: "var(--muted)", fontStyle: "italic" }}>thinking…</p>
-              )}
-            </div>
-          ),
-        )}
-      </div>
+      {visibleThreads.length > 0 && threadListNode}
+
+      {turns.length === 0 && !streaming ? (
+        <p style={{ fontSize: 13, color: "var(--muted)", margin: "12px 0 0", lineHeight: 1.55 }}>
+          Ask me anything about your timing — I'll pull the numbers from the engine and explain them. This conversation
+          is saved on your device, so you can come back to it.
+        </p>
+      ) : (
+        transcriptNode
+      )}
 
       {error && (
         <div className="warn" style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -573,7 +1087,9 @@ export function ChatPanel({
         </p>
       )}
 
-      {bubbles.length === 0 && (
+      {noticeNode}
+
+      {turns.length === 0 && (
         <div className="qa-suggest">
           {chips.map((c) => (
             <button key={c.label} className="chip ghost" disabled={busy || blocked} onClick={() => send(c.prompt)}>
@@ -586,6 +1102,116 @@ export function ChatPanel({
       <div className="ask-note" style={{ marginTop: 10 }}>
         The AI narrates the engine's deterministic output — it never computes pillars, scores or dates itself. Tendencies, not predictions. One input among many.
       </div>
+    </div>
+  );
+}
+
+// ── the transcript ───────────────────────────────────────────────────────────
+
+/**
+ * The saved conversation, plus the two markers that keep it honest: where the
+ * replay window cuts, and where the answering model changed. Both are rendered
+ * in the flow, at the point they happened — never as a footnote at the bottom,
+ * and never omitted.
+ */
+function Transcript({
+  rows,
+  turns,
+  streaming,
+  showBylines,
+  innerRef,
+}: {
+  rows: ReturnType<typeof buildTranscriptRows>;
+  turns: ChatTurn[];
+  streaming: { text: string; tools: string[]; model: string } | null;
+  showBylines: boolean;
+  innerRef: RefObject<HTMLDivElement>;
+}) {
+  return (
+    <div className="qa-thread" ref={innerRef} style={{ maxHeight: 420, overflowY: "auto", marginTop: 12 }}>
+      {rows.map((row, i) => {
+        if (row.kind === "boundary") {
+          return (
+            <div className="chat-marker" key={`b${i}`}>
+              <span>{boundaryNote(row.omittedTurns)}</span>
+            </div>
+          );
+        }
+        if (row.kind === "voice") {
+          return (
+            <div className="chat-marker" key={`v${i}`}>
+              <span>{voiceNote(row.label, row.offline)}</span>
+            </div>
+          );
+        }
+        const turn = turns[row.index];
+        if (!turn || !isVisible(turn)) return null;
+        return <TurnView key={turn.id} turn={turn} showByline={showBylines} />;
+      })}
+      {streaming && (
+        <div className="qa-a">
+          <ToolChips labels={streaming.tools} />
+          {streaming.text ? (
+            <RichText text={streaming.text} />
+          ) : (
+            <p style={{ margin: 0, color: "var(--muted)", fontStyle: "italic" }}>thinking…</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ToolChips({ labels }: { labels: string[] }) {
+  if (labels.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 6 }}>
+      {labels.map((t, j) => (
+        <span key={j} style={{ fontSize: 11, color: "var(--muted)", border: "1px solid var(--hairline)", borderRadius: 999, padding: "1px 8px" }}>
+          ◷ {t}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function TurnView({ turn, showByline }: { turn: ChatTurn; showByline: boolean }) {
+  if (turn.kind === "offline") {
+    return (
+      <div className="qa-pair">
+        <div className="qa-q">{turn.question}</div>
+        <div className="qa-a">
+          <div className="qa-a-title">{turn.answer.title}</div>
+          {turn.answer.paragraphs.map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+          {turn.answer.action?.pickIso && (
+            <Link className="btn-text" style={{ paddingLeft: 0 }} to={`/day/${turn.answer.action.pickIso}`}>
+              Open that day's full reading ›
+            </Link>
+          )}
+          <div style={{ fontSize: 10.5, color: "var(--faint)", marginTop: 4 }}>Offline advisor — deterministic, no AI</div>
+        </div>
+      </div>
+    );
+  }
+  if (turn.role === "user") {
+    return (
+      <div className="qa-pair">
+        <div className="qa-q">{messageText(turn.content)}</div>
+      </div>
+    );
+  }
+  const text = messageText(turn.content);
+  return (
+    <div className="qa-a" style={{ marginBottom: 12 }}>
+      <ToolChips labels={toolLabels(turn.content)} />
+      {text ? <RichText text={text} /> : null}
+      {showByline && turn.model && (
+        <div className="chat-byline">
+          <span className="dot">{modelLabel(turn.model)}</span>
+        </div>
+      )}
     </div>
   );
 }

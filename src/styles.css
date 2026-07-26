@@ -3253,3 +3253,198 @@ button {
   font-weight: 600;
 }
 /* ── end day-facts group block ──────────────────────────────────────────── */
+
+/* ── chat memory: thread list + transcript markers ───────────────────────────
+   The AI advisor keeps its conversations. Two jobs here:
+   (1) a compact, collapsible list of saved conversations that never crowds the
+       transcript out on a phone — the disclosure stays one line closed;
+   (2) markers INSIDE the transcript. Where the replay window cuts, and where the
+       model changed mid-conversation, the reader is told so in the place it
+       happened. Both are deliberately the quietest thing on the card: they are
+       footnotes about the machinery, not part of the reading. */
+
+.chat-threadbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.chat-threads {
+  /* Basis, not `flex: 1`: below ~16rem the list would be narrower than its own
+     titles, so "New chat" wraps to its own line instead of squeezing it. */
+  flex: 1 1 16rem;
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--surface-1);
+}
+.chat-threads > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--muted);
+  min-height: 38px;
+}
+.chat-threads > summary::-webkit-details-marker {
+  display: none;
+}
+.chat-threads > summary::after {
+  content: "▾";
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--faint);
+}
+.chat-threads[open] > summary::after {
+  content: "▴";
+}
+.chat-threads > summary:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+.chat-threads-current {
+  color: var(--ink);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.chat-threads-count {
+  flex: none;
+  color: var(--faint);
+  font-size: 11.5px;
+}
+.chat-thread-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 6px 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.chat-thread-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 5px 5px 8px;
+  border-radius: 8px;
+}
+.chat-thread-row.on {
+  background: var(--surface-2);
+}
+.chat-thread-open {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.chat-thread-open .when {
+  display: block;
+  font-size: 11px;
+  color: var(--faint);
+  font-weight: 400;
+}
+.chat-thread-row.on .chat-thread-open {
+  font-weight: 600;
+}
+.chat-thread-acts {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+.chat-thread-act {
+  flex: none;
+  background: none;
+  border: 0;
+  padding: 4px 6px;
+  min-height: 32px;
+  font-size: 11.5px;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 6px;
+}
+.chat-thread-act:hover {
+  color: var(--ink);
+  background: var(--hairline);
+}
+.chat-thread-act.danger {
+  color: var(--cinnabar);
+}
+.chat-thread-rename {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--hairline-strong);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* On a phone the title and its two verbs cannot share a line without shredding
+   the title into one word per row. Give the title the full width and drop the
+   verbs beneath it, still right-aligned. */
+@media (max-width: 560px) {
+  .chat-thread-row {
+    flex-wrap: wrap;
+    padding-bottom: 7px;
+  }
+  .chat-thread-open {
+    flex-basis: 100%;
+  }
+  .chat-thread-acts {
+    margin-left: auto;
+  }
+}
+
+/* A footnote in the flow of the conversation. Hairlines either side so it reads
+   as a seam between turns rather than as something anyone said. */
+.chat-marker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--faint);
+  margin: 2px 0;
+}
+.chat-marker::before,
+.chat-marker::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+.chat-marker span {
+  flex: none;
+  max-width: 62ch;
+  text-align: center;
+}
+
+/* Who said this turn, and how. Sits under the assistant's words, not over them. */
+.chat-byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.chat-byline .dot::before {
+  content: "·";
+  margin-right: 6px;
+}
+/* ── end chat memory block ──────────────────────────────────────────────── */

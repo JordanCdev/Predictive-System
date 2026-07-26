@@ -1,8 +1,9 @@
 /**
  * Data portability — export and restore everything this app knows about you.
  *
- * Why this exists: the app stores your cast of people and your entire decision
- * journal in this browser's localStorage. Clearing site data (or switching
+ * Why this exists: the app stores your cast of people, your entire decision
+ * journal and every AI conversation you have had with it in this browser's
+ * localStorage. Clearing site data (or switching
  * browser, or a private window closing) destroys all of it silently. A backup
  * file is the only honest answer to that, and it is FREE — losing your data is
  * not a paid feature, and portability is a right, not an upsell.
@@ -16,19 +17,30 @@
  * SECURITY: `wei_ai_key` is the user's own API secret. It is never read, never
  * exported and never written by this module — a backup file is something people
  * email themselves. Only the data keys below are in scope.
+ *
+ * PRIVACY, on the AI conversations added in v3: a saved conversation is made of
+ * the user's own questions and the readings they were given. It is their data,
+ * exactly like their journal, so it belongs in their backup and in their own
+ * account — and nowhere else. It is NOT a secret the way the API key is, so it
+ * is exported; but it is personal, so the panel says plainly that the file is
+ * readable by anyone who gets hold of it.
  */
 import { VERSIONS } from "../engine/version.ts";
+import { THREADS_STORE_KEY, parseThreads, sortThreads, type ChatThread } from "./chat/threadStore.ts";
 import { isReflection, lastModified, type JournalEntry, type Reflection } from "./journalStore.ts";
 import { PeopleState, StoredPerson, activePerson, migrate } from "./profile/peopleStore.ts";
 
 /**
  * The bump-me-when-the-shape-changes number written into every export.
  *
- * v1 → v2: daily reflections joined the file. Every v1 file is still accepted
- * exactly as before — an absent `reflections` key just reads as an empty list —
- * and only versions ABOVE the current one are refused.
+ * v1 → v2: daily reflections joined the file.
+ * v2 → v3: saved AI conversations joined the file.
+ *
+ * Every older file is still accepted exactly as before — an absent `reflections`
+ * or `threads` key just reads as an empty list — and only versions ABOVE the
+ * current one are refused.
  */
-export const BACKUP_SCHEMA_VERSION = 2;
+export const BACKUP_SCHEMA_VERSION = 3;
 
 export const PEOPLE_KEY = "wei_people_v1";
 /** Legacy single profile. Read so an old install still exports, written on
@@ -39,8 +51,14 @@ export const JOURNAL_KEY = "wei_journal_v1";
 export const REFLECTIONS_KEY = "wei_reflections_v1";
 /** Owned by the priorities feature; this module only ever passes it through. */
 export const PRIORITIES_KEY = "wei_priorities_v1";
+/** Saved AI conversations. Re-exported from chat/threadStore.ts rather than
+ *  restated, so the two can never drift apart the way a copied literal would. */
+export const THREADS_KEY = THREADS_STORE_KEY;
 
-/** Keys that must NEVER appear in a backup. `wei_ai_key` is an API secret. */
+/** Keys that must NEVER appear in a backup. `wei_ai_key` is an API secret.
+ *  Note what is NOT here: the conversations themselves. A transcript is the
+ *  user's own writing, not a credential, so it travels in their backup — see the
+ *  privacy note at the top of this file. */
 export const EXCLUDED_KEYS = ["wei_ai_key", "wei_ai_consent", "wei_ai_model"] as const;
 
 /** A restore file bigger than this is not a Wéi backup — refuse before parsing. */
@@ -65,6 +83,8 @@ export interface BackupFile {
   journal: JournalEntry[];
   /** Daily reflections. Absent from v1 files, which read as an empty list. */
   reflections: Reflection[];
+  /** Saved AI conversations. Absent from v1 and v2 files, which read as empty. */
+  threads: ChatThread[];
   /** Opaque pass-through of the priority profile, or null when there isn't one. */
   priorities: unknown;
 }
@@ -74,6 +94,10 @@ export interface BackupSummary {
   journal: number;
   journalWithOutcomes: number;
   reflections: number;
+  /** Saved AI conversations in the file. Named in the UI preview, because a file
+   *  that silently carries — or silently lacks — someone's chat history is
+   *  exactly the kind of understatement a restore confirmation must not make. */
+  threads: number;
   hasPriorities: boolean;
   exportedAt: string | null;
   appVersion: string | null;
@@ -106,6 +130,12 @@ export interface ApplySummary {
   /** Same-day duplicates where the local copy was newer and was kept. */
   reflectionsKept: number;
   reflectionsTotal: number;
+  threadsAdded: number;
+  /** Local conversations replaced by a more recently updated incoming copy. */
+  threadsUpdated: number;
+  /** Same-id conversations where the local copy was newer and was kept. */
+  threadsKept: number;
+  threadsTotal: number;
   priorities: "restored" | "kept" | "cleared" | "absent";
   /** Non-null when the browser refused to persist (private mode / quota). The
    *  caller must tell the user the restore did not stick. */
@@ -169,6 +199,22 @@ function normaliseReflections(v: unknown): Reflection[] {
   return Array.isArray(v) ? v.filter(isReflection) : [];
 }
 
+/** Saved conversations go through the thread store's OWN defensive reader — the
+ *  same one the chat panel boots with — for the same reason reflections go
+ *  through `isReflection`: a backup must never smuggle in a thread the app
+ *  itself would refuse to load, and it must never invent a second opinion about
+ *  what a valid thread is. Corrupt rows are dropped, not thrown on. */
+function normaliseThreads(v: unknown): ChatThread[] {
+  return parseThreads(v);
+}
+
+/** When a thread was last touched. Tolerant of a missing or junk stamp — an
+ *  undated thread sorts oldest and loses a merge, rather than throwing. */
+export function threadUpdatedAt(t: ChatThread): number {
+  const v: unknown = t.updatedAt;
+  return typeof v === "number" && Number.isFinite(v) ? v : 0;
+}
+
 /** `migrate()` can hand back the shared EMPTY_PEOPLE constant, so anything that
  *  ends up in a long-lived backup object gets its own array first. A backup must
  *  never alias live app state. */
@@ -187,6 +233,7 @@ export function buildBackup(opts: { storage?: StorageLike | null; now?: Date } =
   const people = cloneState(migrate(readJson(store, PEOPLE_KEY), readJson(store, LEGACY_PERSON_KEY)));
   const journal = normaliseJournal(readJson(store, JOURNAL_KEY));
   const reflections = normaliseReflections(readJson(store, REFLECTIONS_KEY));
+  const threads = normaliseThreads(readJson(store, THREADS_KEY));
   const priorities = readJson(store, PRIORITIES_KEY);
   return {
     schemaVersion: BACKUP_SCHEMA_VERSION,
@@ -196,8 +243,17 @@ export function buildBackup(opts: { storage?: StorageLike | null; now?: Date } =
     people,
     journal,
     reflections,
+    threads,
     priorities: priorities ?? null,
   };
+}
+
+/** How many saved conversations this device holds right now. Exported so the
+ *  panel can warn before a Replace erases them, without the panel needing to
+ *  know the thread store's own API. */
+export function localThreadCount(opts: { storage?: StorageLike | null } = {}): number {
+  const store = opts.storage === undefined ? browserStorage() : opts.storage;
+  return normaliseThreads(readJson(store, THREADS_KEY)).length;
 }
 
 export function summarise(data: BackupFile): BackupSummary {
@@ -206,6 +262,7 @@ export function summarise(data: BackupFile): BackupSummary {
     journal: data.journal.length,
     journalWithOutcomes: data.journal.filter((e) => e.outcome).length,
     reflections: data.reflections.length,
+    threads: data.threads.length,
     hasPriorities: data.priorities !== null && data.priorities !== undefined,
     exportedAt: typeof data.exportedAt === "string" ? data.exportedAt : null,
     appVersion: typeof data.appVersion === "string" ? data.appVersion : null,
@@ -262,10 +319,12 @@ export function parseBackup(text: string): ParseResult {
 
   const hasPeople = !!raw.people && typeof raw.people === "object" && Array.isArray((raw.people as PeopleState).people);
   const hasJournal = Array.isArray(raw.journal);
-  // v1 files legitimately have no `reflections` key at all — that is not damage,
-  // it just reads as an empty list. A reflections-only v2 file IS restorable.
+  // v1 files legitimately have no `reflections` key at all, and v1/v2 files have
+  // no `threads` key — that is not damage, it just reads as an empty list. A
+  // reflections-only or conversations-only file IS restorable.
   const hasReflections = Array.isArray(raw.reflections);
-  if (!hasPeople && !hasJournal && !hasReflections) {
+  const hasThreads = Array.isArray(raw.threads);
+  if (!hasPeople && !hasJournal && !hasReflections && !hasThreads) {
     return { ok: false, error: "That file is valid JSON but carries no people and no journal, so there's nothing to restore." };
   }
 
@@ -274,7 +333,8 @@ export function parseBackup(text: string): ParseResult {
   const people = cloneState(migrate(raw.people ?? null, null));
   const journal = normaliseJournal(raw.journal);
   const reflections = normaliseReflections(raw.reflections);
-  if (people.people.length === 0 && journal.length === 0 && reflections.length === 0) {
+  const threads = normaliseThreads(raw.threads);
+  if (people.people.length === 0 && journal.length === 0 && reflections.length === 0 && threads.length === 0) {
     return { ok: false, error: "Nothing in that file could be read as a person or a journal entry. It may be damaged." };
   }
 
@@ -287,6 +347,7 @@ export function parseBackup(text: string): ParseResult {
     people,
     journal,
     reflections,
+    threads,
     priorities: raw.priorities ?? null,
   };
   return { ok: true, data, summary: summarise(data) };
@@ -409,6 +470,57 @@ export function mergeReflections(
   return { merged, counts };
 }
 
+/**
+ * Merge saved AI conversations by thread id, newest `updatedAt` winning.
+ *
+ * Last-writer-wins per thread is right here for the same reason it is right for
+ * reflections: a thread carries exactly one edit stamp, re-stamped whenever a
+ * turn is appended, so "newer updatedAt" IS "has more of the conversation in
+ * it". There is nothing scarce to protect the way a logged outcome is, because
+ * a longer transcript is a superset of a shorter one.
+ *
+ * What this merge will never do is DROP a thread. A conversation the file has
+ * never seen stays exactly where it is — restoring an old backup must not cost
+ * the user last night's chat. On a dead tie the incoming copy wins, matching the
+ * convention everywhere else in this module.
+ *
+ * WHY THIS EXISTS ALONGSIDE `threadStore.mergeThreads`, which the cloud sync
+ * uses: that one answers "which list", this one also answers "and what happened
+ * to each row", because a restore has to be able to TELL the user what it did.
+ * They agree on the rule that decides the data (newest wins, nothing dropped)
+ * and on the resulting order — `sortThreads` is shared, so a restored list and a
+ * synced list read identically, pinned conversations first.
+ */
+export function mergeThreads(
+  local: ChatThread[],
+  incoming: ChatThread[],
+): { merged: ChatThread[]; counts: MergeCounts } {
+  const byId = new Map<string, ChatThread>();
+  const order: string[] = [];
+  for (const t of local) {
+    if (!byId.has(t.id)) order.push(t.id);
+    byId.set(t.id, t);
+  }
+  const counts: MergeCounts = { added: 0, updated: 0, kept: 0 };
+  for (const t of incoming) {
+    const existing = byId.get(t.id);
+    if (!existing) {
+      byId.set(t.id, t);
+      order.push(t.id);
+      counts.added += 1;
+    } else if (threadUpdatedAt(t) >= threadUpdatedAt(existing)) {
+      byId.set(t.id, t);
+      counts.updated += 1;
+    } else {
+      counts.kept += 1;
+    }
+  }
+  // Insertion order after a merge interleaves two histories; the store's own
+  // list order is what the panel reads, so hand back that (the same defect
+  // mergeReflections had to fix for the day list).
+  return { merged: sortThreads(order.map((id) => byId.get(id)!)), counts };
+}
+
 export interface PeopleMergeCounts extends MergeCounts {
   /** Incoming people whose id collided with a DIFFERENT human here, and who were
    *  therefore imported under a fresh id instead of overwriting anyone. Counted
@@ -501,9 +613,10 @@ export function mergePeople(
  * Write a parsed backup into storage.
  *
  * MERGE (the default) is additive and never destroys: nothing local disappears.
- * REPLACE overwrites the cast, the journal and the priority profile with the
- * file's contents — the UI must have taken an explicit second confirmation
- * before calling it. Neither mode touches the AI keys.
+ * REPLACE overwrites the cast, the journal, the reflections, the saved AI
+ * conversations and the priority profile with the file's contents — the UI must
+ * have taken an explicit second confirmation, naming all of them, before calling
+ * it. Neither mode touches the AI keys.
  *
  * Never throws: a storage failure comes back as `storageError` so the caller can
  * be honest that the restore did not stick.
@@ -518,25 +631,31 @@ export function applyBackup(
   const localPeople = migrate(readJson(store, PEOPLE_KEY), readJson(store, LEGACY_PERSON_KEY));
   const localJournal = normaliseJournal(readJson(store, JOURNAL_KEY));
   const localReflections = normaliseReflections(readJson(store, REFLECTIONS_KEY));
+  const localThreads = normaliseThreads(readJson(store, THREADS_KEY));
   const incomingPriorities = data.priorities ?? null;
 
   let people: PeopleState;
   let journal: JournalEntry[];
   let reflections: Reflection[];
+  let threads: ChatThread[];
   let peopleCounts: PeopleMergeCounts;
   let journalCounts: MergeCounts;
   let reflectionCounts: MergeCounts;
+  let threadCounts: MergeCounts;
   let priorities: ApplySummary["priorities"];
 
   if (mode === "replace") {
     people = data.people;
     journal = data.journal;
     // Replace means the file's contents, exactly — so a v1 file (no reflections)
-    // leaves an empty list, the same way a file with no priorities clears them.
+    // or a v1/v2 file (no conversations) leaves an empty list, the same way a
+    // file with no priorities clears them. The panel warns before this happens.
     reflections = data.reflections;
+    threads = data.threads;
     peopleCounts = { added: data.people.people.length, updated: 0, kept: 0, importedAsNew: 0 };
     journalCounts = { added: data.journal.length, updated: 0, kept: 0 };
     reflectionCounts = { added: data.reflections.length, updated: 0, kept: 0 };
+    threadCounts = { added: data.threads.length, updated: 0, kept: 0 };
     priorities = incomingPriorities !== null ? "restored" : "cleared";
   } else {
     const p = mergePeople(localPeople, data.people);
@@ -544,12 +663,15 @@ export function applyBackup(
     // A merge is additive: a v1 file simply contributes no reflections, and
     // nothing local is ever removed by it.
     const r = mergeReflections(localReflections, data.reflections);
+    const t = mergeThreads(localThreads, data.threads);
     people = p.merged;
     journal = j.merged;
     reflections = r.merged;
+    threads = t.merged;
     peopleCounts = p.counts;
     journalCounts = j.counts;
     reflectionCounts = r.counts;
+    threadCounts = t.counts;
     // A merge never removes a priority profile the user already has; the file's
     // copy only fills a gap, so restoring an old backup can't wipe today's answers.
     const localPriorities = readRaw(store, PRIORITIES_KEY);
@@ -566,12 +688,16 @@ export function applyBackup(
   if (!store) {
     storageError = "This browser isn't letting the app store data, so nothing was saved.";
   } else {
-    // This is four separate writes, and a quota or private-mode throw can land
-    // between any two of them — leaving people restored but the journal not, for
-    // instance. So snapshot every key first and put them back on failure, rather
-    // than telling the user "nothing may have been kept" and hoping.
+    // This is several separate writes, and a quota or private-mode throw can
+    // land between any two of them — leaving people restored but the journal
+    // not, for instance. So snapshot every key first and put them back on
+    // failure, rather than telling the user "nothing may have been kept" and
+    // hoping. Every key written below must appear in this list.
     const before = new Map<string, string | null>(
-      [PEOPLE_KEY, LEGACY_PERSON_KEY, JOURNAL_KEY, REFLECTIONS_KEY, PRIORITIES_KEY].map((k) => [k, readRaw(store, k)]),
+      [PEOPLE_KEY, LEGACY_PERSON_KEY, JOURNAL_KEY, REFLECTIONS_KEY, THREADS_KEY, PRIORITIES_KEY].map((k) => [
+        k,
+        readRaw(store, k),
+      ]),
     );
     const touched: string[] = [];
     const put = (key: string, value: string) => {
@@ -590,6 +716,7 @@ export function applyBackup(
       else drop(LEGACY_PERSON_KEY);
       put(JOURNAL_KEY, JSON.stringify(journal));
       put(REFLECTIONS_KEY, JSON.stringify(reflections));
+      put(THREADS_KEY, JSON.stringify(threads));
       if (priorities === "restored") put(PRIORITIES_KEY, JSON.stringify(incomingPriorities));
       else if (priorities === "cleared") drop(PRIORITIES_KEY);
     } catch (e) {
@@ -624,6 +751,10 @@ export function applyBackup(
     reflectionsUpdated: reflectionCounts.updated,
     reflectionsKept: reflectionCounts.kept,
     reflectionsTotal: reflections.length,
+    threadsAdded: threadCounts.added,
+    threadsUpdated: threadCounts.updated,
+    threadsKept: threadCounts.kept,
+    threadsTotal: threads.length,
     priorities,
     storageError,
     storageRolledBack,
@@ -640,22 +771,25 @@ export function describeApply(s: ApplySummary): string {
       : "The restore didn't finish, and part of it may have been written before it failed.";
   }
   const reflectionsPhrase = (n: number) => `${n} ${n === 1 ? "reflection" : "reflections"}`;
+  const threadsPhrase = (n: number) => `${n} saved ${n === 1 ? "conversation" : "conversations"}`;
   if (s.mode === "replace") {
     bits.push(
-      `Replaced everything with the file: ${s.peopleTotal} ${s.peopleTotal === 1 ? "person" : "people"}, ${s.journalTotal} journal ${s.journalTotal === 1 ? "entry" : "entries"} and ${reflectionsPhrase(s.reflectionsTotal)}.`,
+      `Replaced everything with the file: ${s.peopleTotal} ${s.peopleTotal === 1 ? "person" : "people"}, ${s.journalTotal} journal ${s.journalTotal === 1 ? "entry" : "entries"}, ${reflectionsPhrase(s.reflectionsTotal)} and ${threadsPhrase(s.threadsTotal)}.`,
     );
   } else {
     bits.push(
-      `Merged in ${s.peopleAdded} new ${s.peopleAdded === 1 ? "person" : "people"}, ${s.journalAdded} new journal ${s.journalAdded === 1 ? "entry" : "entries"} and ${s.reflectionsAdded} new ${s.reflectionsAdded === 1 ? "reflection" : "reflections"}.`,
+      `Merged in ${s.peopleAdded} new ${s.peopleAdded === 1 ? "person" : "people"}, ${s.journalAdded} new journal ${s.journalAdded === 1 ? "entry" : "entries"}, ${s.reflectionsAdded} new ${s.reflectionsAdded === 1 ? "reflection" : "reflections"} and ${s.threadsAdded} new ${s.threadsAdded === 1 ? "conversation" : "conversations"}.`,
     );
     if (s.peopleImportedAsNew)
       bits.push(
         `${s.peopleImportedAsNew} of ${s.peopleImportedAsNew === 1 ? "them shared an internal id with someone already here but had different birth details, so your chart was kept and theirs was added" : "them shared internal ids with people already here but had different birth details, so your charts were kept and theirs were added"} separately.`,
       );
-    if (s.peopleUpdated || s.journalUpdated || s.reflectionsUpdated) bits.push(`${s.peopleUpdated + s.journalUpdated + s.reflectionsUpdated} existing ${s.peopleUpdated + s.journalUpdated + s.reflectionsUpdated === 1 ? "record was" : "records were"} updated from the file.`);
-    if (s.journalKept || s.reflectionsKept) bits.push(`${s.journalKept + s.reflectionsKept} of your own ${s.journalKept + s.reflectionsKept === 1 ? "entry was" : "entries were"} kept as the better copy.`);
+    const updated = s.peopleUpdated + s.journalUpdated + s.reflectionsUpdated + s.threadsUpdated;
+    if (updated) bits.push(`${updated} existing ${updated === 1 ? "record was" : "records were"} updated from the file.`);
+    const kept = s.journalKept + s.reflectionsKept + s.threadsKept;
+    if (kept) bits.push(`${kept} of your own ${kept === 1 ? "entry was" : "entries were"} kept as the better copy.`);
     bits.push(
-      `You now have ${s.peopleTotal} ${s.peopleTotal === 1 ? "person" : "people"}, ${s.journalTotal} journal ${s.journalTotal === 1 ? "entry" : "entries"} and ${reflectionsPhrase(s.reflectionsTotal)}.`,
+      `You now have ${s.peopleTotal} ${s.peopleTotal === 1 ? "person" : "people"}, ${s.journalTotal} journal ${s.journalTotal === 1 ? "entry" : "entries"}, ${reflectionsPhrase(s.reflectionsTotal)} and ${threadsPhrase(s.threadsTotal)}.`,
     );
   }
   if (s.priorities === "restored") bits.push("Your priority profile was restored.");

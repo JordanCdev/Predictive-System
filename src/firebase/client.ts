@@ -23,6 +23,7 @@ import {
 } from "firebase/firestore";
 import { firebaseConfig } from "./config.ts";
 import type { Person } from "../ui/PersonalizeCard.tsx";
+import type { ChatThread } from "../ui/chat/threadStore.ts";
 import type { JournalEntry } from "../ui/journalStore.ts";
 import type { UsageRecord } from "../billing/plans.ts";
 import type { PeopleState } from "../ui/profile/peopleStore.ts";
@@ -124,7 +125,8 @@ export function watchUsage(uid: string, cb: (record: UsageRecord | null) => void
 }
 
 /** Generic per-user collection helpers for the remaining spec collections
- *  (goals, saved_events, saved_reports, verification_runs, ai_threads). */
+ *  (goals, saved_events, saved_reports, verification_runs). `ai_threads` is now
+ *  live and has typed helpers below, built on these. */
 export async function listDocs<T>(uid: string, coll: string): Promise<T[]> {
   const snap = await getDocs(collection(ensure().db, "users", uid, coll));
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as T);
@@ -134,4 +136,50 @@ export async function putDoc(uid: string, coll: string, id: string, data: object
 }
 export async function removeDoc(uid: string, coll: string, id: string): Promise<void> {
   await deleteDoc(doc(ensure().db, "users", uid, coll, safeId(id)));
+}
+
+// ── saved AI conversations ───────────────────────────────────────────────────
+//
+// users/{uid}/ai_threads/{threadId} → { thread, updatedAt: <server> }.
+//
+// A collection, not one document, because unlike the cast or the journal a
+// conversation grows a turn at a time and there can be many of them: writing the
+// whole history back on every reply would be a large upload per keystroke-ish
+// turn, and one bad thread would risk the rest.
+//
+// TWO REASONS THE THREAD IS NESTED UNDER A `thread` FIELD rather than spread at
+// the top level (the same shape `saveProfile` uses for `person`):
+//   1. putDoc() stamps `updatedAt: serverTimestamp()` on whatever it is given.
+//      Spread flat, that would CLOBBER the thread's own numeric `updatedAt` —
+//      the exact field the merge orders by — and read it back as a Firestore
+//      Timestamp, so every cloud thread would look undated and lose every merge.
+//      Nested, the server stamp sits beside the thread and the thread's own
+//      stamp survives a round trip byte-identical.
+//   2. Document ids go through safeId(), which rewrites '/'. The thread's real
+//      id stays inside the payload, so it is never quietly renamed.
+export const AI_THREADS = "ai_threads";
+
+interface ThreadDoc {
+  id: string;
+  thread?: unknown;
+}
+
+/** Every saved conversation in the account. Rows that aren't objects are skipped
+ *  rather than thrown on — one bad document must not cost the user the rest. */
+export async function listThreadsCloud(uid: string): Promise<ChatThread[]> {
+  const docs = await listDocs<ThreadDoc>(uid, AI_THREADS);
+  const out: ChatThread[] = [];
+  for (const d of docs) {
+    const t = d.thread as { id?: unknown } | null | undefined;
+    if (t && typeof t === "object" && !Array.isArray(t) && typeof t.id === "string" && t.id) out.push(t as ChatThread);
+  }
+  return out;
+}
+
+export async function saveThreadCloud(uid: string, thread: ChatThread): Promise<void> {
+  await putDoc(uid, AI_THREADS, thread.id, { thread });
+}
+
+export async function deleteThreadCloud(uid: string, id: string): Promise<void> {
+  await removeDoc(uid, AI_THREADS, id);
 }
