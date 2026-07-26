@@ -3046,8 +3046,10 @@ button {
       where cinnabar is the whole point of the mark.
    ========================================================================== */
 
+/* No margin here: inside the day-facts group the wrapper's `gap` owns the
+   rhythm, and this card is only ever rendered there. */
 .hexagram-card {
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 /* The lede: glyph on the left, names and attribution on the right. */
@@ -3204,12 +3206,11 @@ button {
   margin-top: 12px;
 }
 
-/* One rhythm, set in one place. The cards presently carry their own inline
-   top margins (12 / 18 / none), and an inline style can only be reached from a
-   stylesheet with !important. Their owners are dropping those margins; once
-   they are gone this can lose the flag and stay as a plain `margin-top: 0`. */
+/* One rhythm, set in one place: the wrapper's `gap` spaces the group, so no
+   card inside it carries a top margin of its own. Belt and braces for any card
+   that later arrives with one. */
 .day-facts > * {
-  margin-top: 0 !important;
+  margin-top: 0;
 }
 
 /* The group intro — frames the four as facts about the DATE, not readings of

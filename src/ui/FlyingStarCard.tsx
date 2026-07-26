@@ -123,8 +123,9 @@ export function FlyingStarCard({ civil }: { civil: FlyingStarCivilDate }) {
       ? "one palace up each day"
       : "one palace down each day";
 
+  // Spacing is owned by the .day-facts wrapper, not the card — see styles.css.
   return (
-    <div className="card" style={{ padding: 16, marginTop: 12 }}>
+    <div className="card" style={{ padding: 18 }}>
       <h3 className="section-title" style={{ margin: "0 0 10px" }}>
         Daily flying star · <span style={zh}>日家紫白</span>
       </h3>

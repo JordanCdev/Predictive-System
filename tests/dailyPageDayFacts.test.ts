@@ -57,7 +57,24 @@ describe("the four classical day cards are one group, mounted once", () => {
     expect(STYLES).toContain(".day-facts {");
     // One rhythm for the group rather than four per-card inline margins.
     expect(STYLES).toMatch(/\.day-facts\s*\{[^}]*gap:\s*12px/);
-    expect(STYLES).toMatch(/\.day-facts\s*>\s*\*\s*\{[^}]*margin-top:\s*0\s*!important/);
+    expect(STYLES).toMatch(/\.day-facts\s*>\s*\*\s*\{[^}]*margin-top:\s*0/);
+  });
+
+  it("keeps the cards free of their own top margins, so the wrapper's gap is the only rhythm", () => {
+    // The invariant, not the workaround: this used to be enforced with an
+    // `!important` because the cards set inline margins that no stylesheet can
+    // outrank. The margins are gone, so the flag is gone — and this test is
+    // what stops one creeping back in and silently breaking the group spacing.
+    // Only the ROOT card element is in scope — margins between a card's own
+    // internal rows are its business.
+    for (const file of ["HexagramCard", "FlyingStarCard", "NineStarWheel", "WuTuCard"]) {
+      const src = readFileSync(`${ROOT}src/ui/${file}.tsx`, "utf8");
+      const root = src.match(/<div className="card[^"]*"[^>]*>/);
+      expect(root, `${file}: expected a root <div className="card">`).not.toBeNull();
+      expect(root![0], `${file}'s root card must not set marginTop — .day-facts owns the spacing`).not.toMatch(
+        /marginTop/,
+      );
+    }
   });
 });
 

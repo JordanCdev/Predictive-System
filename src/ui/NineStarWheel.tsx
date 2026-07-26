@@ -229,8 +229,9 @@ export function NineStarWheel({
   const centreValence = valOf(day.centre);
   const toggle = (p: number) => setPicked(picked === p ? null : p);
 
+  // Spacing is owned by the .day-facts wrapper, not the card — see styles.css.
   return (
-    <div className="card" style={{ padding: 20, marginTop: 18 }}>
+    <div className="card" style={{ padding: 18 }}>
       <h3 className="section-title" style={{ margin: "0 0 6px" }}>
         Directions today ·{" "}
         <span style={{ fontFamily: "var(--serif-cjk)" }}>日家奇門九星</span>

@@ -121,7 +121,7 @@ export function WuTuCard({
   const entailedPalaces = WU_TU_BRANCH_PALACE_CAVEAT.entailed.length;
 
   return (
-    <div className="card" style={{ padding: 16 }}>
+    <div className="card" style={{ padding: 18 }}>
       {/* Shared card heading: same element and class as the other divination
           cards — h3.section-title, "English name · 漢字". */}
       <h3 className="section-title" style={{ margin: "0 0 8px" }}>
