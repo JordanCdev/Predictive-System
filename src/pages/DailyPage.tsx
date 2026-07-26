@@ -14,6 +14,10 @@ import {
 } from "../engine/index.ts";
 import { AlmanacPanel, useAlmanacDayDetail } from "../ui/AlmanacPanel.tsx";
 import { DayHero } from "../ui/DayHero.tsx";
+import { HexagramCard, useMeihuaLunarDate } from "../ui/HexagramCard.tsx";
+import { FlyingStarCard } from "../ui/FlyingStarCard.tsx";
+import { NineStarWheel } from "../ui/NineStarWheel.tsx";
+import { WuTuCard } from "../ui/WuTuCard.tsx";
 import { DayInsights, HourGrid } from "../ui/DayInsights.tsx";
 import { PersonalDayCard } from "../ui/PersonalDayCard.tsx";
 import { ReflectionCard } from "../ui/ReflectionCard.tsx";
@@ -88,6 +92,11 @@ export function DailyPage() {
   // cross-check stars. Null until the verification chunk arrives (or offline).
   const almanacDetail = useAlmanacDayDetail(rec.civil);
 
+  // The lunisolar date, from the same lazy verification chunk. 烏兔 keys off the
+  // lunar month and day, so the card waits for this and simply isn't there
+  // offline — the rest of the fold does not depend on it.
+  const lunarDate = useMeihuaLunarDate(rec.civil);
+
   // The date's own year + month pillars (its 四柱 frame at local noon under the
   // request's convention) — display context for the DayHero, cheap and cached.
   const datePillars = useMemo(() => {
@@ -142,6 +151,49 @@ export function DailyPage() {
       <Link className="btn-text" to={`/month/${iso.slice(0, 7)}`}>This month ›</Link>
       <Link className="btn-text" to={`/year/${iso.slice(0, 4)}`}>This year ›</Link>
     </div>
+  );
+
+  // ── The date's own classical calendars ────────────────────────────────────
+  // Four traditional day-readings of the DATE — 卦氣 hexagram (+ a 梅花 cast),
+  // 日家紫白 flying star, 日家奇門 nine-star direction wheel, 烏兔 day star.
+  // Built ONCE and mounted in both branches so the set and the order are
+  // identical whether or not a chart is set. All four are display-only:
+  // nothing in here reaches recommendationScore or calculationHash.
+  //
+  // Spacing lives in `.day-facts` (src/styles.css), not in the cards — one
+  // rhythm for the group instead of four different inline top margins.
+  const dayFacts = (
+    <section className="day-facts" aria-label="Classical calendar facts about this date">
+      <div className="day-facts-intro">
+        <span className="day-facts-eyebrow">Four classical calendars · 曆日</span>
+        <p>
+          Four traditions read this date on their own terms. They describe the <i>day</i> — not any person — and they
+          were never a single system, so they do not always agree with one another. Shown for interest and study: none
+          of them feeds the recommendation score.
+        </p>
+      </div>
+
+      <HexagramCard civil={rec.civil} />
+      <FlyingStarCard civil={rec.civil} />
+      <NineStarWheel civil={rec.civil} />
+
+      {/* The page carries TWO directional prescriptions — the 三煞 pill in "the
+          day at a glance" and the nine-star ring — and they routinely point
+          different ways. Saying so where a reader meets the second one is the
+          honest move; inventing a rule that ranks them would not be. */}
+      <div className="day-facts-note">
+        <b>Two directional systems, not one.</b>{" "}
+        {rec.tongshu.sanShaDirection !== "—" ?
+          <>The 三煞 pill under &ldquo;the day at a glance&rdquo; marks <b>{rec.tongshu.sanShaDirection}</b> today.</>
+        : <>The 三煞 pill under &ldquo;the day at a glance&rdquo; marks no direction today.</>}{" "}
+        三煞 comes from the day&apos;s branch triad in the 通勝; the ring above comes from 日家奇門. They are separate
+        lineages with separate rules, they frequently disagree about the same compass point, and neither one overrides
+        the other. This app shows both and does not reconcile them — where they conflict, the classical texts leave the
+        call to the practitioner.
+      </div>
+
+      <WuTuCard civil={rec.civil} lunar={lunarDate} />
+    </section>
   );
 
   return (
@@ -203,6 +255,11 @@ export function DailyPage() {
                 {glancePills}
               </div>
               <AlmanacPanel civil={rec.civil} />
+              {/* The four classical day-facts. They are properties of the
+                  calendar day, not readings of the person, so they belong
+                  inside the day's own fold rather than above the personal
+                  reading. Same group, same order as the visitor branch. */}
+              {dayFacts}
             </div>
           </details>
 
@@ -249,6 +306,9 @@ export function DailyPage() {
           )}
 
           <AlmanacPanel civil={rec.civil} />
+          {/* The identical group, in the identical order — this branch has no
+              fold, so it simply sits after the almanac panel. */}
+          {dayFacts}
         </>
       )}
 
