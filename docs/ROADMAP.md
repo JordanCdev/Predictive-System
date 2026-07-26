@@ -233,6 +233,22 @@ Many are partly built already; this is the prioritized backlog.
 > nothing may ever gate the correctness, transparency or honesty of a reading
 > (DECISIONS.md §11). Engine untouched — scores and hashes byte-identical.
 >
+> **Phase 16 — the classical day layer (2026-07-26).** The four remaining widgets from the
+> competitor's daily planner, each sourced to a named text and shipped only where the sourcing
+> held. **卦氣/六日七分 daily hexagram** — reproduces their 天澤履 for 2026-07-25, and the
+> 60-order is cross-checked against two independent primary witnesses (京房卦氣直日圖 via
+> 《新唐書‧曆志》, and 《易緯稽覽圖》 via 艮宧易說《卦氣直日考》, retrieved and parsed). A 梅花易數
+> cast ships subordinate to it, because the anchor cannot discriminate the two families (they
+> coincide on only 8 days of 2026). **日家紫白 flying star in TWO lineages** (通書 vs 超神接氣,
+> ~40% disagreement in multi-year blocks), calibrated against Joey Yap's own 2008 printed
+> diary. **日家奇門 九星 wheel** — their "QIMEN MOBILITY" is not the Qi Men 八神 but the nine
+> stars of 《奇門遁甲元靈經》; there are nine, so ours shows the centre palace their eight-point
+> version cannot. **天元烏兔經 day star** — "Black Rabbit" is a literal gloss of 烏兔 (crow=Sun,
+> rabbit=Moon), not an animal sign. **Qi Men Directions deliberately NOT shipped**: proprietary
+> theme labels, a three-way 起局 fork, and an undocumented hour choice — no disclosure would
+> make a guess honest. Review: 39 raised, 17 confirmed, all fixed; four lenses independently
+> caught a 太陽日 of 三十 printed in 29-day lunar months. Everything display-only.
+>
 > **Phase 14 — daily-view completeness (2026-07-26).** Closed the verified gaps against the
 > competitor's daily planner, all deterministic and free: the third-party almanac's full
 > 吉神/凶煞 day-star lists as glossed chips plus per-hour stars (hour god, 吉/凶, hour 宜/忌),
