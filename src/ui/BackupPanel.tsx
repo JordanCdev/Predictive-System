@@ -21,6 +21,7 @@ import {
   downloadBackup,
   parseBackup,
 } from "./backup.ts";
+import { loadReflections } from "./journalStore.ts";
 
 const box: CSSProperties = {
   border: "1px solid var(--hairline)",
@@ -149,8 +150,9 @@ export function BackupPanel() {
       </div>
 
       <p style={{ margin: "8px 0 0", fontSize: 11.5, color: "var(--faint)", lineHeight: 1.45 }}>
-        The file is plain JSON containing your saved people, your journal and your priority profile — readable by you,
-        and by anyone you send it to, so keep it somewhere private. Your AI settings and API key are never included.
+        The file is plain JSON containing your saved people, your journal, your daily reflections and your priority
+        profile — readable by you, and by anyone you send it to, so keep it somewhere private. Your AI settings and
+        API key are never included.
       </p>
 
       {savedAs && (
@@ -178,6 +180,9 @@ export function BackupPanel() {
             <li>
               {pending.summary.journal} journal {pending.summary.journal === 1 ? "entry" : "entries"}
               {pending.summary.journalWithOutcomes > 0 && <> ({pending.summary.journalWithOutcomes} with a logged outcome)</>}
+            </li>
+            <li>
+              {pending.summary.reflections} daily {pending.summary.reflections === 1 ? "reflection" : "reflections"}
             </li>
             <li>{pending.summary.hasPriorities ? "A saved priority profile" : "No priority profile"}</li>
           </ul>
@@ -233,8 +238,15 @@ export function BackupPanel() {
                 style={{ marginTop: 3 }}
               />
               <span>
-                I understand this will permanently delete the people, journal entries and priority profile currently
-                stored in this browser.
+                I understand this will permanently delete the people, journal entries, daily reflections and priority
+                profile currently stored in this browser.
+                {pending.summary.reflections === 0 && loadReflections().length > 0 && (
+                  <>
+                    {" "}
+                    <b>This file contains no reflections</b> — replacing will erase the{" "}
+                    {loadReflections().length} stored here.
+                  </>
+                )}
               </span>
             </label>
           )}

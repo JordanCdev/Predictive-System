@@ -1,0 +1,6766 @@
+{
+ "_meta": {
+  "title": "Dong Gong (董公選擇要覽) per-ganzhi day-rating draft — RESEARCH DATA, NOT SHIPPED",
+  "status": "draft-unverified",
+  "generated": "2026-07-26",
+  "structure": "{solar month branch (寅..丑)} -> {day ganzhi} -> {rating, ratingEn, officer, sourceRefs}",
+  "derivation": "Ratings are NOT printed labels in the classical text. They were derived deterministically from the classical commentary of three cross-checked online transcriptions by keyword extraction (vocabulary: 上吉/大吉/吉/次吉/平/凶/大凶 + mixed where the commentary praises some activities and forbids others). A cell is present ONLY where every source's independently derived rating agreed exactly; disagreeing cells are absent, never guessed.",
+  "coverage": "673 of 720 ganzhi-month cells (93.5%); 47 cells absent due to inter-source disagreement in the derived rating",
+  "sources": {
+   "wenxuecity-2017": "https://www.wenxuecity.com/blog/201706/67063/12758.html",
+   "diancang": "https://www.diancang.xyz/xuanxuewushu/18440/341127.html",
+   "tianyugong-2022": "https://tianyugong.com/donggong/"
+  },
+  "independence_caveat": "All three are online transcriptions that appear to descend from the same modern printed recension (wenxuecity and diancang are near-verbatim twins; tianyugong is an edited modernisation). Agreement here proves transcription fidelity, not recension-level independence. Verify against a printed edition before any user-facing use.",
+  "verification_plan": "Spot-check 36 cells (3 per month, stratified across ratings) against a printed edition: Joey Yap, 'Dong Gong Date Selection' (JY Books, ISBN 983333251X) and/or a Taiwanese 通書 reprint of 董公選擇要覽. Any mismatch demotes the cell to absent."
+ },
+ "寅": {
+  "甲子": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "卯": {
+  "甲子": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "上吉",
+   "ratingEn": "excellent",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "上吉",
+   "ratingEn": "excellent",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "辰": {
+  "甲子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "巳": {
+  "甲子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "午": {
+  "甲子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "未": {
+  "甲子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "申": {
+  "甲子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "酉": {
+  "甲子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "上吉",
+   "ratingEn": "excellent",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "上吉",
+   "ratingEn": "excellent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "上吉",
+   "ratingEn": "excellent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "上吉",
+   "ratingEn": "excellent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "戌": {
+  "甲子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "亥": {
+  "甲子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "上吉",
+   "ratingEn": "excellent",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "上吉",
+   "ratingEn": "excellent",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "子": {
+  "甲子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸丑": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛卯": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙巳": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸酉": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ },
+ "丑": {
+  "甲子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊子": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚子": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬子": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "閉",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙丑": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁丑": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己丑": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛丑": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "建",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊寅": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚寅": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬寅": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "除",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸卯": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "滿",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲辰": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang"
+   ]
+  },
+  "丙辰": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang"
+   ]
+  },
+  "戊辰": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang"
+   ]
+  },
+  "庚辰": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang"
+   ]
+  },
+  "壬辰": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "平",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang"
+   ]
+  },
+  "乙巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛巳": {
+   "rating": "MIXED",
+   "ratingEn": "mixed-activity-dependent",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸巳": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "定",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊午": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚午": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬午": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "執",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙未": {
+   "rating": "凶",
+   "ratingEn": "inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁未": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛未": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "癸未": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "破",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲申": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙申": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊申": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚申": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬申": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "危",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙酉": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁酉": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛酉": {
+   "rating": "次吉",
+   "ratingEn": "moderately-auspicious",
+   "officer": "成",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "甲戌": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丙戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "戊戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "庚戌": {
+   "rating": "大吉",
+   "ratingEn": "very-auspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "壬戌": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "收",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "乙亥": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "丁亥": {
+   "rating": "吉",
+   "ratingEn": "auspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "己亥": {
+   "rating": "平",
+   "ratingEn": "neutral",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  },
+  "辛亥": {
+   "rating": "大凶",
+   "ratingEn": "very-inauspicious",
+   "officer": "開",
+   "sourceRefs": [
+    "wenxuecity-2017",
+    "diancang",
+    "tianyugong-2022"
+   ]
+  }
+ }
+}

@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { relativeDay, shortDate } from "../engine/index.ts";
-import { EventOutcome, JournalEntry, feedbackSummary } from "./journalStore.ts";
+import {
+  EventOutcome,
+  JournalEntry,
+  Reflection,
+  feedbackSummary,
+  loadReflections,
+  moodLabel,
+  removeReflection,
+} from "./journalStore.ts";
 import { scoreColor, scoreTextColor } from "./format.ts";
 import { AreaSignal, deriveSignals } from "./priorities/deriveSignals.ts";
 import { areaSignalId, dismissSignal, loadDismissed } from "./priorities/dismissedSignals.ts";
@@ -51,6 +59,9 @@ export function Journal({
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [outcomeFor, setOutcomeFor] = useState<string | null>(null);
+  // Daily reflections live in their own store and are owned by this panel +
+  // ReflectionCard; the decisions list still arrives via props unchanged.
+  const [reflections, setReflections] = useState<Reflection[]>(() => loadReflections());
   // Priorities are the user's own data, edited on the profile page too; this panel
   // reads a snapshot and writes through the same store.
   const [priorities, setPriorities] = useState<PriorityProfile>(() => loadPriorities());
@@ -87,7 +98,7 @@ export function Journal({
   };
   const clearIntention = (i: number) => setPriorities(savePriorities(setIntention(priorities, i, ""), Date.now()));
 
-  if (entries.length === 0) return null;
+  if (entries.length === 0 && reflections.length === 0) return null;
 
   const civilOf = (iso: string) => {
     const [year, month, day] = iso.split("-").map(Number);
@@ -95,14 +106,21 @@ export function Journal({
   };
   const summary = feedbackSummary(entries);
 
+  // A reflections-only journal (moods logged, no decisions yet) shouldn't wear
+  // the decision-journal's chrome — the header and intro would describe content
+  // that isn't there.
+  const reflectionsOnly = entries.length === 0;
+
   return (
     <div className="card" style={{ padding: 20, marginTop: 18 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span className="seal sm" aria-hidden="true">誌</span>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Your decision journal</h3>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{reflectionsOnly ? "Your journal" : "Your decision journal"}</h3>
       </div>
       <p style={{ margin: "8px 0 12px", fontSize: 13, color: "var(--muted)" }}>
-        Days you've saved to revisit. Once one has passed, log how it went — it tunes your reading, not the metaphysics.
+        {reflectionsOnly
+          ? "Your daily reflections so far. Save a decision from a reading and it will appear here too."
+          : "Days you've saved to revisit. Once one has passed, log how it went — it tunes your reading, not the metaphysics."}
       </p>
 
       {summary.withOutcome > 0 && (
@@ -241,6 +259,47 @@ export function Journal({
           );
         })}
       </div>
+
+      {/* ── Daily reflections: quieter rows — a mood and a line, no reading attached.
+            They live alongside decisions but are deliberately NOT folded into the
+            feedback summary above, which stays decision-based. ── */}
+      {reflections.length > 0 && (
+        <section aria-label="Daily reflections" style={{ marginTop: entries.length > 0 ? 14 : 0 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>
+            Daily reflections
+          </div>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            {reflections.map((r) => (
+              <li
+                key={r.isoDate}
+                style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", border: "1px dashed var(--hairline)", borderRadius: 10, padding: "7px 12px", fontSize: 12.5, color: "var(--muted)" }}
+              >
+                <span>
+                  {shortDate(civilOf(r.isoDate))}{" "}
+                  <span style={{ color: "var(--faint)" }}>({relativeDay(r.isoDate, todayIso)})</span>
+                </span>
+                <span style={{ color: "var(--ink)" }}>
+                  Felt: <b>{moodLabel(r.mood)}</b>
+                </span>
+                {r.note && <span style={{ fontStyle: "italic" }}>“{r.note}”</span>}
+                <span style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+                  <Link className="btn-text" style={{ textDecoration: "none", padding: 0 }} to={`/day/${r.isoDate}`}>
+                    View day ›
+                  </Link>
+                  <button
+                    className="btn-text"
+                    style={{ color: "var(--cinnabar)", padding: 0 }}
+                    aria-label={`Remove the reflection for ${r.isoDate}`}
+                    onClick={() => setReflections(removeReflection(r.isoDate))}
+                  >
+                    Remove
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

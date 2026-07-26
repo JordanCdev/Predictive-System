@@ -7,6 +7,7 @@ import {
   MAX_BACKUP_BYTES,
   PEOPLE_KEY,
   PRIORITIES_KEY,
+  REFLECTIONS_KEY,
   StorageLike,
   applyBackup,
   backupFilename,
@@ -15,10 +16,11 @@ import {
   incomingWinsJournal,
   mergeJournals,
   mergePeople,
+  mergeReflections,
   parseBackup,
   serializeBackup,
 } from "../src/ui/backup.ts";
-import type { JournalEntry } from "../src/ui/journalStore.ts";
+import type { JournalEntry, Reflection } from "../src/ui/journalStore.ts";
 import { SELF_ID, type StoredPerson } from "../src/ui/profile/peopleStore.ts";
 
 /** An in-memory stand-in for localStorage — the tests run in the node env. */
@@ -76,6 +78,14 @@ const entry = (id: string, over: Partial<JournalEntry> = {}): JournalEntry => ({
   ...over,
 });
 
+const reflection = (isoDate: string, over: Partial<Reflection> = {}): Reflection => ({
+  isoDate,
+  mood: 4,
+  note: "",
+  savedAt: 1_000,
+  ...over,
+});
+
 const NOW = new Date("2026-07-25T09:30:00.000Z");
 
 /** A backup object built by hand, so a test never mutates one the module made. */
@@ -86,6 +96,7 @@ const file = (over: Partial<BackupFile> = {}): BackupFile => ({
   engineVersions: {},
   people: { people: [], activeId: null },
   journal: [],
+  reflections: [],
   priorities: null,
   ...over,
 });
@@ -95,11 +106,12 @@ beforeEach(() => {
   store = new FakeStorage();
 });
 
-function seed(opts: { people?: StoredPerson[]; activeId?: string | null; journal?: JournalEntry[]; priorities?: unknown } = {}) {
+function seed(opts: { people?: StoredPerson[]; activeId?: string | null; journal?: JournalEntry[]; reflections?: Reflection[]; priorities?: unknown } = {}) {
   if (opts.people) {
     store.map.set(PEOPLE_KEY, JSON.stringify({ people: opts.people, activeId: opts.activeId ?? opts.people[0]?.id ?? null }));
   }
   if (opts.journal) store.map.set(JOURNAL_KEY, JSON.stringify(opts.journal));
+  if (opts.reflections) store.map.set(REFLECTIONS_KEY, JSON.stringify(opts.reflections));
   if (opts.priorities !== undefined) store.map.set(PRIORITIES_KEY, JSON.stringify(opts.priorities));
 }
 
@@ -178,6 +190,7 @@ describe("the AI key never leaves the device", () => {
       "engineVersions",
       "people",
       "journal",
+      "reflections",
       "priorities",
     ]);
   });
@@ -576,6 +589,170 @@ describe("hostile storage", () => {
     expect(s.storageError).toMatch(/may now be a mix/i);
     expect(describeApply(s)).toMatch(/didn't finish/i);
     expect(describeApply(s)).not.toMatch(/merged in/i);
+  });
+});
+
+describe("reflections in backups (schema v2)", () => {
+  /** A byte-faithful v1 file: version 1, and NO `reflections` key at all. */
+  const v1Text = () =>
+    JSON.stringify({
+      schemaVersion: 1,
+      exportedAt: NOW.toISOString(),
+      appVersion: "0.3.0",
+      engineVersions: {},
+      people: { people: [person("a")], activeId: "a" },
+      journal: [entry("x", { note: "old note" })],
+      priorities: null,
+    });
+
+  it("still restores a v1 file exactly as before — absent reflections read as empty", () => {
+    const r = parseBackup(v1Text());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.schemaVersion).toBe(1);
+    expect(r.data.reflections).toEqual([]);
+    expect(r.summary.reflections).toBe(0);
+    expect(r.summary).toMatchObject({ people: 1, journal: 1 });
+
+    const s = applyBackup(r.data, "merge", { storage: store });
+    expect(s.storageError).toBeNull();
+    expect(s.journalAdded).toBe(1);
+    expect(s.reflectionsAdded).toBe(0);
+    expect(JSON.parse(store.getItem(JOURNAL_KEY)!).map((e: JournalEntry) => e.id)).toEqual(["x"]);
+  });
+
+  it("a v1 merge never touches the reflections already on the device", () => {
+    seed({ reflections: [reflection("2026-07-20", { mood: 2, note: "rough" })] });
+    const r = parseBackup(v1Text());
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    applyBackup(r.data, "merge", { storage: store });
+    expect(JSON.parse(store.getItem(REFLECTIONS_KEY)!)).toEqual([reflection("2026-07-20", { mood: 2, note: "rough" })]);
+  });
+
+  it("rejects only versions ABOVE the current one", () => {
+    const raw = JSON.parse(v1Text()) as Record<string, unknown>;
+    raw.schemaVersion = BACKUP_SCHEMA_VERSION + 1;
+    const r = parseBackup(JSON.stringify(raw));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("newer version of the app");
+  });
+
+  it("round-trips a v2 export with reflections byte-for-byte", () => {
+    seed({
+      people: [person("a")],
+      journal: [entry("x")],
+      reflections: [reflection("2026-07-24", { mood: 5, note: "good day", savedAt: 9_000 }), reflection("2026-07-23", { mood: 1 })],
+    });
+    const b = buildBackup({ storage: store, now: NOW });
+    expect(b.schemaVersion).toBe(BACKUP_SCHEMA_VERSION);
+    const parsed = parseBackup(serializeBackup(b));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.summary.reflections).toBe(2);
+
+    const fresh = new FakeStorage();
+    applyBackup(parsed.data, "merge", { storage: fresh });
+    expect(buildBackup({ storage: fresh, now: NOW })).toEqual(b);
+  });
+
+  it("a reflections-only file is restorable", () => {
+    const r = parseBackup(JSON.stringify(file({ reflections: [reflection("2026-07-24")] })));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.summary.reflections).toBe(1);
+  });
+
+  it("drops corrupt reflection rows rather than importing junk", () => {
+    const r = parseBackup(
+      JSON.stringify(
+        file({
+          reflections: [
+            reflection("2026-07-24"),
+            null,
+            42,
+            { isoDate: "not-a-date", mood: 3, note: "", savedAt: 1 },
+            { isoDate: "2026-07-23", mood: 9, note: "", savedAt: 1 }, // mood out of range
+            { isoDate: "2026-07-22", mood: 3, savedAt: 1 }, // note missing
+          ] as unknown as Reflection[],
+        }),
+      ),
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.reflections).toEqual([reflection("2026-07-24")]);
+  });
+
+  it("merges by day with the newer savedAt winning, in both directions", () => {
+    const olderHere = reflection("2026-07-20", { mood: 2, note: "as backed up", savedAt: 1_000 });
+    const editedThere = reflection("2026-07-20", { mood: 4, note: "edited on the other device", savedAt: 9_000 });
+
+    // Incoming is newer → it lands.
+    const a = mergeReflections([olderHere], [editedThere]);
+    expect(a.merged).toEqual([editedThere]);
+    expect(a.counts).toEqual({ added: 0, updated: 1, kept: 0 });
+
+    // Local is newer → the old backup must not win.
+    const b = mergeReflections([editedThere], [olderHere]);
+    expect(b.merged).toEqual([editedThere]);
+    expect(b.counts).toEqual({ added: 0, updated: 0, kept: 1 });
+
+    // Dead tie → incoming wins, matching the convention everywhere else.
+    const tie = mergeReflections([olderHere], [reflection("2026-07-20", { mood: 3, savedAt: 1_000 })]);
+    expect(tie.merged[0].mood).toBe(3);
+
+    // The merged list comes back in the store's documented newest-first order —
+    // a new incoming day must slot into place, not append (review-confirmed:
+    // interleaved insertion order leaked backup history into the UI ordering).
+    const c = mergeReflections([reflection("2026-07-20"), reflection("2026-07-19")], [reflection("2026-07-21")]);
+    expect(c.merged.map((x) => x.isoDate)).toEqual(["2026-07-21", "2026-07-20", "2026-07-19"]);
+    expect(c.counts).toEqual({ added: 1, updated: 0, kept: 0 });
+  });
+
+  it("merges through applyBackup without destroying anything local", () => {
+    seed({ reflections: [reflection("2026-07-20", { note: "mine", savedAt: 5_000 })] });
+    const s = applyBackup(
+      file({ journal: [entry("x")], reflections: [reflection("2026-07-20", { note: "stale", savedAt: 1_000 }), reflection("2026-07-21")] }),
+      "merge",
+      { storage: store },
+    );
+    expect(s.reflectionsAdded).toBe(1);
+    expect(s.reflectionsKept).toBe(1);
+    expect(s.reflectionsTotal).toBe(2);
+    const stored = JSON.parse(store.getItem(REFLECTIONS_KEY)!) as Reflection[];
+    expect(stored.find((x) => x.isoDate === "2026-07-20")!.note).toBe("mine");
+  });
+
+  it("replace keeps only the file's reflections — and a v1 file clears them, like priorities", () => {
+    seed({ people: [person("a")], reflections: [reflection("2026-07-20")] });
+    const s = applyBackup(file({ people: { people: [person("b")], activeId: "b" }, reflections: [reflection("2026-07-21")] }), "replace", { storage: store });
+    expect(s.reflectionsTotal).toBe(1);
+    expect(JSON.parse(store.getItem(REFLECTIONS_KEY)!).map((x: Reflection) => x.isoDate)).toEqual(["2026-07-21"]);
+
+    // A v1 file parsed today has an empty reflections list, so replace clears.
+    const v1 = parseBackup(v1Text());
+    expect(v1.ok).toBe(true);
+    if (!v1.ok) return;
+    applyBackup(v1.data, "replace", { storage: store });
+    expect(JSON.parse(store.getItem(REFLECTIONS_KEY)!)).toEqual([]);
+  });
+
+  it("rolls reflections back too when a later write fails", () => {
+    seed({ people: [person("a")], reflections: [reflection("2026-07-20", { note: "mine" })] });
+    const before = store.getItem(REFLECTIONS_KEY)!;
+    store.blocked.add(PRIORITIES_KEY); // everything lands, then the last write throws
+
+    const s = applyBackup(file({ reflections: [reflection("2026-07-21")], priorities: { theirs: true } }), "replace", { storage: store });
+    expect(s.storageError).toBeTruthy();
+    expect(s.storageRolledBack).toBe(true);
+    expect(store.getItem(REFLECTIONS_KEY)).toBe(before);
+  });
+
+  it("names reflections in the summary line, in both modes", () => {
+    const replaced = applyBackup(file({ journal: [entry("x")], reflections: [reflection("2026-07-21")] }), "replace", { storage: store });
+    expect(describeApply(replaced)).toMatch(/1 reflection\b/);
+
+    const merged = applyBackup(file({ reflections: [reflection("2026-07-22"), reflection("2026-07-23")] }), "merge", { storage: store });
+    expect(describeApply(merged)).toMatch(/2 new reflections/);
+    expect(describeApply(merged)).toMatch(/you now have .*3 reflections/i);
   });
 });
 

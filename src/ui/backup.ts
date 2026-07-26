@@ -15,20 +15,28 @@
  *
  * SECURITY: `wei_ai_key` is the user's own API secret. It is never read, never
  * exported and never written by this module — a backup file is something people
- * email themselves. Only the four data keys below are in scope.
+ * email themselves. Only the data keys below are in scope.
  */
 import { VERSIONS } from "../engine/version.ts";
-import { lastModified, type JournalEntry } from "./journalStore.ts";
+import { isReflection, lastModified, type JournalEntry, type Reflection } from "./journalStore.ts";
 import { PeopleState, StoredPerson, activePerson, migrate } from "./profile/peopleStore.ts";
 
-/** The bump-me-when-the-shape-changes number written into every export. */
-export const BACKUP_SCHEMA_VERSION = 1;
+/**
+ * The bump-me-when-the-shape-changes number written into every export.
+ *
+ * v1 → v2: daily reflections joined the file. Every v1 file is still accepted
+ * exactly as before — an absent `reflections` key just reads as an empty list —
+ * and only versions ABOVE the current one are refused.
+ */
+export const BACKUP_SCHEMA_VERSION = 2;
 
 export const PEOPLE_KEY = "wei_people_v1";
 /** Legacy single profile. Read so an old install still exports, written on
  *  restore so an older build (or a rollback) finds a profile where it expects one. */
 export const LEGACY_PERSON_KEY = "wei_person_v1";
 export const JOURNAL_KEY = "wei_journal_v1";
+/** Daily reflections — the mood-and-a-line rows kept by journalStore. */
+export const REFLECTIONS_KEY = "wei_reflections_v1";
 /** Owned by the priorities feature; this module only ever passes it through. */
 export const PRIORITIES_KEY = "wei_priorities_v1";
 
@@ -55,6 +63,8 @@ export interface BackupFile {
   engineVersions: Record<string, string>;
   people: PeopleState;
   journal: JournalEntry[];
+  /** Daily reflections. Absent from v1 files, which read as an empty list. */
+  reflections: Reflection[];
   /** Opaque pass-through of the priority profile, or null when there isn't one. */
   priorities: unknown;
 }
@@ -63,6 +73,7 @@ export interface BackupSummary {
   people: number;
   journal: number;
   journalWithOutcomes: number;
+  reflections: number;
   hasPriorities: boolean;
   exportedAt: string | null;
   appVersion: string | null;
@@ -89,6 +100,12 @@ export interface ApplySummary {
   /** Duplicates where the local copy won and the incoming one was discarded. */
   journalKept: number;
   journalTotal: number;
+  reflectionsAdded: number;
+  /** Local reflections replaced by a newer incoming copy of the same day. */
+  reflectionsUpdated: number;
+  /** Same-day duplicates where the local copy was newer and was kept. */
+  reflectionsKept: number;
+  reflectionsTotal: number;
   priorities: "restored" | "kept" | "cleared" | "absent";
   /** Non-null when the browser refused to persist (private mode / quota). The
    *  caller must tell the user the restore did not stick. */
@@ -145,6 +162,13 @@ function normaliseJournal(v: unknown): JournalEntry[] {
   return Array.isArray(v) ? v.filter(isJournalEntry) : [];
 }
 
+/** Same tolerance for reflections: corrupt rows are dropped, never thrown on.
+ *  `isReflection` is the journalStore's own structural check, so a backup can
+ *  never smuggle in a row the app itself would refuse to load. */
+function normaliseReflections(v: unknown): Reflection[] {
+  return Array.isArray(v) ? v.filter(isReflection) : [];
+}
+
 /** `migrate()` can hand back the shared EMPTY_PEOPLE constant, so anything that
  *  ends up in a long-lived backup object gets its own array first. A backup must
  *  never alias live app state. */
@@ -162,6 +186,7 @@ export function buildBackup(opts: { storage?: StorageLike | null; now?: Date } =
   const store = opts.storage === undefined ? browserStorage() : opts.storage;
   const people = cloneState(migrate(readJson(store, PEOPLE_KEY), readJson(store, LEGACY_PERSON_KEY)));
   const journal = normaliseJournal(readJson(store, JOURNAL_KEY));
+  const reflections = normaliseReflections(readJson(store, REFLECTIONS_KEY));
   const priorities = readJson(store, PRIORITIES_KEY);
   return {
     schemaVersion: BACKUP_SCHEMA_VERSION,
@@ -170,6 +195,7 @@ export function buildBackup(opts: { storage?: StorageLike | null; now?: Date } =
     engineVersions: { ...VERSIONS },
     people,
     journal,
+    reflections,
     priorities: priorities ?? null,
   };
 }
@@ -179,6 +205,7 @@ export function summarise(data: BackupFile): BackupSummary {
     people: data.people.people.length,
     journal: data.journal.length,
     journalWithOutcomes: data.journal.filter((e) => e.outcome).length,
+    reflections: data.reflections.length,
     hasPriorities: data.priorities !== null && data.priorities !== undefined,
     exportedAt: typeof data.exportedAt === "string" ? data.exportedAt : null,
     appVersion: typeof data.appVersion === "string" ? data.appVersion : null,
@@ -235,7 +262,10 @@ export function parseBackup(text: string): ParseResult {
 
   const hasPeople = !!raw.people && typeof raw.people === "object" && Array.isArray((raw.people as PeopleState).people);
   const hasJournal = Array.isArray(raw.journal);
-  if (!hasPeople && !hasJournal) {
+  // v1 files legitimately have no `reflections` key at all — that is not damage,
+  // it just reads as an empty list. A reflections-only v2 file IS restorable.
+  const hasReflections = Array.isArray(raw.reflections);
+  if (!hasPeople && !hasJournal && !hasReflections) {
     return { ok: false, error: "That file is valid JSON but carries no people and no journal, so there's nothing to restore." };
   }
 
@@ -243,7 +273,8 @@ export function parseBackup(text: string): ParseResult {
   // dropped, and a dangling activeId is repaired, rather than importing junk.
   const people = cloneState(migrate(raw.people ?? null, null));
   const journal = normaliseJournal(raw.journal);
-  if (people.people.length === 0 && journal.length === 0) {
+  const reflections = normaliseReflections(raw.reflections);
+  if (people.people.length === 0 && journal.length === 0 && reflections.length === 0) {
     return { ok: false, error: "Nothing in that file could be read as a person or a journal entry. It may be damaged." };
   }
 
@@ -255,6 +286,7 @@ export function parseBackup(text: string): ParseResult {
       raw.engineVersions && typeof raw.engineVersions === "object" ? (raw.engineVersions as Record<string, string>) : {},
     people,
     journal,
+    reflections,
     priorities: raw.priorities ?? null,
   };
   return { ok: true, data, summary: summarise(data) };
@@ -337,6 +369,44 @@ export function mergeJournals(
     }
   }
   return { merged: order.map((id) => byId.get(id)!), counts };
+}
+
+/**
+ * Merge daily reflections by their day. Far simpler than the journal rule
+ * because a reflection has exactly one timestamp: `savedAt` is re-stamped on
+ * every edit (see journalStore), so "newer savedAt wins" IS the last-edit rule
+ * — there is no outcome to protect and no immovable creation stamp to trip
+ * over. On a dead tie the incoming copy wins, matching the convention
+ * everywhere else in this module. Pure; local order preserved, new days appended.
+ */
+export function mergeReflections(
+  local: Reflection[],
+  incoming: Reflection[],
+): { merged: Reflection[]; counts: MergeCounts } {
+  const byDay = new Map<string, Reflection>();
+  const order: string[] = [];
+  for (const r of local) {
+    if (!byDay.has(r.isoDate)) order.push(r.isoDate);
+    byDay.set(r.isoDate, r);
+  }
+  const counts: MergeCounts = { added: 0, updated: 0, kept: 0 };
+  for (const r of incoming) {
+    const existing = byDay.get(r.isoDate);
+    if (!existing) {
+      byDay.set(r.isoDate, r);
+      order.push(r.isoDate);
+      counts.added += 1;
+    } else if (r.savedAt >= existing.savedAt) {
+      byDay.set(r.isoDate, r);
+      counts.updated += 1;
+    } else {
+      counts.kept += 1;
+    }
+  }
+  // The store's documented order is newest day first; insertion order after a
+  // merge interleaves the two histories, so re-sort before persisting.
+  const merged = order.map((d) => byDay.get(d)!).sort((a, b) => b.isoDate.localeCompare(a.isoDate));
+  return { merged, counts };
 }
 
 export interface PeopleMergeCounts extends MergeCounts {
@@ -447,27 +517,39 @@ export function applyBackup(
 
   const localPeople = migrate(readJson(store, PEOPLE_KEY), readJson(store, LEGACY_PERSON_KEY));
   const localJournal = normaliseJournal(readJson(store, JOURNAL_KEY));
+  const localReflections = normaliseReflections(readJson(store, REFLECTIONS_KEY));
   const incomingPriorities = data.priorities ?? null;
 
   let people: PeopleState;
   let journal: JournalEntry[];
+  let reflections: Reflection[];
   let peopleCounts: PeopleMergeCounts;
   let journalCounts: MergeCounts;
+  let reflectionCounts: MergeCounts;
   let priorities: ApplySummary["priorities"];
 
   if (mode === "replace") {
     people = data.people;
     journal = data.journal;
+    // Replace means the file's contents, exactly — so a v1 file (no reflections)
+    // leaves an empty list, the same way a file with no priorities clears them.
+    reflections = data.reflections;
     peopleCounts = { added: data.people.people.length, updated: 0, kept: 0, importedAsNew: 0 };
     journalCounts = { added: data.journal.length, updated: 0, kept: 0 };
+    reflectionCounts = { added: data.reflections.length, updated: 0, kept: 0 };
     priorities = incomingPriorities !== null ? "restored" : "cleared";
   } else {
     const p = mergePeople(localPeople, data.people);
     const j = mergeJournals(localJournal, data.journal);
+    // A merge is additive: a v1 file simply contributes no reflections, and
+    // nothing local is ever removed by it.
+    const r = mergeReflections(localReflections, data.reflections);
     people = p.merged;
     journal = j.merged;
+    reflections = r.merged;
     peopleCounts = p.counts;
     journalCounts = j.counts;
+    reflectionCounts = r.counts;
     // A merge never removes a priority profile the user already has; the file's
     // copy only fills a gap, so restoring an old backup can't wipe today's answers.
     const localPriorities = readRaw(store, PRIORITIES_KEY);
@@ -489,7 +571,7 @@ export function applyBackup(
     // instance. So snapshot every key first and put them back on failure, rather
     // than telling the user "nothing may have been kept" and hoping.
     const before = new Map<string, string | null>(
-      [PEOPLE_KEY, LEGACY_PERSON_KEY, JOURNAL_KEY, PRIORITIES_KEY].map((k) => [k, readRaw(store, k)]),
+      [PEOPLE_KEY, LEGACY_PERSON_KEY, JOURNAL_KEY, REFLECTIONS_KEY, PRIORITIES_KEY].map((k) => [k, readRaw(store, k)]),
     );
     const touched: string[] = [];
     const put = (key: string, value: string) => {
@@ -507,6 +589,7 @@ export function applyBackup(
       if (active) put(LEGACY_PERSON_KEY, JSON.stringify(active));
       else drop(LEGACY_PERSON_KEY);
       put(JOURNAL_KEY, JSON.stringify(journal));
+      put(REFLECTIONS_KEY, JSON.stringify(reflections));
       if (priorities === "restored") put(PRIORITIES_KEY, JSON.stringify(incomingPriorities));
       else if (priorities === "cleared") drop(PRIORITIES_KEY);
     } catch (e) {
@@ -537,6 +620,10 @@ export function applyBackup(
     journalUpdated: journalCounts.updated,
     journalKept: journalCounts.kept,
     journalTotal: journal.length,
+    reflectionsAdded: reflectionCounts.added,
+    reflectionsUpdated: reflectionCounts.updated,
+    reflectionsKept: reflectionCounts.kept,
+    reflectionsTotal: reflections.length,
     priorities,
     storageError,
     storageRolledBack,
@@ -552,19 +639,24 @@ export function describeApply(s: ApplySummary): string {
       ? "Nothing was restored — this browser wouldn't save it, and your existing data was left exactly as it was."
       : "The restore didn't finish, and part of it may have been written before it failed.";
   }
+  const reflectionsPhrase = (n: number) => `${n} ${n === 1 ? "reflection" : "reflections"}`;
   if (s.mode === "replace") {
-    bits.push(`Replaced everything with the file: ${s.peopleTotal} ${s.peopleTotal === 1 ? "person" : "people"} and ${s.journalTotal} journal ${s.journalTotal === 1 ? "entry" : "entries"}.`);
+    bits.push(
+      `Replaced everything with the file: ${s.peopleTotal} ${s.peopleTotal === 1 ? "person" : "people"}, ${s.journalTotal} journal ${s.journalTotal === 1 ? "entry" : "entries"} and ${reflectionsPhrase(s.reflectionsTotal)}.`,
+    );
   } else {
     bits.push(
-      `Merged in ${s.peopleAdded} new ${s.peopleAdded === 1 ? "person" : "people"} and ${s.journalAdded} new journal ${s.journalAdded === 1 ? "entry" : "entries"}.`,
+      `Merged in ${s.peopleAdded} new ${s.peopleAdded === 1 ? "person" : "people"}, ${s.journalAdded} new journal ${s.journalAdded === 1 ? "entry" : "entries"} and ${s.reflectionsAdded} new ${s.reflectionsAdded === 1 ? "reflection" : "reflections"}.`,
     );
     if (s.peopleImportedAsNew)
       bits.push(
         `${s.peopleImportedAsNew} of ${s.peopleImportedAsNew === 1 ? "them shared an internal id with someone already here but had different birth details, so your chart was kept and theirs was added" : "them shared internal ids with people already here but had different birth details, so your charts were kept and theirs were added"} separately.`,
       );
-    if (s.peopleUpdated || s.journalUpdated) bits.push(`${s.peopleUpdated + s.journalUpdated} existing ${s.peopleUpdated + s.journalUpdated === 1 ? "record was" : "records were"} updated from the file.`);
-    if (s.journalKept) bits.push(`${s.journalKept} of your own ${s.journalKept === 1 ? "entry was" : "entries were"} kept as the better copy.`);
-    bits.push(`You now have ${s.peopleTotal} ${s.peopleTotal === 1 ? "person" : "people"} and ${s.journalTotal} journal ${s.journalTotal === 1 ? "entry" : "entries"}.`);
+    if (s.peopleUpdated || s.journalUpdated || s.reflectionsUpdated) bits.push(`${s.peopleUpdated + s.journalUpdated + s.reflectionsUpdated} existing ${s.peopleUpdated + s.journalUpdated + s.reflectionsUpdated === 1 ? "record was" : "records were"} updated from the file.`);
+    if (s.journalKept || s.reflectionsKept) bits.push(`${s.journalKept + s.reflectionsKept} of your own ${s.journalKept + s.reflectionsKept === 1 ? "entry was" : "entries were"} kept as the better copy.`);
+    bits.push(
+      `You now have ${s.peopleTotal} ${s.peopleTotal === 1 ? "person" : "people"}, ${s.journalTotal} journal ${s.journalTotal === 1 ? "entry" : "entries"} and ${reflectionsPhrase(s.reflectionsTotal)}.`,
+    );
   }
   if (s.priorities === "restored") bits.push("Your priority profile was restored.");
   if (s.priorities === "kept") bits.push("Your current priority profile was left as it is.");

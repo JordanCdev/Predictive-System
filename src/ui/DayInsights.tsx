@@ -9,6 +9,8 @@ import {
   lifeAreaScores,
   practicalBestHour,
 } from "../engine/index.ts";
+import type { AlmanacDayDetail, AlmanacHour } from "../engine/verification/lunarAlmanac.ts";
+import { SHENSHA_GLOSS, YIJI_GLOSS } from "./AlmanacPanel.tsx";
 import { scoreColor, scoreTextColor, valenceColor, valenceOfScore } from "./format.ts";
 import { useRankedAreas } from "./PriorityFitChip.tsx";
 
@@ -86,7 +88,44 @@ export function LifeAreaGauges({ chart, dayGz, compact }: { chart: BaziChart; da
 
 // ── Auspicious-hour grid (12 double-hours) ───────────────────────────────────
 
-export function HourGrid({ hours, bestBranch }: { hours: HourPick[]; bestBranch: number | null }) {
+/** Hanzi term + gloss (when known) for the compact hour 宜/忌 excerpt. */
+function glossTerms(terms: string[], max: number): string {
+  return terms
+    .filter((t) => t !== "无")
+    .slice(0, max)
+    .map((t) => (YIJI_GLOSS[t] ? `${t} ${YIJI_GLOSS[t]}` : t))
+    .join(", ");
+}
+
+/** The third-party almanac's read of one double-hour, shown inside the
+ *  expanded hour detail alongside our own hour-god reasons — clearly labelled
+ *  as the independent publisher's list, not ours. */
+function AlmanacHourLine({ ah }: { ah: AlmanacHour }) {
+  const good = ah.tianShenLuck === "吉";
+  const yi = glossTerms(ah.yi, 4);
+  const ji = glossTerms(ah.ji, 4);
+  return (
+    <div style={{ marginTop: 7, paddingTop: 7, borderTop: "1px dashed var(--hairline)", fontSize: 12, lineHeight: 1.5 }}>
+      <span style={{ color: "var(--faint)" }}>Third-party almanac (cross-check) for this hour:</span>{" "}
+      hour god <span style={{ fontFamily: "var(--serif-cjk)", color: "var(--ink)" }}>{ah.tianShen}</span>
+      {SHENSHA_GLOSS[ah.tianShen] && <span style={{ color: "var(--muted)" }}> ({SHENSHA_GLOSS[ah.tianShen]})</span>},{" "}
+      <b style={{ color: good ? "#15795a" : "#b3403a" }}>{good ? "吉 auspicious" : "凶 inauspicious"}</b>.
+      {yi && (
+        <span style={{ color: "var(--muted)" }}>
+          {" "}<b style={{ color: "#1d9e75", fontFamily: "var(--serif-cjk)" }}>宜</b> {yi}
+        </span>
+      )}
+      {ji && (
+        <span style={{ color: "var(--muted)" }}>
+          {yi ? "; " : " "}<b style={{ color: "#c0442e", fontFamily: "var(--serif-cjk)" }}>忌</b> {ji}
+        </span>
+      )}
+      <span style={{ color: "var(--faint)" }}> — one publisher's hour list, alongside our own hour reading above; publishers differ.</span>
+    </div>
+  );
+}
+
+export function HourGrid({ hours, bestBranch, almanacHours }: { hours: HourPick[]; bestBranch: number | null; almanacHours?: AlmanacHour[] }) {
   const [open, setOpen] = useState<number | null>(null);
   if (hours.length === 0) return null;
   return (
@@ -129,6 +168,7 @@ export function HourGrid({ hours, bestBranch }: { hours: HourPick[]; bestBranch:
       {open !== null && (() => {
         const h = hours.find((x) => x.branchIndex === open);
         if (!h) return null;
+        const ah = almanacHours?.find((x) => x.branchIndex === open);
         return (
           <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5, paddingLeft: 2 }}>
             <b style={{ color: "var(--ink)" }}>{humanHourRange(h.rangeLabel)}</b> ({branchHzLabel(h)}) — {h.score}/100
@@ -141,6 +181,7 @@ export function HourGrid({ hours, bestBranch }: { hours: HourPick[]; bestBranch:
             ) : (
               <span> — a neutral window.</span>
             )}
+            {ah && <AlmanacHourLine ah={ah} />}
           </div>
         );
       })()}
@@ -229,7 +270,13 @@ export function YiJiChips({ rec }: { rec: DayRecommendation }) {
 
 // ── Composite: everything about one selected day ─────────────────────────────
 
-export function DayInsights({ chart, rec }: { chart: BaziChart; rec: DayRecommendation }) {
+/**
+ * `almanac` is optional: when the page has loaded the third-party almanac
+ * detail (via useAlmanacDayDetail from AlmanacPanel), each expanded hour also
+ * shows that publisher's hour god and hour 宜/忌 as a labelled cross-check.
+ * Without it the component renders exactly as before.
+ */
+export function DayInsights({ chart, rec, almanac }: { chart: BaziChart; rec: DayRecommendation; almanac?: AlmanacDayDetail | null }) {
   return (
     <div className="card" style={{ padding: 20, marginTop: 18 }}>
       <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 600 }}>This day, area by area</h3>
@@ -244,7 +291,7 @@ export function DayInsights({ chart, rec }: { chart: BaziChart; rec: DayRecommen
         const overnightBest = ph && rec.bestHour && ph.branchIndex !== rec.bestHour.branchIndex;
         return (
           <>
-            <HourGrid hours={rec.allHours} bestBranch={ph?.branchIndex ?? null} />
+            <HourGrid hours={rec.allHours} bestBranch={ph?.branchIndex ?? null} almanacHours={almanac?.perHour} />
             {overnightBest && (
               <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--faint)", lineHeight: 1.45 }}>
                 Gold marks your recommended daytime window; your highest-scoring hour that day ({humanHourRange(rec.bestHour!.rangeLabel)}) is overnight and less practical to schedule.

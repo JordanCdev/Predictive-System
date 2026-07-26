@@ -98,10 +98,19 @@ export function upsertEntry(entry: JournalEntry): JournalEntry[] {
  * smaller plan — a downgrade must not destroy someone's decision history, and
  * the outcome log is what the honest-feedback loop is built on. Re-saving an
  * entry that already exists is always allowed.
+ *
+ * TIER DECISION (settled): decision entries and daily reflections share ONE
+ * `journalEntries` allowance, so reflections count here too. Callers that don't
+ * pass them get the stored list, defensively read; tests can inject their own.
  */
-export function isJournalFull(list: JournalEntry[], limit: number, id?: string): boolean {
+export function isJournalFull(
+  list: JournalEntry[],
+  limit: number,
+  id?: string,
+  reflections: Reflection[] = loadReflections(),
+): boolean {
   if (id && list.some((e) => e.id === id)) return false;
-  return list.length >= limit;
+  return list.length + reflections.length >= limit;
 }
 
 export function removeEntry(id: string): JournalEntry[] {
@@ -170,4 +179,111 @@ export function feedbackSummary(entries: JournalEntry[]): FeedbackSummary {
 
 export function hasEntry(objectiveId: string, isoDate: string): boolean {
   return loadJournal().some((e) => e.id === entryId(objectiveId, isoDate));
+}
+
+// ── Daily reflections ────────────────────────────────────────────────────────
+// A lighter kind of journal row: how a day FELT, for any day, tied to nothing.
+// A decision entry needs an objective and a reading; a reflection needs neither.
+// Same honesty rules apply — this is the user's own record, never scoring input.
+
+/** One per calendar day. `isoDate` is the identity; saving again replaces it. */
+export interface Reflection {
+  /** `YYYY-MM-DD` — the natural key. */
+  isoDate: string;
+  /** 1 (terrible) … 5 (great). */
+  mood: number;
+  /** Optional one-liner. Empty string when the user only picked a mood. */
+  note: string;
+  /** Epoch ms of the LAST save. Unlike a decision's `savedAt` (a creation stamp
+   *  that never moves), this is bumped on every edit: the day itself is the
+   *  identity here, so there is nothing to lose by re-stamping, and backup/restore
+   *  needs exactly one "which copy is newer?" number. UI wall-clock only. */
+  savedAt: number;
+}
+
+/** The user-facing wording for each mood, index `mood - 1`. Shared by the card,
+ *  the journal list and the aria-labels so a screen reader hears the same word
+ *  the sighted user sees. */
+export const MOOD_LABELS = ["Terrible", "Poor", "Okay", "Good", "Great"] as const;
+
+export function moodLabel(mood: number): string {
+  return MOOD_LABELS[mood - 1] ?? "—";
+}
+
+const REFLECTIONS_STORE = "wei_reflections_v1";
+
+/** Structural check — anything that fails is dropped rather than thrown on,
+ *  matching how corrupt journal rows are treated everywhere else. */
+export function isReflection(v: unknown): v is Reflection {
+  const r = v as Partial<Reflection> | null;
+  return (
+    !!r &&
+    typeof r === "object" &&
+    typeof r.isoDate === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(r.isoDate) &&
+    typeof r.mood === "number" &&
+    Number.isInteger(r.mood) &&
+    r.mood >= 1 &&
+    r.mood <= 5 &&
+    typeof r.note === "string" &&
+    typeof r.savedAt === "number" &&
+    Number.isFinite(r.savedAt)
+  );
+}
+
+/** Newest day first, corrupt rows dropped, storage failures → empty list. */
+export function loadReflections(): Reflection[] {
+  try {
+    const raw = localStorage.getItem(REFLECTIONS_STORE);
+    const list = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(list) ? list.filter(isReflection) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistReflections(list: Reflection[]): Reflection[] {
+  try {
+    localStorage.setItem(REFLECTIONS_STORE, JSON.stringify(list));
+  } catch {
+    /* private mode / quota — the in-memory list still works this session */
+  }
+  return list;
+}
+
+export function getReflection(isoDate: string): Reflection | null {
+  return loadReflections().find((r) => r.isoDate === isoDate) ?? null;
+}
+
+/** Add or replace THE reflection for its day — one per day, always. Kept sorted
+ *  newest day first so every reader sees the same order. */
+export function upsertReflection(r: Reflection): Reflection[] {
+  const rest = loadReflections().filter((x) => x.isoDate !== r.isoDate);
+  return persistReflections([r, ...rest].sort((a, b) => b.isoDate.localeCompare(a.isoDate)));
+}
+
+export function removeReflection(isoDate: string): Reflection[] {
+  return persistReflections(loadReflections().filter((r) => r.isoDate !== isoDate));
+}
+
+/**
+ * Is the plan's allowance used up for a NEW reflection on `isoDate`?
+ *
+ * TIER DECISION (settled): reflections and decision entries draw on ONE shared
+ * `journalEntries` allowance — a single honest lever, and the free tier keeps its
+ * floor. So the count here is decisions + reflections together, exactly like
+ * `isJournalFull` on the decision side.
+ *
+ * Same guarantees as `isJournalFull`: only NEW rows are ever blocked. Re-saving
+ * the day's existing reflection is always allowed, and nothing already stored is
+ * ever trimmed to fit a smaller plan — a downgrade must not destroy history.
+ */
+export function isReflectionFull(
+  decisions: JournalEntry[],
+  reflections: Reflection[],
+  limit: number,
+  isoDate?: string,
+): boolean {
+  if (isoDate && reflections.some((r) => r.isoDate === isoDate)) return false;
+  return decisions.length + reflections.length >= limit;
 }

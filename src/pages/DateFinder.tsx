@@ -272,7 +272,14 @@ export function DateFinderPage() {
 
   const journalBlock = (
     <>
-      {showJournalPrompt && <UpgradePrompt feature="journal_unlimited" compact />}
+      {showJournalPrompt && (
+        <>
+          <UpgradePrompt feature="journal_unlimited" compact />
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--muted)" }}>
+            Saved decisions and daily reflections share the same allowance.
+          </p>
+        </>
+      )}
       {journalSyncError && (
         <div className="warn" style={{ marginTop: 8 }}>
           <span aria-hidden="true">⚠</span> Your journal is saved on this device but couldn't sync to your account:{" "}

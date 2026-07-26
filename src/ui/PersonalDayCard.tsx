@@ -14,7 +14,7 @@
  */
 
 import { useMemo } from "react";
-import { BaziChart, DayRecommendation, humanDate, personalDayReading, verdictBand } from "../engine/index.ts";
+import { BaziChart, DayRecommendation, TEN_GOD_LABEL, humanDate, personalDayReading, tenGodPlain, verdictBand } from "../engine/index.ts";
 import { scoreColor, scoreTextColor } from "./format.ts";
 import { PriorityFitChip, useRankedAreas } from "./PriorityFitChip.tsx";
 
@@ -64,6 +64,24 @@ export function PersonalDayCard({
           )}
         </span>
 
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+        {/* Day-type badge: what kind of day this is FOR THIS PERSON — the day
+            stem's Ten God relative to their Day Master. A label the engine
+            already computed (rec.dayStemTenGod); display only. */}
+        {rec.dayStemTenGod && (() => {
+          const label = TEN_GOD_LABEL[rec.dayStemTenGod];
+          const cut = label.lastIndexOf(" ");
+          return (
+            <span
+              className="pill"
+              style={{ padding: "4px 10px", whiteSpace: "nowrap" }}
+              title={`The day stem is your ${label} — a day of ${tenGodPlain(rec.dayStemTenGod)}. A classical label for the day's flavour, not part of the score.`}
+            >
+              {label.slice(0, cut)} day <span className="faint" style={{ fontFamily: "var(--serif-cjk)" }}>· {label.slice(cut + 1)}</span>
+            </span>
+          );
+        })()}
+
         {/* The verdict + rounded score, as one chip. Same band/colour logic as everywhere else. */}
         <span
           className="pill"
@@ -74,6 +92,7 @@ export function PersonalDayCard({
           <b style={{ fontSize: 13.5, color: scoreTextColor(rec.recommendationScore) }}>{band.label}</b>
           <b style={{ fontSize: 15, color: scoreTextColor(rec.recommendationScore) }}>{score}</b>
           <span className="faint" style={{ fontSize: 11 }}>{rec.personalized ? "your day rating" : "general day rating"}</span>
+        </span>
         </span>
       </div>
 

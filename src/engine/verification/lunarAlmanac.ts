@@ -13,6 +13,7 @@
 
 import { Solar } from "lunar-javascript";
 import { AlmanacData } from "../decision.ts";
+import { BRANCHES } from "../symbols.ts";
 
 /** Normalise the odd variant characters lunar-javascript can emit so the
  *  engine's simplified-Chinese term matching is reliable. */
@@ -39,6 +40,21 @@ interface RichLunar {
   getAnimal(): string; // the mansion's animal, e.g. "貉"
   getGong(): string; // quadrant, e.g. "东"
   getShou(): string; // palace beast, e.g. "青龙"
+  getDayJiShen(): string[]; // 吉神, e.g. ['月空','金堂','解神','鸣吠对']
+  getDayXiongSha(): string[]; // 凶煞, e.g. ['月害','大时','咸池',…]
+  getTimes(): RichLunarTime[]; // 13 entries: early 子 … 亥, then late 子
+}
+
+/** The per-double-hour surface of lunar-javascript's LunarTime (probed on
+ *  1.7.7: getTimes()[i] carries the hour pillar plus the hour's 天神 and its
+ *  own 宜/忌 lists — all simplified Chinese). */
+interface RichLunarTime {
+  getGanZhi(): string; // "丙子"
+  getZhi(): string; // "子"
+  getTianShen(): string; // 黄黑道 hour god, e.g. "金匮"
+  getTianShenLuck(): string; // "吉" | "凶"
+  getYi(): string[];
+  getJi(): string[];
 }
 
 /** 廿八宿 — the day's lunar mansion, as reported by the third-party almanac. */
@@ -56,8 +72,24 @@ export interface AlmanacMansion {
   shou: string;
 }
 
+/** One double-hour's read from the third-party almanac. */
+export interface AlmanacHour {
+  /** Branch index 0 (子) … 11 (亥) — same indexing as the engine's BRANCHES. */
+  branchIndex: number;
+  /** Hour pillar, e.g. "丙子". */
+  ganzhi: string;
+  /** 黄黑道 hour god (simplified), e.g. "金匮". */
+  tianShen: string;
+  /** The traditional verdict for that god: "吉" or "凶". */
+  tianShenLuck: string;
+  /** This hour's own 宜/忌 activity terms (normalised simplified). */
+  yi: string[];
+  ji: string[];
+}
+
 /** One day's full 通勝 read from the third-party almanac: the lunar date in
- *  Chinese, the complete 宜/忌 term lists, and the 28-mansion. */
+ *  Chinese, the complete 宜/忌 term lists, the day-star lists, the 28-mansion,
+ *  and the per-double-hour breakdown. */
 export interface AlmanacDayDetail {
   iso: string;
   /** Lunar month in Chinese, e.g. "六月" (leap: "闰六月"). */
@@ -68,8 +100,72 @@ export interface AlmanacDayDetail {
   lunarDateZh: string;
   yi: string[];
   ji: string[];
+  /** 吉神 — the day's auspicious stars per this almanac (empty if the API is absent). */
+  jiShen: string[];
+  /** 凶煞 — the day's inauspicious stars per this almanac (empty if the API is absent). */
+  xiongSha: string[];
+  /** 12 double-hours in 子…亥 order (empty if the per-hour API is absent). */
+  perHour: AlmanacHour[];
   /** null if this lunar-javascript build lacks the mansion API. */
   mansion: AlmanacMansion | null;
+}
+
+/** The day-star (神煞) lists, probe-guarded: builds that lack the APIs — or
+ *  throw inside them — yield empty lists rather than breaking the panel. */
+export function extractDayStars(lunarObj: unknown): { jiShen: string[]; xiongSha: string[] } {
+  const lunar = lunarObj as RichLunar;
+  let jiShen: string[] = [];
+  let xiongSha: string[] = [];
+  try {
+    if (typeof lunar.getDayJiShen === "function") jiShen = lunar.getDayJiShen().map(norm);
+  } catch {
+    jiShen = [];
+  }
+  try {
+    if (typeof lunar.getDayXiongSha === "function") xiongSha = lunar.getDayXiongSha().map(norm);
+  } catch {
+    xiongSha = [];
+  }
+  return { jiShen, xiongSha };
+}
+
+/** The 12 double-hours' almanac read, probe-guarded like extractDayStars.
+ *  lunar-javascript emits 13 entries (early and late 子); the civil-day early
+ *  子 (00:00–01:00) is kept and the trailing late-子 duplicate dropped, so the
+ *  result is one row per branch, 子…亥. */
+export function extractPerHour(lunarObj: unknown): AlmanacHour[] {
+  const lunar = lunarObj as RichLunar;
+  try {
+    if (typeof lunar.getTimes !== "function") return [];
+    const out: AlmanacHour[] = [];
+    const seen = new Set<number>();
+    for (const t of lunar.getTimes()) {
+      if (
+        !t ||
+        typeof t.getGanZhi !== "function" ||
+        typeof t.getZhi !== "function" ||
+        typeof t.getTianShen !== "function" ||
+        typeof t.getTianShenLuck !== "function"
+      ) {
+        continue;
+      }
+      const zhi = t.getZhi();
+      const branchIndex = BRANCHES.findIndex((b) => b.hanzi === zhi);
+      if (branchIndex < 0 || seen.has(branchIndex)) continue;
+      seen.add(branchIndex);
+      out.push({
+        branchIndex,
+        ganzhi: t.getGanZhi(),
+        tianShen: norm(t.getTianShen()),
+        tianShenLuck: t.getTianShenLuck(),
+        yi: (typeof t.getYi === "function" ? t.getYi() : []).map(norm),
+        ji: (typeof t.getJi === "function" ? t.getJi() : []).map(norm),
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
 }
 
 /** Full 通勝 detail for one civil day (lazy chunk only — imports the library). */
@@ -93,6 +189,7 @@ export function buildAlmanacDayDetail(civil: { year: number; month: number; day:
   } catch {
     mansion = null;
   }
+  const { jiShen, xiongSha } = extractDayStars(lunar);
   return {
     iso,
     lunarMonthZh,
@@ -100,6 +197,9 @@ export function buildAlmanacDayDetail(civil: { year: number; month: number; day:
     lunarDateZh: `${lunarMonthZh}${lunarDayZh}`,
     yi: lunar.getDayYi().map(norm),
     ji: lunar.getDayJi().map(norm),
+    jiShen,
+    xiongSha,
+    perHour: extractPerHour(lunar),
     mansion,
   };
 }

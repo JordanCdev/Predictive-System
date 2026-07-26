@@ -8,6 +8,8 @@ import { Solar } from "lunar-javascript";
 import {
   buildAlmanacDayDetail,
   buildLunarDayLabels,
+  extractDayStars,
+  extractPerHour,
 } from "../src/engine/verification/lunarAlmanac.ts";
 
 describe("buildAlmanacDayDetail", () => {
@@ -40,10 +42,77 @@ describe("buildAlmanacDayDetail", () => {
     }
   });
 
+  it("returns the day-star (神煞) lists, normalised, for the anchor day", () => {
+    // Probed live on lunar-javascript@1.7.7 for 2026-07-25.
+    const d = buildAlmanacDayDetail({ year: 2026, month: 7, day: 25 });
+    expect(d.jiShen.length).toBeGreaterThan(0);
+    expect(d.xiongSha.length).toBeGreaterThan(0);
+    expect(d.jiShen).toContain("月空");
+    expect(d.jiShen).toContain("金堂");
+    expect(d.jiShen).toContain("解神");
+    expect(d.xiongSha).toContain("咸池");
+    expect(d.xiongSha).toContain("天刑");
+    // Normalised: no traditional-variant leakage the adapter is pinned to fix.
+    expect([...d.jiShen, ...d.xiongSha].join()).not.toMatch(/諸事不宜|馀/);
+  });
+
+  it("returns 12 per-hour rows in 子…亥 order with valid lucks", () => {
+    const d = buildAlmanacDayDetail({ year: 2026, month: 7, day: 25 });
+    expect(d.perHour).toHaveLength(12);
+    // One row per branch, ascending 子(0)…亥(11); the library's trailing
+    // late-子 duplicate is dropped in favour of the civil day's early 子.
+    expect(d.perHour.map((h) => h.branchIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    for (const h of d.perHour) {
+      expect(["吉", "凶"]).toContain(h.tianShenLuck);
+      expect(h.ganzhi).toMatch(/^..$/);
+      expect(h.tianShen.length).toBeGreaterThan(0);
+    }
+    // Probed anchors: 子 hour is 丙子/金匮(吉); 辰 hour is 庚辰/天牢(凶), 诸事不宜.
+    const zi = d.perHour[0];
+    expect(zi.ganzhi).toBe("丙子");
+    expect(zi.tianShen).toBe("金匮");
+    expect(zi.tianShenLuck).toBe("吉");
+    const chen = d.perHour[4];
+    expect(chen.ganzhi).toBe("庚辰");
+    expect(chen.tianShen).toBe("天牢");
+    expect(chen.tianShenLuck).toBe("凶");
+    expect(chen.ji).toContain("诸事不宜");
+    expect(chen.ji.join()).not.toMatch(/諸事不宜/); // normalised to simplified
+  });
+
   it("is deterministic", () => {
     const a = buildAlmanacDayDetail({ year: 2026, month: 2, day: 17 });
     const b = buildAlmanacDayDetail({ year: 2026, month: 2, day: 17 });
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+});
+
+describe("probe-guarded extraction (graceful absence)", () => {
+  it("yields empty star lists when the APIs are missing", () => {
+    expect(extractDayStars({})).toEqual({ jiShen: [], xiongSha: [] });
+  });
+
+  it("yields empty star lists when an API throws", () => {
+    const throwing = {
+      getDayJiShen: () => {
+        throw new Error("boom");
+      },
+      getDayXiongSha: () => ["天刑"],
+    };
+    expect(extractDayStars(throwing)).toEqual({ jiShen: [], xiongSha: ["天刑"] });
+  });
+
+  it("yields no per-hour rows when getTimes is missing, throws, or returns bad entries", () => {
+    expect(extractPerHour({})).toEqual([]);
+    expect(
+      extractPerHour({
+        getTimes: () => {
+          throw new Error("boom");
+        },
+      }),
+    ).toEqual([]);
+    // Entries lacking the probed methods are skipped, not crashed on.
+    expect(extractPerHour({ getTimes: () => [{}, null] })).toEqual([]);
   });
 });
 

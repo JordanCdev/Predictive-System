@@ -507,6 +507,92 @@ export function computeDaYun(fp: FourPillars, sex: "male" | "female", count = 9)
   };
 }
 
+// ── Ten-God day activation (display-only) ────────────────────────────────────
+
+/** Canonical presentation order of the Ten Gods (same-group pairs adjacent,
+ *  companion → output → wealth → officer → resource). */
+export const TEN_GOD_ORDER: TenGod[] = [
+  "friend",
+  "rob_wealth",
+  "eating_god",
+  "hurting_officer",
+  "indirect_wealth",
+  "direct_wealth",
+  "seven_killings",
+  "direct_officer",
+  "indirect_resource",
+  "direct_resource",
+];
+
+export interface TenGodDayActivationRow {
+  tenGod: TenGod;
+  /** The heavenly stem that carries this god for THIS Day Master (the map
+   *  DM-stem → Ten God is a bijection over the 10 stems). */
+  stem: Stem;
+  /** Unsigned raw activation: day-stem hit (1.0) + day-branch hidden-stem hits
+   *  (each at its stored hidden-stem weight). 0 when the pillar doesn't touch it. */
+  weight: number;
+  /** Signed, bounded display value (see formula below). Never fed to scoring. */
+  activation: number;
+  /** True when today's pillar carries this god at all (weight > 0). */
+  present: boolean;
+  /** How the god's underlying element sits with this chart's useful-element read. */
+  valence: "favourable" | "unfavourable" | "neutral";
+}
+
+/** Neutral-element damping: a god whose element the chart neither favours nor
+ *  avoids still registers, but quietly (display convention, not doctrine). */
+const NEUTRAL_ACTIVATION_FACTOR = 0.35;
+
+/**
+ * How strongly a given day pillar "wakes" each of this chart's Ten Gods — an
+ * interpretive DISPLAY read for the daily view, never an input to any score
+ * (recommendationScore/calculationHash are computed elsewhere and unchanged).
+ *
+ * Formula (deterministic, display convention):
+ *   weight(g)   = 1.0 if the day STEM's Ten God is g
+ *               + Σ hidden-stem weights of the day BRANCH whose Ten God is g
+ *                 (the same HIDDEN_STEMS weights the element accounting uses)
+ *   activation(g) = weight(g) × sign, where sign is
+ *                 +1    when g's underlying element (the phase of the stem that
+ *                       carries g for this DM) is in the chart's favourable set,
+ *                 −1    when it is in the unfavourable set,
+ *                 +0.35 otherwise (present but neutral — kept small).
+ * Bounded to [−2, 2] (a stem hit plus a full single-hidden branch is the
+ * arithmetic maximum). All 10 gods are always returned, in TEN_GOD_ORDER, so
+ * the UI can show absence honestly rather than dropping rows.
+ */
+export function tenGodDayActivation(chart: BaziChart, dayGz: GanZhi): TenGodDayActivationRow[] {
+  const dm = chart.dayMaster.dayMaster;
+  const favourable = new Set(chart.dayMaster.favorableElements);
+  const unfavourable = new Set(chart.dayMaster.unfavorableElements);
+
+  // For a fixed Day Master, each of the 10 stems maps to exactly one Ten God
+  // (and vice versa) — recover the carrier stem for every god.
+  const carrier = new Map<TenGod, Stem>();
+  for (const s of STEMS) carrier.set(tenGodOf(dm, s), s);
+
+  const weights = new Map<TenGod, number>();
+  weights.set(tenGodOf(dm, dayGz.stem), 1.0);
+  for (const h of HIDDEN_STEMS[dayGz.branch.index]) {
+    const g = tenGodOf(dm, STEMS[h.stem]);
+    weights.set(g, (weights.get(g) ?? 0) + h.weight);
+  }
+
+  return TEN_GOD_ORDER.map((tenGod) => {
+    const stem = carrier.get(tenGod)!;
+    const weight = Math.round((weights.get(tenGod) ?? 0) * 1000) / 1000;
+    const valence: TenGodDayActivationRow["valence"] = favourable.has(stem.phase)
+      ? "favourable"
+      : unfavourable.has(stem.phase)
+        ? "unfavourable"
+        : "neutral";
+    const factor = valence === "favourable" ? 1 : valence === "unfavourable" ? -1 : NEUTRAL_ACTIVATION_FACTOR;
+    const activation = Math.max(-2, Math.min(2, Math.round(weight * factor * 1000) / 1000));
+    return { tenGod, stem, weight, activation, present: weight > 0, valence };
+  });
+}
+
 // Convenience re-exports for the decision layer.
 export { TEN_GOD_LABEL, godGroupOf, BRANCHES };
 export type { Branch };

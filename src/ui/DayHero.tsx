@@ -1,4 +1,4 @@
-import { BRANCHES, DayRecommendation, mod, verdictBand } from "../engine/index.ts";
+import { BRANCHES, DayRecommendation, GanZhi, mod, verdictBand } from "../engine/index.ts";
 import { scoreColor, scoreTextColor } from "./format.ts";
 
 /** The 4 most recent years (up to and including `uptoYear`) whose year branch
@@ -17,8 +17,21 @@ function recentYearsOfBranch(branchIndex: number, uptoYear: number): number[] {
  *
  *  `quiet` — the demoted form used inside the personalised view's "The day
  *  itself (通勝 almanac)" fold: smaller pillar, no card chrome, and no big
- *  score (the score lives in PersonalDayCard there). Same facts, lower voice. */
-export function DayHero({ rec, quiet }: { rec: DayRecommendation; quiet?: boolean }) {
+ *  score (the score lives in PersonalDayCard there). Same facts, lower voice.
+ *
+ *  `datePillars` — the date's own year + month pillars (computed by the caller
+ *  via the kernel for local noon under the request's convention), shown as a
+ *  plain "Year 丙午 · Month 乙未 · Day 庚子" line so the day pillar is seen in
+ *  the frame it sits inside. */
+export function DayHero({
+  rec,
+  quiet,
+  datePillars,
+}: {
+  rec: DayRecommendation;
+  quiet?: boolean;
+  datePillars?: { year: GanZhi; month: GanZhi } | null;
+}) {
   const gz = rec.tongshu.dayGanzhi;
   const animal = BRANCHES[gz.branch.index].animal;
   const clashAnimal = rec.tongshu.clashAnimal;
@@ -59,6 +72,26 @@ export function DayHero({ rec, quiet }: { rec: DayRecommendation; quiet?: boolea
           </div>
         )}
       </div>
+
+      {/* The date's own pillar frame — year and month alongside the day. */}
+      {datePillars && (
+        <div
+          style={{ marginTop: quiet ? 8 : 10, fontSize: 12.5, color: "var(--muted)", display: "flex", gap: 10, flexWrap: "wrap" }}
+          title="The date's year and month pillars (四柱 frame at local noon, under your convention) — the larger cycles this day sits inside."
+        >
+          <span>
+            Year <b style={{ fontFamily: "var(--serif-cjk)", color: "var(--ink)", fontWeight: 600 }}>{datePillars.year.hanzi}</b>
+          </span>
+          <span aria-hidden="true" style={{ color: "var(--faint)" }}>·</span>
+          <span>
+            Month <b style={{ fontFamily: "var(--serif-cjk)", color: "var(--ink)", fontWeight: 600 }}>{datePillars.month.hanzi}</b>
+          </span>
+          <span aria-hidden="true" style={{ color: "var(--faint)" }}>·</span>
+          <span>
+            Day <b style={{ fontFamily: "var(--serif-cjk)", color: "var(--ink)", fontWeight: 600 }}>{gz.hanzi}</b>
+          </span>
+        </div>
+      )}
 
       <div
         className="pill danger"

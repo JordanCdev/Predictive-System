@@ -4,6 +4,7 @@ import {
   BRANCHES,
   DecisionResult,
   GENERAL_DAY_OBJECTIVE,
+  buildFourPillars,
   classicalHoursOfDay,
   dayGodPlain,
   evaluateDecision,
@@ -11,10 +12,12 @@ import {
   officerPlain,
   shenShaPlain,
 } from "../engine/index.ts";
-import { AlmanacPanel } from "../ui/AlmanacPanel.tsx";
+import { AlmanacPanel, useAlmanacDayDetail } from "../ui/AlmanacPanel.tsx";
 import { DayHero } from "../ui/DayHero.tsx";
 import { DayInsights, HourGrid } from "../ui/DayInsights.tsx";
 import { PersonalDayCard } from "../ui/PersonalDayCard.tsx";
+import { ReflectionCard } from "../ui/ReflectionCard.tsx";
+import { TenGodsDayChart } from "../ui/TenGodsDayChart.tsx";
 import { PriorityFitChip } from "../ui/PriorityFitChip.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { BoundaryNotice } from "../ui/BoundaryNotice.tsx";
@@ -79,6 +82,22 @@ export function DailyPage() {
   const gz = rec.tongshu.dayGanzhi;
   const dayAnimal = BRANCHES[gz.branch.index].animal;
   const HOUR_GRID_ID = "day-hour-grid";
+
+  // The lazily-loaded third-party almanac detail — the same data AlmanacPanel
+  // shows, shared into DayInsights so the open hour can carry the per-hour
+  // cross-check stars. Null until the verification chunk arrives (or offline).
+  const almanacDetail = useAlmanacDayDetail(rec.civil);
+
+  // The date's own year + month pillars (its 四柱 frame at local noon under the
+  // request's convention) — display context for the DayHero, cheap and cached.
+  const datePillars = useMemo(() => {
+    const c = civilOfIso(iso);
+    const fp = buildFourPillars(
+      { year: c.year, month: c.month, day: c.day, hour: 12, minute: 0, tzOffsetMinutes: req.window.tzOffsetMinutes },
+      req.convention,
+    );
+    return { year: fp.year, month: fp.month };
+  }, [iso, req]);
 
   // "The day at a glance" pills — identical content in both modes; only where
   // they sit on the page differs.
@@ -156,8 +175,12 @@ export function DailyPage() {
           <PersonalDayCard chart={chart} rec={rec} label={activeStored?.label ?? "You"} hourGridId={HOUR_GRID_ID} />
 
           <div id={HOUR_GRID_ID}>
-            <DayInsights chart={chart} rec={rec} />
+            <DayInsights chart={chart} rec={rec} almanac={almanacDetail} />
           </div>
+
+          {/* The personal Ten-Gods energy chart — which of THEIR gods this day
+              wakes. Display-only; the explainer inside says so. */}
+          <TenGodsDayChart chart={chart} dayGz={gz} />
 
           {starsBlock && (
             <div className="card" style={{ padding: 18, marginTop: 18 }}>{starsBlock}</div>
@@ -174,7 +197,7 @@ export function DailyPage() {
               </span>
             </summary>
             <div className="almanac-fold-body">
-              <DayHero rec={rec} quiet />
+              <DayHero rec={rec} quiet datePillars={datePillars} />
               <div>
                 <div className="section-title" style={{ margin: "14px 0 0" }}>The day at a glance</div>
                 {glancePills}
@@ -189,7 +212,7 @@ export function DailyPage() {
         <>
           {/* ALMANAC-FIRST — the right order when there is no person to lead
               with. This is today's layout, unchanged. */}
-          <DayHero rec={rec} />
+          <DayHero rec={rec} datePillars={datePillars} />
 
           {/* A SEPARATE axis, never a modifier: what the user says they care about
               changes what we surface and in what order, never the classical score.
@@ -207,7 +230,7 @@ export function DailyPage() {
           </div>
 
           {chart ? (
-            <DayInsights chart={chart} rec={rec} />
+            <DayInsights chart={chart} rec={rec} almanac={almanacDetail} />
           ) : (
             <>
               {/* No profile → the classical Tong Shu hour read: the 黃道/黑道 hour gods
@@ -250,6 +273,10 @@ export function DailyPage() {
           )}
         </div>
       </div>
+
+      {/* The day's reflection prompt (Agent C's card) — after the main content
+          in BOTH branches (the tail below is shared), before verification. */}
+      <ReflectionCard iso={iso} />
 
       <DayVerification
         rec={rec}
