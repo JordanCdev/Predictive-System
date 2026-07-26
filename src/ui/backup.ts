@@ -55,11 +55,13 @@ export const PRIORITIES_KEY = "wei_priorities_v1";
  *  restated, so the two can never drift apart the way a copied literal would. */
 export const THREADS_KEY = THREADS_STORE_KEY;
 
-/** Keys that must NEVER appear in a backup. `wei_ai_key` is an API secret.
+/** Keys that must NEVER appear in a backup. `wei_ai_key` is an API secret;
+ *  `wei_signin_email` is a half-finished sign-in — an address the user typed to
+ *  receive a link, which is both PII and useless to anyone restoring elsewhere.
  *  Note what is NOT here: the conversations themselves. A transcript is the
  *  user's own writing, not a credential, so it travels in their backup — see the
  *  privacy note at the top of this file. */
-export const EXCLUDED_KEYS = ["wei_ai_key", "wei_ai_consent", "wei_ai_model"] as const;
+export const EXCLUDED_KEYS = ["wei_ai_key", "wei_ai_consent", "wei_ai_model", "wei_signin_email"] as const;
 
 /** A restore file bigger than this is not a Wéi backup — refuse before parsing. */
 export const MAX_BACKUP_BYTES = 8 * 1024 * 1024;

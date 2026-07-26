@@ -61,13 +61,27 @@ firebase apps:sdkconfig web <APP_ID>   # prints the six values §4 needs
 
 Firebase console → **Authentication → Sign-in method**.
 
-Today the client implements **Google only** (`signInWithGoogle`, `src/firebase/client.ts:55`),
-so enabling **Google** is what makes the current build work. Enable it, then under
-**Authentication → Settings → Authorized domains** add your GitHub Pages domain
-(e.g. `jordancdev.github.io`) and `localhost`. No separate Google Cloud OAuth app is
-needed — Firebase manages it.
+The client implements **two** providers, and each needs its own toggle here:
 
-**Google-only is a private-beta configuration, not a launch configuration.** See §3.
+1. **Google** — `signInWithGoogle`. Enable **Google**. No separate Google Cloud OAuth app is
+   needed; Firebase manages it.
+2. **Email link (passwordless)** — `sendSignInLink` / `completeEmailLink`. Enable
+   **Email/Password**, then tick **Email link (passwordless sign-in)** inside it. The
+   password half stays unused; the app never asks for or stores one.
+
+Then under **Authentication → Settings → Authorized domains** add your GitHub Pages domain
+(e.g. `jordancdev.github.io`) and `localhost`. This matters more for email link than for
+Google: the emailed link returns to the app's own URL, and an unauthorized domain makes
+Firebase refuse to send at all.
+
+**If the email form is present but sending fails with `auth/operation-not-allowed`, rung 1
+is simply not toggled on** — the client is wired and waiting, nothing is broken.
+
+Why the return URL is the app's bare base path and not `#/profile`: Firebase appends
+`mode`/`oobCode`/`apiKey` to whatever URL you give it, and this is a HashRouter app, so a
+hash route would bury those in the fragment where they are a router path rather than a query
+string. The app routes itself onward after redeeming. See `linkReturnUrl` in
+`src/firebase/client.ts`.
 
 ## 3. The auth ladder — recommended, in this order
 
@@ -82,7 +96,7 @@ The recommended ladder, each rung earning its place before the next:
 | Rung | What | Why here | Cost to add |
 |---|---|---|---|
 | **0. Guest** | No account. Everything works, data is local, export/import is the safety net. | This is the app's default state and must stay usable forever. Accounts are additive. | Already shipped |
-| **1. Email link (passwordless)** | Firebase `signInWithEmailLink`. Type an email, click the link. | Widest possible reach with no password to store, reset, breach, or support. Works in every market. Should be the **first** provider added, ahead of any social login. | Small: one client method, one route to catch the link, plus authorized-domain config |
+| **1. Email link (passwordless)** | Firebase `signInWithEmailLink`. Type an email, click the link. | Widest possible reach with no password to store, reset, breach, or support. Works in every market. Should be the **first** provider added, ahead of any social login. | **Done (Phase 18)** — client-side. Needs the §2 console toggle to go live |
 | **2. Google** | `signInWithPopup` — already implemented. | One tap for the large share of users who do have Google; keep it as a convenience path, never the only door. | Done |
 | **3. Passkeys** | WebAuthn, via Firebase's passkey support or an identity provider that fronts it. | The direction of travel for consumer auth: no shared secret, phishing-resistant, and the platform UX (Face ID / fingerprint) reads as *less* friction than a password, not more. Add once rungs 1–2 are stable. | Medium |
 | **4. Apple** | Sign in with Apple. | **Defer.** Apple's requirement to offer it bites when you ship a **native app** with third-party sign-in; a web-only PWA does not trigger it. Adding it costs an Apple Developer Program membership and a service-ID setup for no reach we don't already have via email link. Revisit if and when a native app is on the table. | Deferred |
@@ -181,13 +195,26 @@ consider enabling **Firebase App Check** too.
 
 In order. Each step tells you which of the previous ones failed.
 
-1. **Config loaded.** Open the app → **Profile**. If §4 worked you now see a
-   "**Sign in with Google**" button (`src/pages/ProfilePage.tsx:61`). No button ⇒
-   `firebaseEnabled` is false ⇒ one of the six values is missing or misspelt. On the
+1. **Config loaded.** Open the app → **Profile**. If §4 worked you now see the Account card
+   with a "**Sign in with Google**" button and an email field (`src/ui/profile/SignInOptions.tsx`).
+   No card ⇒ `firebaseEnabled` is false ⇒ one of the six values is missing or misspelt. On the
    deployed site, re-run the deploy workflow after adding the secrets — secrets are read
    at build time, not at page load.
-2. **Auth works.** Click it; the Google popup completes and the page shows your account.
+
+   > **Check the value, not the config screen.** A masked secret copied from a UI that renders
+   > it as bullets stores the bullets. A Firebase web API key is **39 characters** and starts
+   > `AIza`; if `auth/invalid-api-key` persists against a config that looks correct, measure the
+   > length before re-reading the panel. Two cheap tells that the build input never changed at
+   > all: the deployed bundle's content hash is identical across re-runs, and
+   > `curl "https://identitytoolkit.googleapis.com/v1/projects?key=<key>"` rejects the deployed
+   > key while accepting the local one.
+
+2. **Google works.** Click it; the popup completes and the page shows your account.
    `auth/unauthorized-domain` ⇒ §2's authorized-domains list is missing your host.
+2b. **Email link works.** Enter your address → "Email me a sign-in link" → open the link.
+   Opening it in the *same* browser signs you in silently; opening it elsewhere asks you to
+   confirm the address first, which is intended — a link alone must never be enough.
+   `auth/operation-not-allowed` ⇒ the Email-link toggle in §2 is off.
 3. **Firestore works.** With a profile saved, open the Firebase console →
    Firestore → and confirm a document exists at **`users/{your-uid}/meta/people`**
    containing your cast of people and `activeId`. That single document is the proof the

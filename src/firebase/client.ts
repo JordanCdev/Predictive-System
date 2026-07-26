@@ -8,7 +8,18 @@
  * rules can scope access to the signed-in user (see firestore.rules).
  */
 import { FirebaseApp, initializeApp } from "firebase/app";
-import { Auth, GoogleAuthProvider, User, getAuth, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import {
+  Auth,
+  GoogleAuthProvider,
+  User,
+  getAuth,
+  isSignInWithEmailLink,
+  onAuthStateChanged,
+  sendSignInLinkToEmail,
+  signInWithEmailLink,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
 import {
   Firestore,
   initializeFirestore,
@@ -55,6 +66,72 @@ export function watchAuth(cb: (user: User | null) => void): () => void {
 }
 export async function signInWithGoogle(): Promise<void> {
   await signInWithPopup(ensure().auth, new GoogleAuthProvider());
+}
+
+// ── email link (passwordless) ────────────────────────────────────────────────
+//
+// The second rung of the auth ladder, and the one that matters most for reach:
+// Google sign-in is uneven across this app's target markets and unavailable in
+// mainland China, so an email address must be enough to own an account.
+//
+// The return URL is deliberately the app's BASE PATH WITH NO HASH. Firebase
+// appends its own `mode`/`oobCode`/`apiKey` to whatever URL it is given, and this
+// app is a HashRouter app: hand it ".../#/profile" and those parameters land
+// INSIDE the fragment, where they are a hash-router path rather than a query
+// string. Landing on the bare base path keeps them real `?` search params that
+// isSignInWithEmailLink() can read unambiguously; the app then routes onward
+// itself once the sign-in completes.
+const PENDING_EMAIL_KEY = "wei_signin_email";
+
+function linkReturnUrl(): string {
+  const { origin, pathname } = window.location;
+  const base = import.meta.env.BASE_URL || "/";
+  // pathname already includes the base on Pages; prefer it so a preview served
+  // from a different mount still returns to itself.
+  return origin + (pathname && pathname !== "/" ? pathname : base);
+}
+
+/**
+ * Email a sign-in link. The address is remembered locally so that following the
+ * link in the SAME browser needs no retyping; opening it elsewhere falls back to
+ * asking, which is Firebase's documented anti-session-injection requirement —
+ * the link alone must never be enough to sign in as an address you can't name.
+ */
+export async function sendSignInLink(email: string): Promise<void> {
+  await sendSignInLinkToEmail(ensure().auth, email, { url: linkReturnUrl(), handleCodeInApp: true });
+  try {
+    window.localStorage.setItem(PENDING_EMAIL_KEY, email);
+  } catch {
+    /* private mode — the user will simply be asked for the address again */
+  }
+}
+
+/** True when the current URL is a sign-in link waiting to be completed. */
+export function isEmailLink(href: string): boolean {
+  return isSignInWithEmailLink(ensure().auth, href);
+}
+
+/** The address the link was requested for in this browser, if we still have it. */
+export function pendingLinkEmail(): string | null {
+  try {
+    return window.localStorage.getItem(PENDING_EMAIL_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Finish an email-link sign-in. The remembered address is cleared either way —
+ *  it has served its purpose, and it is the one piece of PII this flow stores. */
+export async function completeEmailLink(href: string, email: string): Promise<void> {
+  try {
+    await signInWithEmailLink(ensure().auth, email, href);
+  } finally {
+    try {
+      window.localStorage.removeItem(PENDING_EMAIL_KEY);
+    } catch {
+      /* nothing to clear */
+    }
+  }
 }
 export async function signOutUser(): Promise<void> {
   await signOut(ensure().auth);

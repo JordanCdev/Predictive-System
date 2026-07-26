@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CONVENTION_PRESETS, objectivePlain } from "../engine/index.ts";
 import { Person, PersonalizeCard } from "../ui/PersonalizeCard.tsx";
@@ -10,6 +11,7 @@ import { PeriodsPanel } from "../ui/PeriodsPanel.tsx";
 import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { useAuth } from "../ui/profile/AuthContext.tsx";
 import { PeoplePanel } from "../ui/profile/PeoplePanel.tsx";
+import { CompleteSignIn, SignInOptions } from "../ui/profile/SignInOptions.tsx";
 import { PrioritiesPanel } from "../ui/priorities/PrioritiesPanel.tsx";
 import { BackupPanel } from "../ui/BackupPanel.tsx";
 import { SELF_ID } from "../ui/profile/peopleStore.ts";
@@ -21,9 +23,10 @@ import { DEFAULT_TZ, TODAY_ISO } from "../ui/shared.ts";
 export function ProfilePage() {
   const { person, setPerson, savePerson, activeStored, chart, dayun, currentAge, warnings, people, boundary, primaryPillars, timeChain, birthCivil, evaluate, personalized } =
     useProfile();
-  const { enabled, user, signIn, signOut, error } = useAuth();
+  const { enabled, user, signOut, error, needsLinkEmail } = useAuth();
   const [params] = useSearchParams();
   const nav = useNavigate();
+  const [showSignIn, setShowSignIn] = useState(false);
 
   // Arriving from the landing CTA ("Get my reading"). Open the form immediately
   // rather than making someone who already asked for a reading click through a
@@ -87,10 +90,20 @@ export function ProfilePage() {
           onCancel={() => nav("/today")}
         />
         {enabled && !user && (
-          <p style={{ textAlign: "center", marginTop: 14, fontSize: 13, color: "var(--muted)" }}>
-            Already set up on another device?{" "}
-            <button className="btn-text" onClick={signIn}>Sign in</button>
-          </p>
+          <div style={{ textAlign: "center", marginTop: 14 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
+              Already set up on another device?{" "}
+              <button className="btn-text" onClick={() => setShowSignIn((v) => !v)}>Sign in</button>
+            </p>
+            {/* Kept behind a click here, unlike the profile page: someone who
+                asked for a reading should see the chart form, not two sign-in
+                methods competing with it. */}
+            {showSignIn && (
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+                <div style={{ textAlign: "left", width: 300 }}><SignInOptions /></div>
+              </div>
+            )}
+          </div>
         )}
         {error && <div className="warn" style={{ marginTop: 10 }}><span aria-hidden="true">⚠</span> {error}</div>}
       </div>
@@ -105,24 +118,38 @@ export function ProfilePage() {
 
       {enabled && (
         <div className="card" style={{ padding: 18, marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-            <div>
-              <b style={{ fontSize: 15 }}>Account</b>
-              <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)", lineHeight: 1.5, maxWidth: 460 }}>
-                {user
-                  ? `Signed in as ${user.displayName ?? user.email}. Your birth profile syncs to your account across devices.`
-                  : "Sign in to store your birth profile in your account and use it on any device. Your chart data stays private to your account."}
-              </p>
-            </div>
-            {user ? (
+          {/* Signed in reads as one line, so it stays side-by-side. Signed out is
+              now a form, and squeezing a form into the right-hand slot of a
+              space-between row is what makes it look like an afterthought —
+              so that state stacks instead. */}
+          {user ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <b style={{ fontSize: 15 }}>Account</b>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)", lineHeight: 1.5, maxWidth: 460 }}>
+                  Signed in as {user.displayName ?? user.email}. Your birth profile syncs to your account across devices.
+                </p>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 {user.photoURL && <img src={user.photoURL} alt="" width={28} height={28} style={{ borderRadius: 999 }} referrerPolicy="no-referrer" />}
                 <button className="btn-ghost" style={{ width: "auto", padding: "8px 16px" }} onClick={signOut}>Sign out</button>
               </div>
-            ) : (
-              <button className="btn" style={{ maxWidth: 230 }} onClick={signIn}>Sign in with Google</button>
-            )}
-          </div>
+            </div>
+          ) : needsLinkEmail ? (
+            <>
+              <b style={{ fontSize: 15 }}>Account</b>
+              <div style={{ marginTop: 10 }}><CompleteSignIn /></div>
+            </>
+          ) : (
+            <>
+              <b style={{ fontSize: 15 }}>Account</b>
+              <p style={{ margin: "4px 0 12px", fontSize: 13, color: "var(--muted)", lineHeight: 1.5, maxWidth: 460 }}>
+                Sign in to store your birth profile in your account and use it on any device. Your chart data stays
+                private to your account.
+              </p>
+              <SignInOptions />
+            </>
+          )}
           {error && <div className="warn" style={{ marginTop: 10 }}><span aria-hidden="true">⚠</span> {error}</div>}
         </div>
       )}

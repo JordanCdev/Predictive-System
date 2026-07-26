@@ -219,6 +219,45 @@ Many are partly built already; this is the prioritized backlog.
 > charging to see where the traditions disagree, after telling the user they do, was the category's
 > worst trust failure reproduced inside the product.
 >
+> **Phase 18 — accounts are on, and the door widens (2026-07-26).** The Phase 12 blocker is
+> cleared: a Firebase project exists (`wei-timing`, Firestore in `europe-west2`), the
+> `VITE_FIREBASE_*` values are in Actions secrets, and the live site signs in. Verified end to
+> end rather than assumed — the deployed bundle's content hash changed, the served key is 39
+> characters, and Google's Identity Toolkit returns a session for it.
+>
+> **The incident worth keeping.** The first deploy failed with `auth/invalid-api-key` and the
+> config *looked* right. It wasn't: the stored secret held 8 real characters followed by 31
+> `U+2022` bullets — a masked display had been copied instead of the value. What made it
+> findable was refusing to re-check the same way twice: the bundle hash was identical across
+> three builds (so the input never changed), the value was 101 characters where a Firebase key
+> is 39, and Google rejected the deployed key while accepting the one in `.env.local`. Three
+> independent measurements, none of them "look at the config again". Secrets are now read from
+> a file, never from anything that renders them.
+>
+> **Second rung of the auth ladder: email link (passwordless).** Google sign-in alone was
+> always too narrow — uneven penetration across the UK / SE-Asia / Chinese-diaspora markets
+> this app is for, and unavailable in mainland China. An email address is now enough to own an
+> account, offered *beside* Google rather than behind a "more options" disclosure, because for
+> a large share of the intended audience it is the only way in. Three things this costs that
+> are easy to get wrong, all handled: the return URL is the app's bare base path, because
+> Firebase appends `oobCode` &c. to whatever URL it is given and a HashRouter app handed
+> `#/profile` would bury them inside the fragment; the redeemed parameters are stripped with
+> `replaceState`, or the single-use code is retried on the next refresh and the user is told
+> their link is invalid moments after it worked; and a link opened in a different browser
+> asks for the address, since possession of the link must never be sufficient on its own.
+> `wei_signin_email` is excluded from backups (PII, and useless to whoever restores it).
+> Apple stays deferred until there is a native app — the requirement bites on native
+> third-party sign-in, not a web PWA. **Requires one console toggle:** Authentication →
+> Sign-in method → Email/Password → *Email link (passwordless sign-in)*. Until it is on, the
+> form is wired and inert, and Firebase answers `auth/operation-not-allowed`.
+>
+> **The DPIA is now due, not pending.** Phase 12 recorded it as "a gate on enabling cloud
+> sync, not on this phase". Cloud sync is enabled, so the gate has been reached: signing in
+> now syncs birth date/time/place alongside journal text, outcome ratings and life priorities
+> to Firestore, which is plausibly special-category data under UK/EU GDPR. Nothing here is a
+> reason to turn accounts off — it is a **live OWNER action**, and it is the one item in this
+> phase that engineering cannot close by itself.
+>
 > **Phase 15 — one free tier (2026-07-26, OWNER decision).** The Pro/Lifetime tiers are
 > removed entirely: every feature is accessible to every user, with no upsells, no locks and
 > no pricing surface. The pricing/billing pages, `UpgradePrompt`/`PlanBadge`, the Stripe
@@ -339,21 +378,20 @@ Many are partly built already; this is the prioritized backlog.
 > reasoning_dossier, .ics/HTML report export, multi_profile, group all unchanged).
 >
 > **Deferred out of Phase 12, and why:**
-> - **Turning accounts on.** Firebase auth, per-user Firestore sync and the ID-token-authenticated
->   AI proxy are fully implemented and dormant — no `VITE_FIREBASE_*` values are configured and
->   the repo has no Actions secrets, so the live site has no sign-in at all. **Blocked on the
->   owner creating a Firebase project**; nobody but a human with Google Cloud console access can
->   unblock it. Checklist ready in [FIREBASE_SETUP.md](FIREBASE_SETUP.md). Sequencing is
->   deliberate: export/import shipped *first* so accounts can arrive as an optional
->   "keep this across devices" upgrade rather than a signup wall.
-> - **The auth ladder beyond Google.** The client implements Google sign-in only, which is fine
->   for a private beta and **too narrow for a global consumer audience** (uneven Google
->   penetration across the UK / SE Asia / Chinese-diaspora target markets; inaccessible in
->   mainland China). Recommended order: guest → **email link (passwordless)** → Google →
->   passkeys, with **Apple deferred until there is a native app** — the requirement to offer it
->   bites on native third-party sign-in, not on a web PWA, so it currently costs a developer
->   membership for no reach email link doesn't already give us. Rationale table in
->   FIREBASE_SETUP.md §3.
+> - **Turning accounts on.** ~~Blocked on the owner creating a Firebase project.~~ **Done in
+>   Phase 18** — the project exists and the live site signs in. Firebase auth, per-user
+>   Firestore sync and the ID-token-authenticated AI proxy were fully implemented and dormant
+>   throughout; only configuration was missing. Checklist in [FIREBASE_SETUP.md](FIREBASE_SETUP.md).
+>   Sequencing was deliberate and held: export/import shipped *first*, so accounts arrived as an
+>   optional "keep this across devices" upgrade rather than a signup wall.
+> - **The auth ladder beyond Google.** ~~Google sign-in only.~~ **Email link added in Phase 18**,
+>   the recommended next rung; the reasoning below is why, and it held. Remaining rung:
+>   **passkeys**. **Apple stays deferred until there is a native app** — the requirement to offer
+>   it bites on native third-party sign-in, not on a web PWA, so it costs a developer membership
+>   for no reach email link doesn't already give us. Rationale table in FIREBASE_SETUP.md §3.
+>   (Original note: Google alone is fine for a private beta and **too narrow for a global
+>   consumer audience** — uneven Google penetration across the UK / SE Asia / Chinese-diaspora
+>   target markets, and inaccessible in mainland China.)
 > - **Calendar sync.** `.ics` export already exists (Pro). One-click **Google Calendar insert** is
 >   the near-term follow-up — it is an OAuth scope and an API call, not new metaphysics, and it
 >   is the single most requested "make this actually usable" affordance in the category.
@@ -361,13 +399,15 @@ Many are partly built already; this is the prioritized backlog.
 > - **A DPIA.** The research flags a Data Protection Impact Assessment as **required before
 >   cloud storage of sensitive profile/journal fields expands** — birth date/time/place combined
 >   with life priorities, journal text and outcome ratings plausibly reaches special-category
->   data under UK/EU GDPR. This is a **gate on enabling cloud sync, not on this phase**: Phase 12
+>   data under UK/EU GDPR. This was a **gate on enabling cloud sync, not on this phase**: Phase 12
 >   is local-only and processes nothing on our servers. Field-level AI consent (above) is a
 >   separate, client-side control over what is *sent* and does not substitute for it.
-> - **Pricing.** The report observes that comparable consumer apps in this category sit around
->   **£9–£15/month** against our current **£7** Pro. Recorded as an observation and an **OWNER
->   decision** — no price was changed, and none should be changed as a side effect of an
->   engineering phase.
+>   **⚠ That gate has since been reached — Phase 18 turned cloud sync on. Now a live OWNER
+>   action, not a future one.**
+> - **Pricing.** ~~Comparable consumer apps sit around £9–£15/month against our £7 Pro.~~
+>   **Moot since Phase 15**, which removed the paid tiers entirely. The principle it was
+>   recorded under still stands and outlived the pricing question: a price is an OWNER
+>   decision, and none should change as a side effect of an engineering phase.
 >
 > > **Phase 9 — commercial readiness:** Free/Pro plans with a shared, drift-guarded catalogue
 > (`src/billing/plans.ts`), Stripe Checkout + customer portal + webhook-driven entitlements,
