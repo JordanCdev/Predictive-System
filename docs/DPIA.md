@@ -559,6 +559,13 @@ not sign itself.**
 
 ## Appendix A — Open questions register
 
+> ### ⚠️ Read Appendix C first — many of these are now answered
+>
+> This register was written before the deployment was probed. **Appendix C (2026-07-26)
+> resolves OQ-1, 2, 3, 4, 5, 6, 7, 10, 12, 13 and 15 with evidence**, and several by changing
+> the code rather than by describing it. The entries below are kept as written so the
+> reasoning stays auditable — do not treat one as open without checking Appendix C.
+
 These could not be resolved from the code. **Each one must be answered before this document
 is signed.** They are recorded rather than guessed at, because a confident guess in a signed
 DPIA is worse than an admitted gap.
@@ -723,3 +730,110 @@ and looked specifically for flows the inventory had missed. What it changed:
   route through the Date Finder, so §2.3's carve-out is correct
   (`src/pages/DateFinder.tsx:288`, `:383-408` are the only call sites of `upsertEntry` /
   `removeEntry` / `recordOutcome` outside the store).
+
+---
+
+## Appendix C — Open questions resolved (2026-07-26)
+
+Method: the deployment was probed directly rather than inferred from the repo, and where a
+question turned out to describe a defect it was **fixed in code** rather than answered in
+prose. Every claim below states how it was established, so a reader can re-run the check
+instead of trusting this document.
+
+### C.1 — Answered by probing the live deployment
+
+| # | Question | Answer | How established |
+|---|---|---|---|
+| **OQ-1** | Is `VITE_AI_PROXY_URL` set for the Pages build? | **No. The live site is BYOK-direct-to-Anthropic.** There is no relay in the deployed path. | `gh secret list` returns exactly six secrets, all `VITE_FIREBASE_*`; no proxy secret exists. The deployed bundle contains no `cloudfunctions.net`, `us-central1` or `run.app` string. |
+| **OQ-12** | Is the `chat` Cloud Function deployed, and what is `REQUIRE_AUTH`? | **Not deployed.** `REQUIRE_AUTH` is therefore moot, and the feared "unauthenticated open Claude proxy on the owner's key" **does not exist**. | `HTTP 404` from both `us-central1-wei-timing.cloudfunctions.net/chat` and the Cloud Run URL. |
+| **OQ-10** | Transfer mechanism for the us-central1 relay? | **Moot** — the relay is not deployed. Becomes live again the moment the function is deployed, and **must be answered before that happens**. | Follows from OQ-12. |
+| **OQ-13** | Are the rules in `firestore.rules` actually deployed? | **Yes, and enforcing.** | An unauthenticated read of `users/probe-not-a-real-uid/meta/profile` returns `PERMISSION_DENIED`. The distinction is the whole test: an unsecured database would have returned `NOT_FOUND` (read allowed, document absent). |
+| **OQ-15** | Are the `VITE_FIREBASE_*` secrets set? | **Yes, all six.** | `gh secret list`. |
+| **OQ-17** | What is the Firestore region? | **Not machine-verifiable, and consequently NOT claimed in the privacy notice.** The notice previously said "London region"; that came from a setup note, not an observation, so it was removed. | The Firestore admin API rejects API-key auth (`CREDENTIALS_MISSING`). **Owner action:** read the region in the console and, if it is in the UK/EEA, restore the claim — it is worth telling users. |
+
+**Consequences for the risk table.** R4's "on the relay path the content also transits a Cloud
+Function in us-central1" does not apply to the live site. Chat requests go from the user's own
+browser to Anthropic using the user's own API key. This makes the Art 28 analysis in OQ-8
+*more* pressing, not less: there is no processor contract on that path because there is no
+server of ours in it.
+
+### C.2 — Answered by changing the code
+
+Each of these was a question only because the behaviour was wrong or undecided. Describing
+them accurately would have been possible; fixing them was better.
+
+- **OQ-2 — How is an erasure request satisfied?** **In the app, by the user.** A *Delete my
+  account* control now erases `meta/profile`, `meta/people`, `meta/journal` and every
+  `ai_threads` document, then deletes the auth user — in that order, because reversing it
+  strands undeletable documents behind a credential that no longer exists.
+  `tests/erasure.test.ts` reads the source and fails if a path is ever written without being
+  erasable; the guard was mutation-tested. `users/{uid}/billing/usage` remains
+  client-undeletable by design and is **reported to the user** rather than silently omitted;
+  `functions/src/onUserDeleted.ts` sweeps it server-side and **needs deploying**.
+
+- **OQ-3 — Is the `meta/profile` legacy mirror still needed?** **No, and it is gone.**
+  Nothing read it: `loadProfile` had zero callers. It was a second full copy of a birth date,
+  time and place, rewritten on every save, which "remove personalization" never cleared.
+  `savePeople` now *deletes* it, so existing accounts are cleaned up as they sync, and
+  `loadProfile`/`saveProfile`/`clearProfile` were removed outright so the write cannot be
+  reintroduced by accident.
+
+- **OQ-6 — Does journal sync really only run on the Date Finder?** **It did, and that was a
+  bug.** `useJournalSync` was mounted in one route, so signing in anywhere else never pulled
+  the account's journal, and entries logged from the daily view, edited in the journal list,
+  or recorded on a reflection card never reached the account at all. The store's single
+  write chokepoint (`persist`) now emits a change signal, sync subscribes to it, and the hook
+  is mounted app-wide. This fixes every writer at once, including any added later.
+
+- **OQ-7 — Should an abandoned sign-in keep the typed address forever?** **No — it now
+  expires after 24 hours** and is *deleted* on read rather than merely ignored, because
+  hiding a value that is still on disk is not retention control. The pre-expiry bare-string
+  format is treated as expired, since it carries no timestamp and can never be shown fresh.
+
+### C.3 — Answered as decisions, with reasons
+
+- **OQ-4 — Retention period.** **Account data is kept while the account exists, with no
+  timer.** A birth chart does not go stale, and silently deleting someone's journal after a
+  year away would be a worse outcome than keeping it. Erasure is now one click, which is what
+  makes an indefinite period proportionate. Two things *are* short-lived and are stated in the
+  notice: the daily AI counter (per-day) and a pending sign-in address (24h). Written into the
+  published Retention section.
+
+- **OQ-5 — Is per-device AI consent intentional?** **Yes, and it is now stated.** The consent
+  flags do not sync. Syncing them would mean a switch enabled on a trusted personal laptop
+  silently turns on sharing on a borrowed or work machine. Consent to send data from *this
+  device* is the more protective reading, and the cost — re-choosing on a new device — falls
+  in the safe direction.
+
+- **OQ-14 — Keep or drop `outcome.stress`?** **Keep, for now, and revisit.** It is the field
+  most likely to constitute health data, but it is also the only structured signal in the
+  feedback loop the app asks users to trust, it is optional, it never leaves the device except
+  as part of the user's own journal sync, and it is never sent to the model. Flagged in §4.4
+  rather than removed. If the Art 9 basis in §4.3 cannot be resolved, **this is the first
+  field to drop.**
+
+### C.4 — Still genuinely open, and why
+
+These need a person, not a probe. **None can be closed by engineering.**
+
+- **OQ-8 / OQ-9 — Controller status and Anthropic's posture on the BYOK path.** Now sharper
+  given C.1: the user supplies the key and contracts with Anthropic directly, but our code
+  composes the payload and decides what it contains. Whether that makes the owner a
+  controller, a joint controller, or neither is a legal question. The privacy notice's claim
+  that data is not used for training (`LegalPages.tsx`) rests on Anthropic's terms, not on
+  anything this codebase can enforce — **verify it still holds, or soften it.**
+- **OQ-11 — Has the Firebase Data Processing Addendum been accepted?** Console action.
+- **OQ-16 — Age gate.** Terms state a minimum of 16; nothing enforces it. A self-declared
+  date-of-birth gate is weak, but its absence is currently unmitigated.
+- **OQ-17 — Firestore region.** See C.1.
+- **OQ-21 / OQ-22 — Google Cloud Logging and Auth sign-in logs.** Retention of IP and
+  user-agent in the owner's own project is not visible from the code and is not currently
+  described to users.
+- **§4.2 / §4.3 — Lawful basis and the Art 9 basis.** Unchanged: **the weakest point in this
+  assessment**, and the reason a solicitor is listed as required before sign-off.
+
+### C.5 — What this appendix does not claim
+
+No new verification of the *engine* was performed, no legal advice is given or implied, and
+the sign-off table in §7 is still empty. Resolving eleven open questions moves this document
+from a draft with unknown foundations to a draft with known ones — it does not make it signed.

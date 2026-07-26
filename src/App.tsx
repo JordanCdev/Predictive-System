@@ -3,6 +3,7 @@ import { HashRouter, NavLink, Navigate, Route, Routes, useLocation, useNavigate 
 import { ProfileProvider, useProfile } from "./ui/profile/ProfileContext.tsx";
 import { AuthProvider } from "./ui/profile/AuthContext.tsx";
 import { EntitlementsProvider } from "./ui/profile/EntitlementsContext.tsx";
+import { useJournalSync } from "./ui/profile/useJournalSync.ts";
 import { ErrorBoundary } from "./ui/ErrorBoundary.tsx";
 import { TODAY_ISO, isValidIso } from "./ui/shared.ts";
 import { parseAbsoluteDateQuery } from "./ui/dateQuery.ts";
@@ -126,6 +127,12 @@ function NavBar() {
   );
 }
 
+/** Keeps the journal reconciled with the account for as long as the app is open. */
+function JournalSyncMount() {
+  useJournalSync();
+  return null;
+}
+
 export function App() {
   return (
     <AuthProvider>
@@ -133,6 +140,12 @@ export function App() {
     <ProfileProvider>
       <HashRouter>
         <div className="app">
+          {/* Journal cloud sync, mounted for the whole app rather than inside
+              one page. It used to live only in the Date Finder, so signing in
+              anywhere else never pulled the account's journal and entries
+              logged from other pages never reached it — sync was effectively a
+              feature of a single route. Renders nothing. */}
+          <JournalSyncMount />
           <ScrollToTop />
           <NavBar />
           <main className="page">

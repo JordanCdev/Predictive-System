@@ -34,7 +34,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { firebaseConfig } from "./config.ts";
-import type { Person } from "../ui/PersonalizeCard.tsx";
+import { readPendingEmail } from "../ui/profile/signInLink.ts";
 import type { ChatThread } from "../ui/chat/threadStore.ts";
 import type { JournalEntry } from "../ui/journalStore.ts";
 import type { UsageRecord } from "../billing/plans.ts";
@@ -101,21 +101,28 @@ function linkReturnUrl(): string {
 export async function sendSignInLink(email: string): Promise<void> {
   await sendSignInLinkToEmail(ensure().auth, email, { url: linkReturnUrl(), handleCodeInApp: true });
   try {
-    window.localStorage.setItem(PENDING_EMAIL_KEY, email);
+    // Stored WITH AN EXPIRY. Without one, an address typed into a sign-in that
+    // was never completed — a mistyped domain, a link that never arrived, a
+    // change of mind — sits in localStorage indefinitely, which is retention of
+    // personal data for a purpose that has already lapsed. Firebase's own
+    // sign-in links are short-lived, so outliving them serves nobody.
+    window.localStorage.setItem(PENDING_EMAIL_KEY, JSON.stringify({ email, at: Date.now() }));
   } catch {
     /* private mode — the user will simply be asked for the address again */
   }
 }
 
-/** True when the current URL is a sign-in link waiting to be completed. */
 export function isEmailLink(href: string): boolean {
   return isSignInWithEmailLink(ensure().auth, href);
 }
 
-/** The address the link was requested for in this browser, if we still have it. */
+/** The address the link was requested for in this browser, if we still have it
+ *  and it hasn't expired. An expired one is deleted here, not merely ignored. */
 export function pendingLinkEmail(): string | null {
   try {
-    return window.localStorage.getItem(PENDING_EMAIL_KEY);
+    const { email, expired } = readPendingEmail(Date.now(), window.localStorage.getItem(PENDING_EMAIL_KEY));
+    if (expired) window.localStorage.removeItem(PENDING_EMAIL_KEY);
+    return email;
   } catch {
     return null;
   }
@@ -147,17 +154,12 @@ export async function getIdToken(): Promise<string | null> {
 // Firestore doc IDs may not contain '/'; entry ids use ':' which is allowed.
 const safeId = (id: string) => id.replace(/\//g, "_");
 
-/** users/{uid}/meta/profile → { person }. The stored birth profile. */
-export async function loadProfile(uid: string): Promise<Person | null> {
-  const snap = await getDoc(doc(ensure().db, "users", uid, "meta", "profile"));
-  return snap.exists() ? ((snap.data().person ?? null) as Person | null) : null;
-}
-export async function saveProfile(uid: string, person: Person): Promise<void> {
-  await setDoc(doc(ensure().db, "users", uid, "meta", "profile"), { person, updatedAt: serverTimestamp() });
-}
-export async function clearProfile(uid: string): Promise<void> {
-  await deleteDoc(doc(ensure().db, "users", uid, "meta", "profile"));
-}
+// users/{uid}/meta/profile — REMOVED. loadProfile/saveProfile/clearProfile lived
+// here and had, between them, zero callers in the app: the mirror was written on
+// every savePeople and read by nothing. They are deleted rather than left in
+// place because an exported saveProfile is an invitation to start writing that
+// second copy of a birth record again. savePeople now deletes the document, and
+// eraseAccountData still lists it so existing accounts get cleaned up.
 
 // ── the cast (multi-profile) ─────────────────────────────────────────────────
 
@@ -172,10 +174,22 @@ export async function loadPeople(uid: string): Promise<PeopleState | null> {
 }
 export async function savePeople(uid: string, state: PeopleState): Promise<void> {
   await setDoc(doc(ensure().db, "users", uid, "meta", "people"), { ...state, updatedAt: serverTimestamp() });
-  // Mirror the active person to the legacy single-profile doc so an older client
-  // signing into the same account still finds a chart.
-  const active = state.people.find((p) => p.id === state.activeId);
-  if (active) await saveProfile(uid, active);
+  // The legacy meta/profile mirror is GONE, and deliberately.
+  //
+  // It existed so "an older client signing into the same account still finds a
+  // chart". There is no older client: the app is a single build served from one
+  // GitHub Pages origin, everyone gets the current bundle on load, and
+  // loadProfile() — the only thing that ever read the mirror — has no callers
+  // anywhere in the app. So the write was pure accumulation: a second full copy
+  // of a birth date, time and place, refreshed on every save, that nothing read
+  // and that "remove personalization" did not clear.
+  //
+  // Instead of writing it, clear it. Data minimisation is not only about what
+  // you collect; a copy kept for a reader that does not exist is still a copy.
+  // Failure is swallowed on purpose — this is opportunistic cleanup of a legacy
+  // document, and it must never break saving the cast that the user is actually
+  // waiting on.
+  await deleteDoc(doc(ensure().db, "users", uid, "meta", "profile")).catch(() => {});
 }
 /** users/{uid}/meta/journal → { entries }. Saved decisions + their outcomes.
  *  One document, like the cast: the journal is read and written whole, so a

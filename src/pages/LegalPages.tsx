@@ -55,8 +55,8 @@ export function PrivacyPage() {
           them. You never have to sign in — the whole app works this way.
         </li>
         <li>
-          <b>Signed in, three of those records sync</b> to your private area of our database (Google Firestore, London
-          region) so you can use them on another device: your <b>saved people and their birth details</b>, your{" "}
+          <b>Signed in, three of those records sync</b> to your private area of our database (Google Firestore) so you
+          can use them on another device: your <b>saved people and their birth details</b>, your{" "}
           <b>decision journal including the notes you type into it</b>, and your <b>saved advisor conversations</b>.
           They are readable only by you, enforced by per-user security rules. Your life priorities, your daily
           reflections and your AI-sharing switches do <b>not</b> sync — they stay on each device.

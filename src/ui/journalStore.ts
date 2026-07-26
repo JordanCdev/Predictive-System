@@ -76,11 +76,43 @@ export function loadJournal(): JournalEntry[] {
   }
 }
 
+/**
+ * Listeners notified whenever the journal is written, by ANY writer.
+ *
+ * Cloud sync used to hang off `useJournalSync().apply`, which only the Date
+ * Finder page called — so an entry logged from the daily view, a note edited in
+ * the journal list, or an outcome recorded on a reflection card was saved
+ * locally and never reached the account, and signing in on any other page never
+ * pulled the cloud copy at all. Sync was, in practice, a feature of one route.
+ *
+ * `persist` is the single chokepoint every mutation already goes through, so
+ * announcing the change here fixes every writer at once and cannot be bypassed
+ * by a new one added later.
+ */
+type JournalListener = (list: JournalEntry[]) => void;
+const listeners = new Set<JournalListener>();
+
+/** Subscribe to journal writes. Returns an unsubscribe. */
+export function onJournalChange(fn: JournalListener): () => void {
+  listeners.add(fn);
+  return () => void listeners.delete(fn);
+}
+
 function persist(list: JournalEntry[]): JournalEntry[] {
   try {
     localStorage.setItem(STORE, JSON.stringify(list));
   } catch {
     /* private mode / quota — the in-memory list still works this session */
+  }
+  // After the write, never before: a listener that reads storage must see the
+  // value that was just saved. Listener failures are contained so one broken
+  // subscriber cannot take down the mutation that triggered it.
+  for (const fn of listeners) {
+    try {
+      fn(list);
+    } catch {
+      /* a subscriber's problem is not the journal's */
+    }
   }
   return list;
 }

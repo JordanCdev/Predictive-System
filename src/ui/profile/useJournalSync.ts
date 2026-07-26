@@ -14,7 +14,7 @@
  * app asks people to trust.
  */
 import { useCallback, useEffect, useState } from "react";
-import { JournalEntry, loadJournal } from "../journalStore.ts";
+import { JournalEntry, loadJournal, onJournalChange } from "../journalStore.ts";
 import { useAuth } from "./AuthContext.tsx";
 
 function mergeById(a: JournalEntry[], b: JournalEntry[]): JournalEntry[] {
@@ -63,19 +63,32 @@ export function useJournalSync(): JournalSync {
     };
   }, [enabled, user]);
 
-  const apply = useCallback(
-    (next: JournalEntry[]) => {
+  // `apply` no longer writes to the cloud itself. Every caller passes the return
+  // value of a journalStore mutation, which has already been through `persist`
+  // — so the subscription below has fired for this same change. Keeping both
+  // would send every Date Finder edit to Firestore twice. What `apply` still
+  // does is update THIS component's state synchronously, so the caller's UI
+  // doesn't wait a tick for the listener to come round.
+  const apply = useCallback((next: JournalEntry[]) => setEntries(next), []);
+
+  // The cloud write for every writer, in one place. Previously this lived in
+  // `apply`, which only the Date Finder called — so a decision logged from the
+  // daily view, a note edited in the journal list, or an outcome recorded on a
+  // reflection card was saved locally and never reached the account.
+  // Subscribing to the store's own write signal covers all of them, and any
+  // writer added later, because they all go through `persist`.
+  useEffect(() => {
+    if (!enabled || !user) return;
+    return onJournalChange((next) => {
       setEntries(next);
-      if (!enabled || !user) return;
       setSyncError(null);
       import("../../firebase/client.ts")
         .then((m) => m.saveJournalCloud(user.uid, next))
         // Deliberately NOT swallowed. A silent .catch() is exactly how the
         // profile sync stayed broken without anyone noticing.
         .catch((e) => setSyncError(e instanceof Error ? e.message : String(e)));
-    },
-    [enabled, user],
-  );
+    });
+  }, [enabled, user]);
 
   return { entries, apply, syncError };
 }

@@ -44,3 +44,34 @@ export function cleanedLinkUrl(href: string): string | null {
 export function looksLikeEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 }
+
+/** How long a remembered sign-in address stays useful. Roughly the practical
+ *  lifetime of the emailed link — outliving it serves nobody. */
+export const PENDING_EMAIL_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Decide whether a stored sign-in address is still live.
+ *
+ * An address typed into a sign-in that was never completed — a mistyped domain,
+ * a link that never arrived, a change of mind — is personal data whose purpose
+ * has lapsed, and without an expiry it sits in localStorage indefinitely.
+ * `expired: true` is the caller's instruction to DELETE it, not merely to
+ * ignore it: hiding a value that is still on disk fixes nothing.
+ *
+ * Lives here rather than beside the Firebase calls so it can be tested without
+ * pulling the SDK into a node test run.
+ */
+export function readPendingEmail(now: number, raw: string | null): { email: string | null; expired: boolean } {
+  if (!raw) return { email: null, expired: false };
+  try {
+    const v = JSON.parse(raw) as { email?: unknown; at?: unknown };
+    if (typeof v?.email !== "string" || typeof v?.at !== "number") return { email: null, expired: true };
+    if (now - v.at > PENDING_EMAIL_TTL_MS) return { email: null, expired: true };
+    return { email: v.email, expired: false };
+  } catch {
+    // A bare string: the pre-expiry format. It carries no timestamp, so it can
+    // never be shown to be fresh — treat it as expired rather than trusting it
+    // forever, and the upgrade costs one re-typed address at most.
+    return { email: null, expired: true };
+  }
+}
