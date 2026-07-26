@@ -233,6 +233,21 @@ Many are partly built already; this is the prioritized backlog.
 > nothing may ever gate the correctness, transparency or honesty of a reading
 > (DECISIONS.md §11). Engine untouched — scores and hashes byte-identical.
 >
+> **Phase 17 — conversation memory (2026-07-26).** The advisor's chats lived in `useState`
+> and a `useRef`, so a reload erased them. Threads are now durable, and the memory is the
+> APP'S: we store the transcript and replay it each request, so switching Claude model
+> mid-conversation keeps the context (proven live — Sonnet was told a fact, the model was
+> switched, Opus recalled it). AI and offline-advisor turns share one thread; model is stamped
+> per assistant turn; `replayWindow` cuts at whole exchanges because the API rejects an
+> unmatched tool_use/tool_result; threads join backups (schema v3, v1/v2 unchanged) and sync
+> to `ai_threads`. Review: 34 raised, 21 confirmed, all fixed — including three blockers. The
+> worst: the replay projection dropped each turn's timestamp and model, so every staleness
+> defence was inert and the prompt's "an unmarked turn is from today" became a falsehood about
+> week-old readings. It survived review-by-tests because one suite hand-built history WITH the
+> stamps and the other never checked what the store emitted — the bug lived in the seam
+> neither owned, and an end-to-end seam test now guards it. Also: an orphaned tool_use
+> truncated the replay, and threads were not scoped to the subject chart.
+>
 > **Phase 16 — the classical day layer (2026-07-26).** The four remaining widgets from the
 > competitor's daily planner, each sourced to a named text and shipped only where the sourcing
 > held. **卦氣/六日七分 daily hexagram** — reproduces their 天澤履 for 2026-07-25, and the
