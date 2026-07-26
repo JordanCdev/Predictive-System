@@ -1,0 +1,1843 @@
+{
+  "_meta": {
+    "title": "董公選要覽 — printed-witness cell corpus (verbatim transcription snapshot)",
+    "note": "Snapshot of the witness transcriptions so dong-gong-extract.mjs stays re-runnable after the session scratchpad is gone. Verbatim; no emendation beyond the reader-supplied OCR errata table documented in the extractor.",
+    "builtFrom": "/private/tmp/claude-501/-Users-jordan-src-GitHub-Predictive-System-Predictive-System/4e05047a-f7f3-46d7-ba11-fd136cc5a69b/tasks/w3i13fyhm.output",
+    "generated": "2026-07-26"
+  },
+  "cells": [
+    {
+      "month": "丑",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "往亡紅沙。乙丑己丑宜開山斬草興工動土嫁娶開張出行入宅。次吉之日也。丁丑煞入中宮。不宜鼓樂喧嘩婚姻之事。主刑家長宅母。癸丑雖旺。乃又煞入中宮。損傷人口凶。",
+          "variantNotes": [
+            "print 乃又煞入中宮; modern 乃六煞入中宮"
+          ]
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "紅沙。乙丑。己丑宜開山斬草。興工動土。嫁娶。開張。出行。入宅。次吉之日也。丁丑煞入中宮。不宜鼓樂喧嘩婚姻之事。主刑家長宅母。癸丑雖旺乃又煞入中宮。損傷人口凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "往亡紅沙乙丑己丑宜開山斬草興工動土嫁娶開張出行入宅次吉之日也丁丑煞入中宮不宜鼓樂喧嘩婚姻之事。主刑家長宅母癸丑雖旺乃又煞入中宮損傷人口凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "丑",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "text": "天富。土瘟不宜動土。天瘟一年。若用卯日娶親問名小吉。但有六不成六不合之疑。惟辛卯造作興工乃次吉之日也。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "丑",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "庚寅火星天月二德。甲寅丙寅壬寅俱有火星及黃羅紫檀天皇地皇寶輦庫珠福祿文奎祿馬官曜眾吉星照臨。宜起造安葬婚姻入宅開張出行百事順利。用之家門發達。動土雙進財產。名登虎榜。戊寅亦有火星。乃次吉之日可用。",
+          "variantNotes": [
+            "the 按協紀辨方 editorial note is present in the pre-modern print"
+          ]
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "除",
+          "text": "庚寅火星。天月二德。甲寅。丙寅。壬寅俱有火星及黃羅紫檀。天皇地皇。寶輦庫珠。福祿文奎。祿馬官。蓋眾吉星照臨。宜起造。安葬。婚姻。入宅。開張。出行。百事順利。用之家門發達。動土雙進財產。名登虎榜。戊寅亦有火星。乃次吉之日可。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "丑",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "天成。一云官符星。非但云是死氣之日。如修方值飛宮州縣官符立見。若其方合吉神聚集能救其凶。用之亦可。癸巳雖值金水潔淨之時。或可用開山斬草之事。乃次吉之日。若娶親開張出行入宅定磉拴架。卻是天上大空亡納音已絕。不宜用也。丁巳正四廢凶。一年四季凡用巳日主口舌。雖有喜神化解。亦屬難免。如吉旺衰凶必須查明年命山向不犯沖尅方爲可用。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "丑",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "收",
+          "text": "有到州星事到公堂而后散庚戌有天月二德八位奎星有男子之權先招口舌而後大吉甲戌八方俱白二十四向諸神朝天玄女偷修之日可用丙戌壬戌煞入中宮百事皆忌戊戌之日亦不可用。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "丑",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "有到州星。事到官而後散。惟壬辰宜埋葬娶親興工動土出行入宅次吉。庚辰天月二德。宜小作亦次吉。戊辰草木凋零之時。五行無氣。乃是退星。又兼煞入中宮。諸事不利凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "有到州星事到官而后散。惟壬辰宜埋葬娶親興工動土出行入宅次吉庚辰天月二德宜小作亦次吉戊辰草木凋零之時五行無氣乃是退星叉秉煞入中宮諸事不利凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "亥",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "text": "天富天賊天成。丁丑癸丑煞入中宮。不利起造嫁娶鼓樂喧嘩等事以及釘門各務。驚起神煞。損人丁。傷六畜。餘丑亦不宜用。只可請魂入墓。凡金入丑宮五行無氣。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "滿",
+          "text": "天賊。丁丑。癸丑煞入中宮。不利起造。嫁娶。鼓樂喧嘩等事。以及釘門各務。驚起神煞。損人丁。傷六畜。餘丑亦不宜用。只可請魂入墓。凡金入丑宮五行無氣。并犯月厭天賊之凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "亥",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "不利起造開張嫁娶入宅出行安葬。用之招官司。損家長。如乙亥己亥亦是五行無氣。名爲暴敗煞重之日。不宜起造婚姻入宅出行開張。用之冷退凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "亥",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "黃沙甲午月德有黃羅紫檀金銀庫樓諸吉星。蓋照嫁娶安葬起造動土出行入宅開張等事大吉。餘午次吉丙午正四廢凶",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "亥",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "雖是五行旺地。但秋冬交界之初。有轉煞之凶。諺云轉煞而傷。未可輕用。甲子天赦。不是轉煞。用之無妨。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "除",
+          "text": "雖是五行旺地。但秋冬交界之初有轉煞之凶。諺云「轉煞而傷。未可輕用」。甲子天赦。不是轉煞。用之無妨。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "亥",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "平",
+          "text": "天富。天成。有到州星。事到官府而後散。惟甲寅乃上吉。壬寅。庚寅次吉。小小修為則可。大作不宜。餘寅日凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "天富天成。有到州星事到官府而後散。惟甲寅乃上吉壬寅庚寅次吉小小修為則可大作不宜。餘寅日凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "亥",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "收",
+          "text": "卻犯到州星。用之招官司退人口。惟甲申水潔淨之時水土長生居申利安葬嫁娶出行入宅動土開張起造管為主週年百日貴人自來提拔凡事遂意庚申受死無氣而又煞入中宮。犯之主殺人大凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "甲午日天赦。不係轉煞。埋葬。用之次吉。餘午日埋葬亦不利。若用別事。主招官司口舌。孤寡窮病。蓋午月逢午。皆係天地轉煞也。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "甲午日天赦。不係轉煞。埋葬。用之次吉。餘午日皆亦不利。若別事。主招官司。口舌。孤寡窮病。蓋午月逢午日埋葬。係天地轉煞也。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "天賊。不宜娶親造作入宅安葬等事。犯之招官司。損六畜。田產不收。大凶。壬子正四廢更凶。此日百事不利。犯之受死。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "天賊。不宜娶親造作人宅安葬等事。犯之招官司損六畜田產不收大凶壬子正四廢更凶。此日百事不利。犯之受死。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "成",
+          "text": "黃沙天喜。丙寅天月二德。庚寅戊寅甲寅有黃羅紫檀天皇地皇金銀庫樓玉堂寶藏眾吉星相照。興工動土定磉拴架入宅開張。六十日一百二十日內益財增喜。家門從此富盛。世道一切安康大吉全吉。是月。惟壬寅雖有吉星相照。內中稍有煞星相尅。似乎次吉。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "閉",
+          "text": "乙巳辛巳有黃羅紫檀星。蓋照興工造作動土修造池塘倉庫牛羊棚圏。入宅婚葬開張出行大益家門子孫昌盛田產倍收人口安康大吉。餘巳不吉。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "甲戌戊戌庚戌有黃羅紫檀天皇地皇金銀寶藏田塘庫珠聚祿駕馬御聖遊頑星。蓋照大吉。如起造興工動土入宅開張婚姻埋葬諸事。加官進爵。生貴子。益橫財。惟丙戌壬戌二日煞入中宮。雖有吉星相解。終難受益。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "定",
+          "text": "甲戌。戊戌。庚戌有黃羅紫檀。天皇地皇。金銀寶藏。田塘庫珠。祿駕馬。御聖遊頑星。蓋照大吉。如起造與動土。入宅。開張。婚姻。埋葬諸事。加官進爵。生貴子。益橫財。惟丙戌。壬戌二日煞入中宮。雖有吉星相解。終難受益。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "午",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "text": "天富天喜。甲申丙申戊申宜安葬起造婚姻入宅開張出行。次吉。俱不宜動土。庚申只宜安葬。不宜修造入宅等事。壬申西沈之日。五行無氣。不可用。雖是葬日。但月令不利。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "text": "天。富天喜。甲申丙申戊申宜安葬起造婚姻入宅開張出行次吉俱不宜動土庚申只宜安葬不宜修造入宅等事壬申西沈之日五行無氣不可用雖是葬日。但月令不利。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "成",
+          "text": "天喜。有天皇地皇黃羅紫檀玉堂聚寶星。蓋照。宜婚姻開張入宅出行起造安葬定磉拴架。六十日一百二十日內進橫財。貴人接引。謀事大吉。是月之辛亥癸亥亦上吉。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "平",
+          "text": "只宜作生基。如婚姻。修造等事。用之。六十日。一百二十日內招官司。損人口。三六九年冷退。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "只宜作生基。如婚姻修造等事。用之六十日一百二十日內招官司損人口三六九年冷退生基即壽材及生壊也。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "不宜用事。犯之損宅長及少房子孫。遭瘟疫貧苦哭泣重重。三六年或遲至九年。橫訟敗亡。二月建卯日皆爲天地轉殺之日也。",
+          "variantNotes": [
+            "print 損宅長 / 三六年; modern 損家長 / 三、五年"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "閉",
+          "text": "黃沙。有活曜星。宜合板作生基。但不利修造婚姻入宅開張等事。是日乃五行無氣。平常。用之則可。雖云無大害。以不用爲妙。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "滿",
+          "text": "往亡。天空。不宜動土。如修造百事俱吉。若在乾巽二宮起造更吉。出行。開張。婚姻。入宅。內有黃羅紫檀。田塘庫貯星。蓋照。三五年內家生貴子。田蠶興旺。永代吉昌。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "text": "有天月二德。宜修造動土埋葬婚姻開張出行入宅等事。併有黃羅紫檀金銀庫樓寶藏星。蓋照。三六九年內大旺添人口。生貴子。置田產大吉。惟庚申日乃春正四廢。百事忌。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "text": "有天月二德宜修造動土埋葬婚姻開張出行入宅等事併有黃羅紫檀金銀庫樓寶藏星。蓋照三六九年內大旺添人口生貴子置田產大吉。惟庚申日乃春正四廢百事忌。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "不利移居入宅婚姻開張一切營爲等事。犯之六十日一百二十日內。主招官司。損財敗田蠶。失產業。甲辰戊辰殺集中宮更凶。主三年內亡宅長。舊物作怪。火盜侵欺。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "卯",
+      "dayBranch": "酉",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "小紅沙天賊不利婚姻修造等事。犯之六十日一百二十日内招官司口舌陰人劫耗。小口疾病辛酉正四廢更凶。此日乃月破大凶之日。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "子",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "天瘟。乙丑金墓之鄉。宜娶親起造出行開張動土伐木開山。有吉星。蓋照。主貴人接引。謀望遂意。餘丑次吉。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "子",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "天賊。壬午火星傍月德。僅可小小急用。餘午日招瘟疫害六畜。乃月建沖破之日凶。丙午正四廢凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "子",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "平",
+          "text": "天賊。辛卯火星卻犯勾絞朱雀。用之招官司。損財物。起爭鬧。傷情義。多惡疾。凶。惟乙卯一日次吉。餘卯主夭子。兄弟不義。爭鬧。自縊。惡人劫害。破財大凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "天賊辛卯火星卻犯勾絞朱雀。用之招官司損財物起爭鬬傷情義多惡疾凶。惟乙卯一日次吉。餘卯主夭子兄弟不義爭鬭自縊惡人刦害破財大凶",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "子",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "火星。甲子天赦。是進神。惜被月建沖破。用之主官司破敗。謂天赦不合之日也。丙子雖值水旺之時。退神爲地轉。亦與月建相沖。其時水斷溪潦。力亦甚減。終是吉中凶兆。主先進益後禍害。正冰消瓦裂之時也。",
+          "variantNotes": [
+            "VARIANT reversing sense: print 退神爲地轉; modern 進神為地轉"
+          ]
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "火星。甲子天赦是進神。惜被月建沖破。用之主官司破敗。謂天赦不合之日也。丙子雖值水旺之時。退神為地轉。亦與月建相沖。其時水斷溪潦。力亦甚減。終是吉中凶兆。主先進益後禍害。正冰消瓦裂之時也。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "子",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "滿",
+          "text": "黃沙。當是土瘟。但不宜動土。然有福生並黃羅紫檀。天皇地皇星。蓋照。宜婚姻。入宅。起造。安葬。出行。開張。百事順遂。壬寅。戊寅上吉。丙寅。庚寅次吉。甲寅又次吉。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "子",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "成",
+          "text": "天喜。壬申天月二德。甲申五行有氣之時。值黃羅紫檀金銀寶藏庫樓諸吉星。蓋照。一切作爲百福駢臻。諸事順遂。生貴子。旺財祿。庚申日只宜安葬及屋外小小修造則可。若起造大工及婚姻入宅起造開張。立見凶禍。主損家長。傷陰人小口。謂之五行無氣。煞神聚入中宮。善人不能降福。余自幼年得此。在江湖選擇日四十餘年。吉凶無不切中。上年見有人揀用。此日。力爲攔阻。其人不聽。立見災禍。可知此書擇日實有應驗。不可輕視。丙申日用事。驚犯鬼哭神號。更宜慎之。",
+          "variantNotes": [
+            "KEY FINDING: the first-person editorial testimony is already in the pre-modern print, not a modern addition"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "子",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "雖云吉卻有天羅地網之答貴人不臨營為不利煞入中宮。犯之殺人凶。惟壬辰雖犯官符内有天德黃羅紫檀天皇地皇星。蓋照只宜安葬安門嫁娶入宅餘事愼用。是日乃死氣之日犯官符方煞飛宮官符同到此方故百事不利",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "閉",
+          "text": "不利婚姻起造。防虎蛇傷。驢馬踢。成惡疾。貧病大凶。",
+          "variantNotes": [
+            "A 文明書局 p015 + B 1898 p013, IDENTICAL",
+            "VARIANT: both prints 驢馬踢; modern recension 騾馬踢"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "黃沙。有黃羅紫檀天皇地皇金銀庫樓田塘月財庫貯星。蓋照。宜起造安葬移徙開張出行婚姻。六十日一百二十日內進橫財田產。或因附寄成家。大大發。小作小發。永代吉昌。主田蠶大收獲金銀庫窖。",
+          "variantNotes": [
+            "modern: 大作大發 … 金銀庫滿"
+          ]
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "黃沙。有黃羅紫檀天皇地皇金銀庫樓田塘月財庫貯星。蓋照宜起造安葬移徙開張出行婚姻六十日一百二十日内進橫財田產或因附寄成家大作大發小作小發永代吉昌主田蠶大收獲金銀庫害。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "不宜起造婚姻。犯之六十日內損家長。招官司。三五年內見凶冷退。主兄弟不義。活業分散。惡人相逢。生離死別。",
+          "variantNotes": [
+            "modern reads 各業分散; print reads 活業分散"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "開",
+          "text": "甲子自死之金。五行陰忌之日。壬子木打寶瓶。終是北方沐浴之地。不宜起造婚姻入宅開張等事。戊子丙子庚子三日。惟水土生人。用之大吉。內有黃羅紫檀天皇地皇金銀寶藏田塘庫貯聯珠眾星。蓋照。六十日一百二十日內得大財。貴人接引。受職祿。謀事大吉。主得色依人提攜。旺六畜血財。此數日宜安葬。",
+          "variantNotes": [
+            "A 文明書局 p015 + B 1898 p013, IDENTICAL",
+            "MAJOR VARIANT: modern recension has lost 主得色依人提攜 and reads 旺六畜、益財產 for 旺六畜血財"
+          ]
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "開",
+          "text": "甲子自死之金五行陰忌之日壬子木打寶瓶終是北方沐浴之地不宜起造婚姻入宅開張等事戊子丙子庚子三日。惟水土生人。用之大吉内有黃羅紫檀天皇地皇金銀寶藏田塘庫貯聯珠衆星。蓋照六十日一百二十日內得大財貴人接引受職祿謀事大吉主得色依人提攜旺六蓄血財此數日宜安葬",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "往亡。不利起造結婚納采。主家長病招官司。六十日一百二十日內損小口。二年內見重喪。百事不宜。",
+          "variantNotes": [
+            "VARIANT: prints 二年內見重喪; modern recension 一年內見重喪. Month-header 月德/月恩/母倉/天德合 absent from modern recension entirely."
+          ]
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "小紅沙。有朱雀勾絞到州星。犯之。主招官司。損家長宅女媳婦。三五年內重重不利。破財大凶。田蠶不收。產死自縊。被惡人尅削。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "小紅沙。有朱雀勾絞到州星。犯之。主招官司損家長宅女媳婦三五年內重重不利破財大凶田蠶不收產死自縊被惡人尅削。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "text": "天富天賊。爲天羅。又云甲辰雖有氣。却與戊辰同煞集中宮。百事皆忌。犯之主起首殺人退財大凶。餘辰日亦不吉。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "滿",
+          "text": "天賊。為天羅。又云。甲辰雖有氣。卻與戊辰同煞集中宮。百事皆忌。犯之主起首殺人。退財。大凶。餘辰日亦不吉。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "寅",
+      "dayBranch": "酉",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "辛酉正四廢不宜用事。惟丁酉有天德福星。蓋照。宜安葬還福願出行開張參官見貴吉。只不宜起造及婚姻嫁娶等事。乃比利之日也。餘酉均不可用。",
+          "variantNotes": [
+            "print 比利之日; modern 比和之日"
+          ]
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "危",
+          "text": "辛酉正四廢。不宜用事。惟丁酉有天德福星。蓋照。宜安葬。還福願。出行。開張。參官見貴吉。只不宜起造及婚姻嫁娶等事。乃比和之日也。餘酉均不可用。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "黃沙。庚午月德。惟甲午壬午有黃羅紫檀天皇地皇星。蓋照。宜修造婚姻開張出行入宅等事。六十日一百二十日內增田地。進人口。生貴子大旺。丙午戊午天地轉煞。用之凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "除",
+          "text": "黃沙。庚午月德。惟甲午。壬午有黃羅紫檀。天皇地皇星。蓋照。宜修造。婚姻。開張。出行。入宅等事。六十日。一百二十日內增田地。進人口。生貴子大旺。丙午。戊午天地轉煞。用之凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "開",
+          "text": "辛卯天德癸卯己卯有黃羅紫檀天皇地皇星。蓋照出行婚葬造作開張入宅等事大吉主謀事亨通貴人接引進財祿。餘卯次吉",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "庚子月德丙子戊子起造婚姻興工動土出行開張移徙進人口益子孫旺田蠶增財產大作大發小作小發甲子是自死之金五行無氣壬子木打寶瓶北方沐浴之地福力甚淺。又是正四廢。用之損人口主冷退大凶甲子壬子二日。用之立見蕭索損敗。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "小紅沙。不利出行嫁娶安葬造作入宅開張等事。犯之主冷退疾病。田蠶不收。客死不歸。財產破散。受死之日也。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "小紅沙。不利出行。嫁娶。安葬。造作。入宅。開張等事。犯之主冷退。疾病。田蠶不收。客死不歸。財產破散。受死之日也。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "text": "有勾絞。丙戌壬戌煞入中宮。百事大凶。惟甲戌小小營爲次吉。二十四向諸煞朝天偷修則可。婚姻開張安葬入宅非所宜用。主損宅長。傷手足。耗血財。大凶。",
+          "variantNotes": [
+            "VARIANT: print 耗血財; modern 耗錢財"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "未",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "text": "天富天賊。辛未有天月二德。己未有火星。均次吉。宜定磉拴架埋葬。但婚姻起造二事不載。又修造曆云。是日白虎入中宮。用之並非不利。須查是年月日果有吉星與命宮相合者方可。係月厭天賊。犯之少亡冷退。",
+          "variantNotes": [
+            "THREE VARIANTS vs modern: 定磉拴架/定磉造架, 用之並非不利/用之非不利, 犯之少亡冷退/犯之主凶冷退"
+          ]
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "text": "天富天賊辛未有天月二德己未有火星均次吉宜定磉拴架埋葬。但婚姻起造二事不載又修造歷云。是日白虎入中宮。用之並非不利須查是年月日果有吉星與命宮相合者方可係月厭天賊。犯之少亡冷退。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "平",
+          "text": "朱雀勾絞。不利出行。起造。安葬。婚姻。入宅。主小人奉連。口舌。陰人小口生災。甲申。庚申煞入中宮更凶。主招官司禍事。破財。生子醜怪。有水火災厄。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "巳",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "閉",
+          "text": "戊辰甲辰煞入中宮。不利修造婚姻開張出行入宅安葬。犯之損人口。六畜不旺。財產有失。庚辰雖值月德。卻有天地轉煞之疑。丙辰壬辰火星。小小營爲則可。不宜婚姻起造移徙開張大作用也。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "天成。乙亥丁亥宜起造開張嫁娶入宅出行動土。一切諸事皆大吉。子孫興旺。永遠富貴。癸亥六甲窮日不可用。辛亥純陰之氣。非陽間所用。己亥火星。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "成",
+          "text": "天喜。丙午天月二德。有黃羅紫檀天皇地皇金銀庫樓星。蓋照。宜起造嫁娶入宅出行商賈開張動土安葬全吉。一切發財富貴。添丁奴婢自來。謀望勝常。餘午次吉皆可用。",
+          "variantNotes": [
+            "A 文明書局 p035 + B 1898 p036, IDENTICAL"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "text": "辛卯己卯有黃羅紫檀天皇地皇諸吉星。蓋照。宜嫁娶開張出行入宅動土修方起造倉庫。主進財產。增人口。興家道。旺六畜大吉。餘卯次吉。惟乙卯正四廢凶。",
+          "variantNotes": [
+            "A 文明書局 p034 + B 1898 p036, IDENTICAL"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "滿",
+          "text": "壬子木打寶鏡。草木凋零。大凶。餘子日不宜用事。甲子有黃羅紫檀星。蓋照可用。黃沙。丙子水潔淨之時。兼有天月二德。黃羅紫檀。天皇地皇。厚昏連珠。祿馬諸吉星。蓋照。宜嫁娶。開張。出行。入宅。興工動土。定磉捨架。安葬。益家門。利子孫。旺田產。進六畜。增橫財。六十日。一百二十日內便驗。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "丙寅天月二德庚寅戊寅有黃羅紫檀天皇地皇諸吉星。蓋照宜起造嫁娶出行入宅開張一切諸事主進財產生貴子興家道旺六畜大吉壬寅犯月厭受死無解。但丙寅庚寅戊寅三日雖犯月厭内有諸吉星。蓋照故而大吉。惟甲寅正四廢凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "丙戌天月二德卻吉。餘戌不利。若。用之主喪敗貧窮大凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "丙戌天月二德卻吉。餘戌不利。若。用之主喪敗貧窮。大凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "開",
+          "text": "天賊戊申天赦甲申水潔淨之時有黃羅紫檀聚祿帶馬星。蓋照宜安葬作生基。但西沈之日五行無氣況當秋暮之候不宜起造婚姻入宅開張。惟安葬獲吉盆子孫家門發達。餘申次吉庚申乃白虎入中宮。犯之殺人更凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "戌",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "往亡。丙辰天月二德。修造小吉。但不宜嫁娶開張入宅移居。主損六畜。耗血財。招口舌。餘辰更不吉。戊辰甲辰煞入中宮大凶。",
+          "variantNotes": [
+            "A 文明書局 p035 + B 1898 p036, IDENTICAL",
+            "print 耗血財; modern recension 耗錢財"
+          ]
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "往亡丙辰天月二德修造小吉。但不宜嫁娶開張入宅移居。主損六畜耗血財招口舌。餘辰更不吉戊辰甲辰煞入中宮大凶",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "小紅沙。此日無吉星不可營為萬不得已須擇時僅作小小急用。若起造開張出行婚姻等事。主損六畜招官司丁丑癸丑煞入中宮。犯之主殺人凶不可言。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "text": "黃沙。丙子庚子利起造興工動土倉庫入宅移徙開張出行。戊子次吉。若甲子雖是六甲之首。在正月六月值天德月德。豈不可用。然自死之金。五行無氣。平常之人不能當此北方黑煞將軍之氣。壬子木打寶瓶。北方沐浴之地。又是正四廢。更不可用。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "夏爲鬼神空宅。甲寅有天月二德黃羅紫檀金銀庫樓祿馬寶。蓋帝馭星。蓋照。但不利遠行起造入宅婚姻。緣爲鬼神凶宅之疑耳。如開山埋葬營謀百事。六十日一百二十日內生貴子。家業與旺。貴人接引。進絕戶之產業大吉。餘寅次吉。",
+          "variantNotes": [
+            "VARIANT: print 鬼神空宅 / 進絕戶之產業; modern 鬼神空亡 / 進產業"
+          ]
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "夏為鬼神空宅甲寅有天月二德黃羅紫檀金銀庫樓祿馬寶。蓋帝馭星。蓋照。但不利遠行起造入宅婚姻。緣為鬼神凶宅之疑耳。如開山埋葬營謀百事六十日一百二十日内生貴子家業興旺貴人接引進絕戶之產業大吉。餘寅次吉。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "有朱雀勾絞。又犯到州星。不利入宅婚姻等事。犯之招官司。損人口。退血財大凶。惟甲戌一日玄女偷修之日。八方俱白。二十四向諸神朝天。有氣之日可用。",
+          "variantNotes": [
+            "print 退血財; modern 招官非"
+          ]
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "有朱雀勾絞。又犯到州星。不利入宅婚姻等事。犯之。招官司損人口。退血財大凶。惟甲戌一日玄女偷修之日八方俱白二十四向諸神朝天有氣之日可用。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "未",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "乙未煞入中宮。不利修造婚姻入宅開張上官諸事。犯之招時氣瘟疫。損人失舊物。大凶。",
+          "variantNotes": [
+            "VARIANT: print 犯之招時氣瘟疫。損人失舊物; modern 犯之不吉、染瘟疫損人口、失財物"
+          ]
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "乙未煞入中宮。不利修造。婚姻。入宅。開張。上官諸事。犯之招瘟疫。損人。失舊物。大凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "未",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "甲申有天月二德黃羅紫檀星。蓋照。利豎柱起造安葬動土開山斬草出行開張。百事皆吉。餘申日亦大吉。惟丙申一日五行無氣不可用。庚申日慎用。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "除",
+          "text": "甲申有天月二德。黃羅紫檀星。蓋照。利豎柱起造。安葬。動土。開山斬草。出行。開張。百事皆吉。餘申日亦大吉。惟丙申。壬申五行無氣不可用。庚申日慎用。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "開",
+          "text": "黃沙壬午月德丙午戊午三日利會親嫁娶修造埋葬開張出行入宅動士諸事六十日一百二十日内招財獲福貴人接引田產興旺人眷安康。餘午次吉。惟庚午犯天火凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "卯",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "乙卯正四廢凶。癸卯丁卯有天德黃羅紫檀金銀庫樓玉堂聚寶星。蓋照。宜起造婚姻嫁娶興工動土定磉拴架開張出行上官入宅作倉庫牛羊欄圈。主家業昌盛。人口興旺。生貴子。進橫財。富貴雍穆。餘卯次吉。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "丙子水潔淨之時。又遇旺地。值黃羅紫檀星。蓋照。宜修造安葬娶親開張。庚子戊子次吉。壬子木打寶瓶。水不逢時。乃葉落之木。甲子自死之金。此時秋金殺氣方雄。不宜用也。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "定",
+          "text": "丙子水潔淨之時。又遇旺地。值黃羅紫檀星。蓋照。宜修造。安葬。娶親。開張。出行。入宅。興工動土。大吉。庚子。戊子次吉。壬子木打寶鉢。水不逢時。乃葉落之木。甲子自死之金。此時秋金殺氣方雄。不宜用也。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "丙子水潔淨之時又遇旺地值黃羅紫檀星。蓋照宜修造安葬娶親開張。出行入宅興工動土大吉庚子戊子次吉壬子木打寶寶水不逢時乃葉落之木。甲子自死之金此時秋金殺氣方雄不宜用也",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "甲寅正四廢庚寅戊寅丙寅皆不吉諸事不宜主官司退財人口啾喞凶。惟壬寅一日有月德只利安葬。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "申",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "戊申天赦。甲申壬申爲比和之日。只宜埋葬。然月建上凶。不可用。庚申煞集中宮。丙申五行無氣更凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "戊申天赦。甲申。壬申為比和之日。只宜埋葬。然月建上凶不可用。庚申煞集中宮。丙申五行無氣更凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "申",
+      "dayBranch": "酉",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "往亡。乙酉無凶星。開山斬草安葬興工動土定磉拴架修方造作出行開張入宅移居次吉。己酉九土鬼。丁酉凶敗。癸酉伏劍之金。北方黑煞將軍之氣。損傷凶惡。辛酉天地轉殺正四廢凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "收",
+          "text": "小紅沙天賊。丁丑癸丑煞入中宮。不利修造婚姻入宅等事。犯之。主退財疾病爭訟是非凶。餘丑亦不吉。防小人刑害。",
+          "variantNotes": [
+            "A 文明書局 p020 + B 1898 p018, IDENTICAL, and modern identical — clean 3-way agreement"
+          ]
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "收",
+          "text": "小紅沙天賊丁丑癸丑煞入中宮不利修造婚姻入宅等事。犯之。主退財疾病爭訟是非凶。餘丑亦不吉防小人刑害。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "天成。有凶暴。己亥火星有文昌星。蓋照。上學大吉。餘事。用之次吉。乙亥。用之亦次吉。辛亥婦人之金。陰府決遣之日。陰氣全盛。非陽間所宜。丁亥。又值黑煞。癸亥六甲窮日。五行無氣。主絕人有受死事。不可用也。",
+          "variantNotes": [
+            "A 文明書局 p019 + B 1898 p018, IDENTICAL",
+            "VARIANT: both prints 陰府決遣之日 / 主絕人有受死事; modern 陰府決遣之期 / 主絕人又受死事"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "午",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "滿",
+          "text": "天富。甲午有土鬼。丙午平常不能見吉。戊午有猖鬼敗亡並犯重喪。即安葬亦屬不宜。庚午十惡敗日不可用。壬午天月二德。用之次吉。",
+          "variantNotes": [
+            "print 十惡敗日; modern 十惡日"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "子",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "成",
+          "text": "黃沙天喜。壬子雖有天月二德。乃一白主事。木打寶瓶。終是北方沐浴之地。五行無氣。福力減淺。但小小營爲則可。若開張出行入宅修理及婚姻等項。用之。就見凶敗禍害災傷。是日謂之瓦解冰消。",
+          "variantNotes": [
+            "A 文明書局 p019 + B 1898 p018, IDENTICAL, and modern identical — clean 3-way agreement"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "開",
+          "text": "天賊。戊寅天赦。用之卻吉。壬寅有天月二德。只宜埋葬及合板作生基。用之益子孫。進田地。生貴子。陞官職上吉。其餘寅日次吉。但有六不成不合之疑。用之終屬不利。宜慎之。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "巳",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "丁巳宜修造入宅移居動土作用婚姻等事大吉。己巳造作入宅等事亦吉。如埋葬犯重喪不宜用。乙巳有十惡凶。辛巳雖有火星卻有猖鬼敗亡。又是十惡伐日不宜用。癸巳天上空亡又犯土鬼。亦不宜用。此皆必應之事也。",
+          "variantNotes": [
+            "print 作用婚姻 / 不宜用; modern drops 作用 and reads 不利用"
+          ]
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "除",
+          "text": "丁巳宜修造。入宅。移居。動土作用。婚姻等事大吉。己巳造作。入宅等事亦吉。如埋葬犯重喪不宜用。乙巳有十惡。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "破",
+          "text": "值月建沖破。諸事不宜。丙戌壬戌煞入中宮更凶。",
+          "variantNotes": [
+            "A 文明書局 p019 + B 1898 p018, IDENTICAL, and modern identical — clean 3-way agreement"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "未",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "平",
+          "text": "與正五月相似。不宜用事。即小小營爲亦不利。若乙未更加凶險。蓋數值天罡。又犯勾絞朱雀也。",
+          "variantNotes": [
+            "print 與正五月 / 勾絞朱雀; modern 與天正五月 / 凶絞朱雀"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "有地網勾絞。不利修造安葬婚姻開張等事。犯之主湯火驚傷。縱生男生女皆醜拙惡陋無益。甲辰戊辰煞入中宮更凶。主三年內家敗人亡。",
+          "variantNotes": [
+            "print 家敗人亡; modern 家破人亡"
+          ]
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "有地網勾絞。不利修造。安葬。婚姻。開張等事。犯之主湯火驚傷。縱生男生女皆醜拙惡陋無益。甲辰。戊辰煞入中宮更凶。主三年內家敗人凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "辰",
+      "dayBranch": "酉",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming",
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "text": "乙酉宜修造入宅婚姻開張出行等事。癸酉安葬大吉。丁酉安葬次吉。己酉有九土鬼。辛酉正四廢不宜用。",
+          "variantNotes": [
+            "A 文明書局 p019 + B 1898 p018, IDENTICAL, and modern recension also identical — clean 3-way agreement"
+          ]
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "text": "乙酉宜修造入宅婚姻開張出行等事癸酉安葬大吉丁酉安葬次吉己酉有九土鬼辛酉正四廢不宜用。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "丑",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "定",
+          "text": "辛丑癸丑乙丑丁丑次吉。惟己丑不利。諸事不宜。犯之主疾病生災凶。查定丑日董公原本內載辛丑癸丑日用事次吉。乙丑丁丑亦次吉。惟己丑不利焉。諸家曆法云。丁丑癸丑犯朱雀勾絞。又有白虎煞入中宮之凶。而辛丑值秋五墓支干無氣。百事忌用。似難定其爲吉。雖有協紀辨方書云。丁丑己丑二日宜婚姻事之語。然是月之丁己辛癸四丑日均有凶煞。況己丑更有十惡之凶。猖鬼敗亡之險。如何用得。故此四日總以不用方爲穩善。質之高明以爲何。如。惟乙丑核。",
+          "variantNotes": [
+            "KEY FINDING: this editorial adjudication is ALREADY in the pre-modern print — it is NOT a modern annotation. VARIANTS: print 諸家曆法云 (modern 馬諸家曆法云), print 故此四日 (modern 故此數日), print 質之高明以爲何如 (modern 高明以為何如)"
+          ]
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "亥",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "滿",
+          "text": "天富。乙亥文昌貴顯之星。丁亥。己亥有黃羅紫檀。天皇地皇。華彩擁持。祿馬諸星。蓋照。利起造。興工動土。捨架。入宅。嫁娶。開張。出行。營為諸事。大作大發。小作小發。六十日。一百二十日內遲至周年便見獲財成家。生貴子。旺田產。興六畜。辛亥陰府決造之日。非陽間所用。癸亥六甲窮日。五行無氣。不可用。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "寅",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "執",
+          "text": "黃沙。庚寅天月二德。有黃羅紫檀天皇地皇金銀寶藏田塘庫珠聚祿帶馬鑾輿官曜眾吉星照臨。宜起造婚姻動土移居開張出行。旺田產。進橫財。增六畜。添人口。興子孫。改換門庭。家道隆昌。餘寅亦次吉可用。惟甲寅正四廢凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "戌",
+      "readings": [
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "除",
+          "text": "庚戌天月二德。戊戌。甲戌宜興工動土。入宅。開張。婚姻等事。用之次吉。丙戌。壬戌煞入中宮。諸事不宜。犯之。主失血財。冷退。大凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "除",
+          "text": "庚戌天月二德戊戌甲戌宜興工動土入宅開張婚姻等事。用之次吉丙戌壬戌煞入中宮諸事不宜。犯之。主失血財冷退大凶",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "辰",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "壬辰水潔淨之時。丙辰宜破土興工開張出行入宅婚姻。百事順利大吉。戊辰草木凋零。庚辰天地相疑不吉。甲辰煞入中宮大凶。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "危",
+          "text": "壬辰水潔淨之時丙辰宜破土興工開張出行入宅婚姻百事順利大吉戊辰草木凋零庚辰天地相疑不吉甲辰煞入中宮大凶。",
+          "variantNotes": []
+        }
+      ]
+    },
+    {
+      "month": "酉",
+      "dayBranch": "酉",
+      "readings": [
+        {
+          "hunt": 0,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "小紅沙天成。乃五行自敗之時。百事皆凶。兼犯天地轉煞更凶。招官司產厄。水火殊災。子孫逃散。敗家不止。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 1,
+          "witnesses": [
+            "nlc892-1898"
+          ],
+          "witnessAttribution": "inferred",
+          "officer": "建",
+          "text": "小紅沙。天成。乃五行自敗之時。百事皆凶。兼犯天地轉煞更凶。招官司。產厄。水火殊災。子孫逃散敗家不止。",
+          "variantNotes": []
+        },
+        {
+          "hunt": 2,
+          "witnesses": [
+            "nlc416-wenming"
+          ],
+          "witnessAttribution": "tagged",
+          "officer": "建",
+          "text": "小紅沙天成乃五行自敗之時百事皆凶兼犯天地轉煞更凶招官司產厄。水火殊炎子孫逃散敗家不止。",
+          "variantNotes": []
+        }
+      ]
+    }
+  ]
+}

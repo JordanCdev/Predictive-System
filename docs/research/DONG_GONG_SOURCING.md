@@ -399,3 +399,312 @@ source used for the dependence grep), `tally.py` (the 68-group adjudication tabl
 Page mapping for witness A: **scan image index = printed page number + 12** (image p013 =
 printed p.1 = 正月建寅). Scratchpad files are session-scoped and will not survive; the two Wikimedia
 PDF URLs are the durable pointers.
+
+---
+
+# 9. Third pass (2026-07-26): the derivation was rebuilt, and re-adjudicated
+
+§8.7 set a gate: *rebuild the extractor against the six defect classes in §8.5, regenerate, and
+re-run the spot-check at zero contradiction-class mismatches.* The rebuild was done. Three
+independent verifiers examined it through different lenses, and this section is the adjudication —
+every contested claim below was re-settled by this adjudicator directly against the primary
+sources (the printed-witness transcriptions in the hunt output, and the extractor source), not by
+averaging the three reports.
+
+**Verdict up front: the rebuild is a large and genuine repair — it eliminated every polarity
+inversion in the independent sample — but it bought that accuracy by halving coverage, and it
+introduced a new class of defect that is worse for this product than a wrong rating: it makes
+false claims about its own provenance. The scalar rating axis stays unshipped. The recommended
+path is now, more firmly than in §6.1, to ship the CELL TEXT and not a scalar.**
+
+## 9.1 What the rebuild changed
+
+New files (research only; nothing under `src/` was touched, and `dong-gong-draft.json` is
+byte-for-byte unmodified — SHA-256 `4d4a8a86…c47cea6` identical between `HEAD` and the working
+tree, re-verified by this adjudicator):
+
+- `docs/research/dong-gong-extract.mjs` — a deterministic, re-runnable from-scratch replacement
+  for the v1 derivation. Every rule carries an in-file comment naming the §8.5 class it answers.
+- `docs/research/dong-gong-draft-v2.json` — 386 cells kept, 39 dropped, per-cell provenance.
+- `docs/research/dong-gong-witness-corpus.json` — snapshot of the witness transcriptions so the
+  script outlives the session scratchpad.
+
+The architecture is the right one. A cell is a BASE clause plus clauses **bound to the stems each
+names**, optionally closed by a residual 「餘X日…」 clause scoped to the stems named nowhere else in
+the cell. Negations are tokenised and physically removed before any 吉/凶 scan. Generic almanac
+stars that head a cell (天賊, 往亡, 黃沙, 紅沙, 天富, 到州星, 勾絞, 朱雀, 天瘟, 月厭) are never
+verdicts. MIXED requires a praised activity **and** an activity-scoped prohibition in the same
+stem's clause. Anything unresolvable is dropped. Those are exactly the corrections §8.5 asked for.
+
+## 9.2 The new numbers, beside the old 15.8% — coverage and accuracy stated together
+
+These two numbers must never be quoted apart. The rebuild traded one for the other, and either one
+alone misrepresents it.
+
+| | v1 (`dong-gong-draft.json`) | v2 (`dong-gong-draft-v2.json`) |
+|---|---|---|
+| **Coverage** — ganzhi cells rated | **673 / 720 = 93.5%** | **386 / 720 = 53.6%** |
+| Native (month × day-branch) cells with any rating | 144 / 144 | 84 / 144 |
+| **Accuracy** — §8.4 spot-check convention (contradicts an explicit statement about that stem) | **15.8% mismatch** (50 / 316) | **≈2.4% mismatch** (4 / 170 on independent hand re-derivation; **0 / 33** on this adjudicator's own check) |
+| Accuracy — strict exact-tier agreement | not measured this way | **80.0%** (136 / 170); strict mismatch 18.2% |
+| **Polarity inversions** in the independent 36-slot sample | **9 of 36 (25%)** | **0** |
+| Exact agreement in that same 36-slot sample | 21 / 36 | 27 / 33 present (3 absent) |
+
+The 36-slot check in the last two rows is this adjudicator's own, and it is not circular: the
+per-ganzhi witness ratings it scores against were recorded by the witness reader **before v2
+existed**, inside the hunt output, as `witness: X | draft: Y | MATCH/MISMATCH` lines written
+against v1. Scored against v2 they give 27 exact, 6 acceptable (same-polarity, one tier apart),
+**0 polarity conflicts**, 3 absent. Scored against v1 the same 36 lines give 21 exact, 6
+acceptable and **9 polarity conflicts** — 正月滿辰 甲辰 大凶→v1 平, 正月危酉 丁酉 吉→v1 大凶,
+二月定午 甲午 MIXED/凶→v1 吉, 十一月成申 庚子 次吉→v1 平, 八月建酉 乙亥 大吉→v1 平,
+十一月建子 甲子 凶→v1 平, and three more. That is the §8.5 diagnosis confirmed a third time, and
+its repair confirmed for the first time.
+
+**Read the table as one sentence:** *v2 is right about roughly nineteen days in twenty where it
+speaks at all, and it declines to speak about nearly half the year.* v1 was wrong about one day in
+six and spoke about ninety-four per cent of them. Neither is shippable as a scalar, for opposite
+reasons.
+
+Coverage is also **uneven by month**, which matters for a product: 三月 77%, 正月 67%, 二月 67%,
+九月 65%, 四月 57%, 十月 50%, 十一月 50%, 七月 48%, 五月 43%, 八月 42%, 十二月 40%, 六月 38%.
+A user asking about a day in 六月 gets "no opinion" three times in five, for reasons that have
+nothing to do with the text being harder there.
+
+Witness support behind the 386 kept cells, since "two printed witnesses" overstates it per cell:
+**210 rest on `nlc416` alone, 25 on `nlc892` alone, 151 on both**. So 235 of 386 rest on a single
+witness, and 25 of those on an attribution the file itself calls probable rather than proven.
+Of the 161 cells reporting `corroboratingReadings > 1`, **41 are corroborated only by a second
+transcription of the same print.**
+
+## 9.3 Which of the six §8.5 defect classes are genuinely closed
+
+Verified cell-by-cell against the named exemplars in §8.5 and the printed text.
+
+| Class | Status | Evidence |
+|---|---|---|
+| **#1 Residual 「餘X日…」 unbound** | ✅ **CLOSED** | 八月執寅日 丙/戊/壬寅 大凶→**次吉**; 九月執卯日 丁/癸卯 大凶→**次吉**; 十月危午日 戊/庚/壬午 大凶→**次吉**; 六月除申日 戊申 MIXED→**大吉**. Scoping is computed over the whole cell, so 九月破辰日's 餘辰 correctly excludes the 戊辰/甲辰 named after it. |
+| **#2 `吉` matched inside a negation** | ✅ **CLOSED** | 三月收丑日 乙/己/辛丑 吉→**凶**; 正月滿辰日 丙/庚辰 吉→**凶**; 八月危辰日 庚辰 吉→**凶**; 四月滿午日 丙午 →**平** on 「平常不能見吉」. Negations are removed longest-first before any scan, so the 吉 inside 不吉 cannot survive. |
+| **#3 One marker dominating a cell** | ✅ **CLOSED** | 十一月成申日 壬申 平→**大吉**; 十二月除寅日 庚寅 平→**大吉**; 五月成寅日 丙寅 平→**大吉**; 六月執子日 戊子 大凶→**次吉**. |
+| **#4 False MIXED** | ⚠️ **HALF-CLOSED — precision yes, recall no** | Every MIXED cell in v2 is well-formed (both a praised and a forbidden activity; a universal 百事不宜 can never be MIXED). But MIXED is now systematically *under*-detected — see class **E** below. |
+| **#5 Polarity / severity inversion** | ⚠️ **PARTLY** | The 更凶 / 更加凶險 escalator works and `severityRankInCell` preserves ordering when tiers saturate. But new one-tier severity **under**-reads appeared in new places — classes **D** and **F** below. |
+| **#6 Over-rating a disputed cell** | ✅ **CLOSED (with a caveat on the stated reason)** | All five stems of 八月定丑日 are refused. The refusal is correct. The recorded reason — "the text declines to settle it" — is only true of 乙丑, whose 「惟乙丑核…」 runs off the column. For 丁/己/辛/癸丑 the text *does* settle it: 「故此四日總以不用方爲穩善」 is a verdict (avoid), and 「況己丑更有十惡之凶」 orders 己丑 worst. Dropping stays correct; the same rule will over-drop wherever a source adjudicates a dispute **and then concludes**. |
+
+## 9.4 New defect classes found in v2
+
+The most serious findings are not about ratings. They are about the file making **claims about its
+own sources that are false** — which, in a grid whose entire defensibility is per-cell provenance,
+is the more expensive kind of error.
+
+**A. "Printed witnesses disagree" is asserted where there is no witness disagreement. (blocker)**
+`dong-gong-extract.mjs:914` drops a stem whenever two readings' derived ratings differ, with the
+reason `printed witnesses disagree (…)`. It compares ratings only — **witness identity is never
+consulted**, though `reading.witnesses` is in hand. Of the six such drops, **five are not witness
+disagreements**:
+
+- 五月滿申日 甲/丙/戊/庚申 (4 slots) — *both* readings are `nlc416-wenming`. This adjudicator
+  verified their texts are **character-identical once punctuation is removed**; they differ only in
+  where the printed sentence dots fall (`天富天喜。甲申…` vs `天。富天喜。甲申…`).
+- 七月定子日 丙子 — three readings vote 吉 / 大吉 / 大吉. The two agreeing include the second
+  witness; the lone dissenter is a *shorter transcription of the same print* as one of them, whose
+  text simply stops before 「出行入宅興工動土大吉」.
+
+Only **六月除申日 壬申** is a real cross-witness divergence — `nlc416` reads 「惟丙申一日五行無氣
+不可用」 (so 壬申 falls under 「餘申日亦大吉」) while `nlc892` reads 「惟丙申。壬申五行無氣不可用」.
+That one drop is correct and should keep its label. The other five drops are safe; their recorded
+reason is false and it hides the real cause.
+
+**B. A documented provenance gate is not implemented. (blocker)** Line 901 reads
+`const usable = tagged.length ? perReading : perReading;` — both ternary branches identical, and
+`tagged` computed and never used. Line 444's comment says an untagged ("inferred") reading is
+"never used as the sole basis for a cell — see `soleBasis` gate below"; `grep -n soleBasis` returns
+**only that comment**. The gate does not exist. Consequently **25 kept ganzhi cells rest solely on
+`nlc892-1898` by inferred attribution**. The per-cell flag is emitted, so the caveat is visible —
+but the code claims to apply a gate it does not apply.
+
+**C. Segmentation sensitivity — measured. (major)** MIXED detection depends on where the printed
+sentence dots fall. This adjudicator quantified the blast radius by re-running the extractor on a
+corpus with every 。、， stripped: **5 of 386 ratings change (1.3%)** — MIXED→平 ×2, MIXED→大凶,
+MIXED→吉, 次吉→MIXED — and the four 五月滿申日 stems stop disagreeing and are kept. So the effect is
+real but bounded at low single digits. Its significance is not the 1.3%: it is that the
+"witnesses must agree exactly" keep-rule, and the `corroboratingReadings` field, are both partly
+measuring **extractor instability rather than source evidence**. `normaliseWitnessText` (line 352)
+exists specifically to prevent this and its synthetic-break list does not cover 次吉 / 俱.
+
+**D. The permission-idiom family is handled incoherently, and can outrank stated harm. (major)**
+`SCALARS` maps 可用 / 之日可用 / 用之無妨 / 小小急用 / 小小營爲則可 to 平, the scalar branch runs
+*before* the stated-harm branch, and the "worst scalar wins" safeguard splits on
+`tierIdx(t) <= tierIdx('凶')` — where `tierIdx('平') = 2 > tierIdx('凶') = 1`, so **平 is classified
+as a positive scalar** and the safeguard never engages. Result, 六月破丑日 乙/己/辛丑 = **平
+(Neutral)** on text that reads 「此日無吉星不可營為萬不得已須擇時僅作小小急用。若起造開張出行婚姻
+等事。主損六畜招官司」 — no auspicious star, must not undertake, and if you do: loss of livestock
+and lawsuits. The harm sentence is never reached. Conversely at 四月閉辰日 丙辰/壬辰 the *same*
+idiom family 「小小營爲則可。不宜婚姻起造移徙開張大作用也」 yields **MIXED**, discarding the 平 the
+same table assigns it. So the idiom wins over harm in one cell and loses to MIXED in another. §4's
+own vocabulary list names 小小營為則可 as the neutral band; this collision needs an explicit
+precedence decision, not a silent one. Eight further cells report `basis:"explicit-scalar"` when
+their only marker is a permission idiom the code's own comment (line 264) says is "never a positive
+tier".
+
+**E. Scoped prohibitions are collected same-sentence-only, so MIXED is under-detected. (major)**
+`readClause` pushes forbidden activities from the sentence containing the negation and no other,
+while praise walks *backward* across sentences. At 十二月定巳日 癸巳 the clause is 「…或可用開山斬草
+之事。乃次吉之日。若娶親開張出行入宅定磉拴架。卻是天上大空亡納音已絕。不宜用也」 — the 不宜 sits two
+sentences after its activity list, so the forbidden list is empty and v2 emits a flat **次吉**,
+silently discarding the text's explicit prohibition on marriage, opening, travel, moving in and
+beam-raising. `normaliseWitnessText:361` inserts a synthetic 。 before 若, actively manufacturing
+the split. This is the recall half of §8.5 #4.
+
+**F. A cell-level verdict standing after the last named stem reaches no stem at all. (minor, 4
+slots)** 二月破酉日 prints 「…小口疾病。辛酉正四廢更凶。此日乃月破大凶之日。」 — 此日 ("this day") is a
+statement about the whole cell. v2 gives 辛酉 = 大凶 from 「正四廢更凶」 and 乙/丁/己/癸酉 = 凶 from a
+base clause that stops at 小口疾病. The explicit 「大凶」 verdict reaches **nobody**. One instance
+today; it will recur as the remaining native cells are transcribed.
+
+**G. The drop ledger does not reconcile. (minor, 10 slots)** 87 native cells have transcribed print
+text in the hunt output; the corpus holds 85. `buildCorpus` discards a reading `if
+(isTruncated(...))` and keeps a cell only `if (readings.length)`, so **二月定未日** and
+**十一月執巳日** — whose only transcriptions are truncated — vanish into neither the grid nor
+`_meta.dropped`. The discard is *correct* (the truncation rule is right: a text that stops mid-cell
+cannot scope a residual clause). The silence is not. 10 slots leave the accounting without a trace.
+
+**H. Documentation misstatements. (minor, but they are the numbers a reviewer quotes)**
+`_meta.coverage.note` says 59 native cells lack printed text; `_meta.shipStatus` in the same file
+says 57. The rebuild's summary says "8 cells rest on a witness attribution that is probable rather
+than proven"; the file carries `witnessAttribution:"inferred"` on **25**. And
+`dong-gong-witness-corpus.json` is billed as a verbatim snapshot but has the `OCR_FIXES` table
+applied before it is written (22 of 125 readings differ from the raw hunt text) — legitimate reader
+errata in every case checked, **except** 與工→興工 at 五月定戌日, which §8.6 explicitly lists as
+needing a second pass against the images, and which is an ACTIVITIES token, so it can change a
+praised/forbidden list and therefore MIXED.
+
+**I. The 27-check self-test suite is a regression harness for §8.5, not validation. (minor)**
+21 of its 27 checks are keyed to §8.5's six classes and their named example cells. It reports
+**27/27 PASS** on the shipped corpus *and* 27/27 on the dot-stripped corpus that changes five
+ratings — this adjudicator ran both. It detects none of A–H. Its two general invariants test
+MIXED's well-formedness but never its recall, which is exactly defect E.
+
+## 9.5 The two flagged judgement calls — rulings
+
+The rebuild flagged two of its own choices for challenge. Both were re-checked against the printed
+text.
+
+**(a) 「大作大發」 → 大吉. RULING: UPHELD.** The formula occurs in exactly three corpus cells —
+正月定午日, 四月危子日, 八月滿亥日 — and in all three the witness reader's own independently-recorded
+rating line reads 大吉 (`大吉／永代吉昌`; `witness: 大吉`; `draft: all 午 = 大吉 — witness agrees`).
+This is a fixed formula in a genre that uses fixed formulae, corroborated by a reading taken before
+the mapping existed. Keep it, and keep the in-file comment that exposes it.
+
+**(b) Praise-verb + activity + stated benefit, but no scalar word → 吉 (the floor of the praise
+band). RULING: CORRECT AS A SAFETY RULE, DISQUALIFYING AS A PRODUCT RULE.** It is the right
+direction to err — the independent re-derivation found 8 of its 31 strict mismatches were exactly
+this pattern, every one an under-read, never an inversion — and all 14 cells carry
+`basis:"praise-without-scalar"` so they can be listed and re-judged. But look at what it flattens:
+八月危寅日 庚寅 reads 「天月二德。有黃羅紫檀天皇地皇金銀寶藏田塘庫珠聚祿帶馬鑾輿官曜眾吉星照臨。
+宜起造婚姻動土移居開張出行。旺田產。進橫財。增六畜。添人口。興子孫。」 — the single most emphatic
+praise register the text has — and is graded **吉**, its weakest positive tier. Showing a user "吉"
+on a day the source stacks eleven benefic stars on is a distortion in the opposite direction from
+v1's, and one the user cannot see. The rule is honest; the *scalar* is what cannot carry it. This
+is an argument for shipping the cell text, where the eleven stars are simply visible.
+
+**(c) A collision the rebuild did not flag.** 平 ("Neutral / small matters only") and MIXED are
+both satisfied by the 小小營爲則可 idiom — see defect **D**. This was resolved silently in the code
+and must be resolved explicitly in the ruleset.
+
+## 9.6 The 85-of-144 shortfall is a TRANSCRIPTION problem, not an acquisition problem — correction
+
+The v2 file states that the 59 untranscribed native cells "were never read from the prints". **This
+is not what happened, and the correction makes the remaining gate much cheaper.** The witness
+reader's own method note in the hunt output says:
+
+> "Witness A (文明書局): I read scan images p013–p042 = the complete 12-month day section, all 144
+> (month × officer/branch) cells. The 46 cells reported in `cells` are a stratified sample… The
+> remaining ~98 cells are **legible in the same rendered pages and can be transcribed on demand**."
+
+A second reader reports parsing 130 of 144 cells out of OCR, with "14 of 144 lost to
+page-break/garbled headers, **not to absence**".
+
+This adjudicator confirmed the material is still in hand: `nlc416.pdf` (2.0 MB), `nlc892.pdf`
+(40 MB) and `ntl.pdf` are on disk alongside 228 + 78 + 71 rendered page images, and both PDFs have
+durable Wikimedia Commons URLs recorded in §8.1.
+
+**So: the printed witnesses cover 144 of 144 native cells. Our structured transcription covers 85.**
+No book needs to be bought, no library visited, no new edition located — the acquisition gate that
+§6 set and §8.1 closed stays closed. What remains is reading roughly 59 more cells off page images
+we already hold and exporting them in the same verbatim form. That is bounded, unglamorous
+transcription labour, and describing it as a sourcing limit points the next gate at the wrong work.
+
+## 9.7 Revised gate
+
+| Gate | §8.7 status | Now |
+|---|---|---|
+| Recension-independent witness located | ✅ | ✅ unchanged — two pre-modern prints |
+| Printed-edition spot-check ≥36 cells stratified | ✅ | ✅ re-run twice more (170-slot hand re-derivation; 36-slot independent witness-rating check) |
+| Spot-check **passed** (contradiction-class mismatches) | ❌ 15.8% | ⚠️ **≈2.4%, and 0 polarity inversions — but not the zero §8.7 demanded, and measured on ~half the grid** |
+| Grid **covers** the year | ✅ 93.5% (wrongly) | ❌ **53.6%**, unevenly (38%–77% by month) |
+| Provenance claims are true | not tested | ❌ **NEW FAILURE** — 5 of 6 "witnesses disagree" drops are not disagreements; a documented sole-basis gate is absent; 41 "corroborated" cells are one witness read twice |
+| Derived scalar safe to display | ❌ | ❌ **still no** |
+
+### Ship verdict
+
+**DO NOT SHIP THE SCALAR RATING AXIS.** Not because the rebuild failed — it succeeded at what
+§8.7 asked — but because what it revealed is that the scalar cannot be made honest at acceptable
+cost. To be right, the derivation must decline to speak about half the year; to speak about the
+whole year, it must guess. And the scalar is *ours* either way: 「大作大發」→大吉 and
+praise-without-scalar→吉 are our judgement calls, defensible and documented, but they are not the
+classical text's own rating, and a five-point badge cannot carry that distinction to a user.
+
+**SHIP THE CELL TEXT, NOT A SCALAR — this is now the recommended end state, as §6.1 predicted.**
+Three tiers, in descending readiness:
+
+1. **Day Officer pairing (建除十二值) — ready now.** `officerIndex = (dayBranch − monthBranch) mod 12`
+   in `src/engine/tongshu.ts` reproduces the printed officer labels **144/144** against both
+   witnesses. Nothing blocks this.
+2. **Classical commentary text for the 85 transcribed cells — ready after §8.6 closes.** Display
+   the cell's verbatim print text with the day's ganzhi highlighted where the text names it,
+   labelled *"董公選要覽 — classical almanac cross-check, transcribed from two pre-modern printed
+   editions (1898 woodblock; 1926 文明書局 lithograph)"*. It must be silent, and visibly silent
+   ("this edition has no text for this day in our transcription"), for the other 59. Preconditions:
+   the §8.6 variant list adjudicated, and the four glyphs flagged there re-read against the images —
+   including 與/興工 at 五月定戌日, which the corpus currently resolves silently.
+3. **Per-day scalar — blocked.** See below.
+
+### What would have to become true to ship the scalar
+
+All six, and the first three are the real ones:
+
+1. **Provenance claims must be true.** Compare `reading.witnesses` before emitting "printed
+   witnesses disagree"; implement the `soleBasis` gate that line 444 promises or delete the promise;
+   rename `corroboratingReadings` to distinguish a second witness from a second transcription of the
+   same print. Until then the file's evidence claims cannot be relied on, and that — not any single
+   rating — is what would damage the app.
+2. **Coverage must reach the whole year, from the pages already in hand.** Transcribe the remaining
+   ~59 native cells off `nlc416`/`nlc892` and regenerate. Anything below full coverage ships a
+   product that shrugs at 46% of days, worst in 六月 and 十二月.
+3. **Defects D and E must be closed, and the 平/MIXED precedence decided in the ruleset**, not left
+   to branch order. A day the text says has no auspicious star and brings lawsuits must not read
+   "Neutral".
+4. **The self-check suite must test recall, not just the six §8.5 classes** — at minimum: no clause
+   containing an activity-scoped 不宜/不利 may yield a scalar with an empty forbidden list; and the
+   grid must be invariant under punctuation perturbation of the corpus.
+5. **F and G closed**: cell-level 此日/是日 verdicts routed to the base; every available slot
+   accounted for in `_meta.dropped`, including truncation discards.
+6. **Then re-run §8.4's 316-cell spot-check against the images at zero contradiction-class
+   mismatches**, on the full-coverage grid — and even then label it *our derivation from the
+   classical commentary by stated rules*, never the classical text's own rating.
+
+Note what is **not** on that list: acquiring a source. §8.1 closed that gate and §9.6 confirms it
+stays closed. Every remaining item is our own engineering and our own transcription labour.
+
+### Files (third pass)
+
+- `docs/research/dong-gong-extract.mjs` — the rebuilt derivation. Re-runnable:
+  `node docs/research/dong-gong-extract.mjs`. Note it **prefers the session hunt output over the
+  corpus snapshot** when that path exists and silently overwrites the snapshot; the snapshot is a
+  fallback, not the input of record.
+- `docs/research/dong-gong-draft-v2.json` — 386 kept / 39 dropped, per-cell clause, markers,
+  witnesses, attribution and `printVsOnline`.
+- `docs/research/dong-gong-witness-corpus.json` — witness transcriptions with `OCR_FIXES` applied
+  (see defect H — it is not the pre-emendation text).
+- `docs/research/dong-gong-draft.json` — **v1, still byte-for-byte unmodified** (SHA-256
+  `4d4a8a86ac…c47cea6`, verified identical to `HEAD`). It is kept as the evidence that the first
+  derivation was wrong, not as a fallback.
