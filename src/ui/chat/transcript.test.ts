@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { boundaryNote, buildTranscriptRows, relativeWhen, turnVoice, voiceNote } from "./transcript.ts";
+import { boundaryNote, buildTranscriptRows, overBudgetNote, relativeWhen, turnVoice, voiceNote } from "./transcript.ts";
 import type { TranscriptRow, TranscriptTurnLike } from "./transcript.ts";
 
 const user = (): TranscriptTurnLike => ({ role: "user" });
@@ -128,5 +128,16 @@ describe("relativeWhen", () => {
   });
   it("survives a clock that went backwards rather than printing a negative age", () => {
     expect(relativeWhen(now + 60_000, now)).toBe("just now");
+  });
+});
+
+describe("overBudgetNote", () => {
+  it("explains the bigger request without apologising or blaming the user", () => {
+    const note = overBudgetNote();
+    expect(note).toMatch(/exceed|bigger/i);
+    // It must not imply anything was lost — nothing was; the exchange went whole.
+    expect(note).not.toMatch(/lost|dropped|truncat|removed|sorry/i);
+    // And it is a fact about the request, not an upsell: there are no tiers here.
+    expect(note).not.toMatch(/upgrade|plan|tier|premium|pro\b/i);
   });
 });

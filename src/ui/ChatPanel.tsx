@@ -23,7 +23,7 @@ import { deriveSignals } from "./priorities/deriveSignals.ts";
 import { areaLabel, loadPriorities } from "./priorities/prioritiesStore.ts";
 import type { PriorityProfile } from "./priorities/prioritiesStore.ts";
 import { ThreadList } from "./chat/ThreadList.tsx";
-import { boundaryNote, buildTranscriptRows, voiceNote } from "./chat/transcript.ts";
+import { boundaryNote, buildTranscriptRows, overBudgetNote, voiceNote } from "./chat/transcript.ts";
 import { forTranscript, isVisible, toolLabel, toolLabels } from "./chat/turnView.ts";
 import { useThreadSync } from "./chat/useThreadSync.ts";
 import {
@@ -862,6 +862,10 @@ export function ChatPanel({
 
   const notices = [
     notice,
+    // Sent whole because trimming it would split a tool call from its result.
+    // It belongs with the other storage/replay facts rather than in its own
+    // corner — one voice for "here is what actually happens to your words".
+    window_?.overBudget ? overBudgetNote() : null,
     unsavedNote(unsaved, Boolean(auth.enabled && auth.user)),
     sync.syncError
       ? `Your saved conversations are on this device. Syncing them to your account failed: ${sync.syncError}`

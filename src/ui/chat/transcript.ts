@@ -116,6 +116,19 @@ export function boundaryNote(omittedTurns: number): string {
     : `${n} earlier messages aren't being sent to the model — they're still here to read, and quoting one brings it back.`;
 }
 
+/**
+ * Shown when the newest exchange ALONE exceeded the replay budget, so it was
+ * sent whole rather than trimmed (trimming it would split a tool_use from its
+ * tool_result and the request would be rejected).
+ *
+ * Worth saying out loud rather than leaving as silent internal state: it means
+ * that question cost more to ask than a normal one, which is the user's money
+ * on a BYOK key. Never apologetic — nothing was lost or degraded.
+ */
+export function overBudgetNote(): string {
+  return "This exchange was long enough to exceed the usual amount sent with a question, so all of it went in one piece — a bigger request than most.";
+}
+
 /** The sentence shown where the answering model changed. */
 export function voiceNote(label: string, offline: boolean): string {
   return offline ? `switched to ${label} — deterministic, no AI` : `switched to ${label}`;
