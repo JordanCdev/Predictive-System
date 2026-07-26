@@ -961,3 +961,231 @@ prohibition on marriage, opening, travel and moving discarded. Both are still op
 5. Close D and E, and decide 平-vs-MIXED precedence in the ruleset.
 6. Close G (十一月執巳日) and H (五月定戌日 興工).
 7. Only then re-run §8.4's spot-check on the full grid — and still label it *our derivation*.
+
+---
+
+# 11. Fifth pass (2026-07-27): §10.7's signal settled against the page images
+
+**Ruling: READ FROM THE PAGE. The contamination hypothesis is refuted. No cell is withdrawn.**
+Confidence: **high** on the sourcing question; the ruling rests on print-only material verified
+first-hand at the images, not on the statistic and not on character-level agreement.
+
+This supersedes §10.7's "unresolved". Item 3 of §10.8's ordered list is **done**.
+
+## 11.1 What was checked, and by whom
+
+Witness A was re-downloaded (`nlc416.pdf`, 2,090,439 bytes, sha256
+`1842f739…ee4a`, 78 pp., PDF 1.7). The page mapping `image = printed + 12` was re-confirmed at
+depth (image p013 = folio 一; image p040 = folio 二八), and holds only from image p013 — images
+001–012 are front matter on a separate numbering run.
+
+Three checkers examined the question first, with disjoint framings and samples (14 highest-agreeing
+cells; 14 seeded-random cells; 21 cells selected by divergence-token and reader-disagreement). All
+three returned *read-from-page*. **This adjudicator did not average them.** Their strongest
+individual claims were re-tested, and a large fraction of them did not survive (§11.4). The ruling
+below rests only on what was re-verified here.
+
+**A resource all three checkers believed was gone is in fact present:** the stored recension text
+`diancang.txt` is on this machine. Checker 3 explicitly recorded that it was not, and therefore
+declined to test its own print-only claims. That file makes the decisive test mechanical rather
+than impressionistic, and it is what §11.2–§11.4 are built on.
+
+## 11.2 The decisive evidence: print-only material, verified at the images
+
+Each item below was (a) grepped against the whole stored recension — **0 occurrences** — and (b)
+read by this adjudicator off the page at 15–90×. Evidence class: **near-decisive FOR
+reading-from-page**. Text absent from the recension cannot have been copied from it.
+
+| Cell (new) | Reads | Page | Recension reads | Readers |
+|---|---|---|---|---|
+| 四月破亥日 巳\|亥 | 損**血**財 | p021 | 損錢財 / 損財 | both |
+| 五月除未日 午\|未 | 損**血**財 | p023 | 損財 | both |
+| 二月開丑日 卯\|丑 | **粧**修 | p017 | 裝修 | both |
+| 二月開丑日 卯\|丑 | **殺**入中宮 | p017 | 煞入中宮 (35×) | both |
+| 六月成卯日 未\|卯 | 天帝聚**垣** | p027 | 天帝聚寶 | both |
+| 七月閉未日 申\|未 | **做**此**避**忌 | p030 | 仿此選忌 | both |
+| ~~八月成巳日 酉\|巳~~ | ~~牛羊欄**圈**~~ | p032 | **WITHDRAWN — `牛羊欄圈` is IN the recension** (1×; `欄圈` 2×) | **single** |
+| 八月閉申日 酉\|申 | 倉**庫**牛羊**猪棧** | p033 | 倉廩牛羊豬欄 | **single** |
+
+Three of these deserve to be called out.
+
+- **`殺入中宮` at 二月開丑日 is the strongest single datum in the whole exercise.** On the *same
+  page*, 二月危戌日 prints `煞入中宮` — and the readers transcribed `煞` there and `殺` here. The
+  recension prints `煞` at both. The print alternates within one leaf; the readers tracked the
+  alternation in both directions. At 16× the 開丑日 glyph is unmistakably 殺 (左右 structure, 殳 on
+  the right) with no 灬 anywhere. A text reconstructed from the web cannot produce that.
+- **`做此避忌` at 七月閉未日** — two characters, both divergent, both transcribed by both readers.
+  At 16× the page shows 做 (亻+古+攵, not 倣/仿) and 避 (辶+辟, not 選). `避忌` occurs **0 times** in
+  the recension.
+- **`倉庫牛羊猪棧` at 八月閉申日 is a SINGLE-READ cell** — the sub-population the alarm said was
+  cleanest, and where contamination would be easiest to hide. `猪棧` occurs **0 times** in the
+  recension, and the page carries 猪 with the 犭 radical and 棧 with 木, verified at 13×.
+
+  **Correction, on re-checking this table against the recension file directly:** the divergence
+  is at **two** points, not three. The claim of a third (庫/廩) does not hold — the recension
+  reads `倉庫牛羊欄圈`, so 庫 is present in both. The neighbouring row for 八月成巳日 is
+  **withdrawn entirely** for the same reason: `牛羊欄圈` appears in the recension once, and
+  `欄圈` twice, so it is not print-only material and proves nothing.
+
+  This correction is the same discipline §11 was written to apply, turned on §11. It does not
+  move the ruling: seven independently verified zero-occurrence readings remain — `殺入中宮`,
+  `粧修`, `天帝聚垣`, `做此避忌`, `損血財` (two loci) and `猪棧` — and the strongest of them,
+  the within-leaf 殺/煞 alternation, is untouched. It is recorded because a reader who checks
+  one row of an evidence table and finds it false has no reason to trust the other six, which
+  is precisely the failure this document has already had to record once.
+
+## 11.3 The aggregate text test — which points the same way
+
+Character-level agreement is weaker evidence than print-only material, because a faithful recension
+agrees with its ancestor most of the time anyway. But the aggregate shape of that agreement is
+informative, and it was measured rather than asserted. Every corpus cell was aligned against its
+recension cell (140 of 144 parse cleanly):
+
+| | new cells (39) | old cells (81) |
+|---|---|---|
+| mean similarity to recension | **0.941** | 0.929 |
+| median similarity | 0.959 | 0.958 |
+| mean share of 4-grams **absent from the entire recension** | **18.2%** | 13.4% |
+
+The new cells are **not** textually closer to the recension, and they carry **more** material the
+recension does not have, not less. That is the opposite of the contamination fingerprint. Since the
+text is upstream of the derived rating, there is no mechanism by which copying could lift the
+ratings statistic without first lifting textual similarity — and it does not.
+
+Only **4 of 39** new cells are character-identical to the recension (午\|酉, 卯\|戌, 巳\|寅, 酉\|卯).
+All four are short (9–53 chars) and formulaic. 卯\|戌 was examined at p017 and 午\|酉 at p023 and
+both read off the column exactly; these cells are simply ones where a faithful print and a faithful
+descendant coincide, and they carry no information either way.
+
+## 11.4 Checker claims that did NOT survive — corrections to the record
+
+Roughly half the "print-only material" offered by the three checkers is **present in the
+recension** and is worthless as evidence. Recorded so it is not cited again:
+
+| Claimed print-only | Actual count in recension | Claimed by |
+|---|---|---|
+| 定磉拴架 / 拴架 | **11 / 13** | checkers 1, 2 |
+| 到州星 | **8** | checkers 1, 2 |
+| 勾絞 ("never 凶絞") | **22** | checker 2 |
+| 馬注 · 祿蔭 | 1 · 1 | checkers 1, 2 |
+| 釘丁打物 | 1 | checkers 1, 3 |
+| 同上成丑日亦大不利 | 1 | checker 1 |
+| 曲堂 / 集聚曲堂 | 1 | checker 2 |
+| 拮据 · 退牲財 · 伶仃 · 內有福生 · 鑾輿 · 寶蓋 · 水入秦州 · 九土鬼日 · 小葬日 · 黑煞所臨 | all ≥1 | checker 2 |
+| 螣蛇 / 騰蛇 | 3 / 1 — recension has **both** | checker 3 |
+| 陰府決遣之**日** | 2 (and 之**期** also 2) | checker 3 |
+
+Two headline claims need explicit retraction:
+
+- **Checker 1's `定磉拴架` argument is wrong.** §8.2 lists 造架 as the recension reading *at 四月滿未日
+  only*; elsewhere the recension prints 拴架 13 times. 拴 at 七月閉未日 and 八月閉申日 proves nothing.
+- **Checker 3's "control that kills the contamination hypothesis" is void.** It rested on the print
+  alternating 損家長 / 損宅長 while the recension supposedly reads 家長 throughout. The recension
+  alternates too — `損宅長` = 2, `損家長` = 6 — and it reads **損宅長 at 八月平子日**, the very cell
+  cited. The readers matching the print there is not diagnostic. (The genuine version of this
+  argument is the 殺/煞 alternation at §11.2, which *is* diagnostic.)
+
+None of this changes the ruling — it narrows the evidence base to the eight verified items in
+§11.2, which are sufficient on their own.
+
+## 11.5 The statistic, reproduced and explained benignly
+
+The §10.7 signal reproduces exactly from `dong-gong-draft.json` (v1, recension-derived) against
+`dong-gong-draft-v2.json` (corpus-derived): **new 121/177 = 68.4%, old 212/361 = 58.7%, z = 2.16**.
+(§10.7's 69.2/59.5 were slightly mis-stated; the counts it quoted are right.)
+
+**It is a composition artefact.** The reread pass recovered cells that are systematically *shorter*
+than those already transcribed — mean 49.8 vs 65.9 characters — and short cells carry one
+unambiguous verdict token, so their derived tier is robust to the drift between print and
+recension. Long cells mix praise and prohibition, and land on the MIXED/平 boundary that §10.6
+already showed is unstable. Stratified by cell length, **the gap disappears**:
+
+| cell length (chars) | new agree | old agree |
+|---|---|---|
+| 0–35 | 43/50 (86%) | 15/16 (**94%**) |
+| 36–55 | 50/79 (63%) | 77/131 (59%) |
+| 56–80 | 17/28 (61%) | 81/135 (60%) |
+| 81+ | 11/20 (55%) | 39/79 (49%) |
+
+Within every stratum the two groups agree at the same rate, and in the shortest stratum the *old*
+cells agree more. The aggregate gap comes entirely from mix: **73%** of new stems come from cells
+≤55 characters versus **41%** of old stems. Direct-standardising the new cells to the old length
+distribution moves them from 68.4% to **61.5%** against 58.7% — **z = 0.77, p ≈ 0.44**.
+
+So §10.7's benign reading was correct in spirit but imprecise in mechanism: it is not mainly the
+keep-rule, it is cell length. And a single post-hoc p ≈ 0.03, on a derived 5-tier projection of the
+text, selected because it looked odd among the many summary statistics in §10, was never strong
+evidence of anything.
+
+## 11.6 Glyphs settled against the image — recorded in the corpus
+
+Recorded in `variantNotes` on the affected readings so the next reader inherits the answer. **No
+transcribed text was changed**; the settled reading is recorded alongside it.
+
+- **螣, not 騰** — 六月收辰日, 七月執丑日, 七月收巳日, 七月平亥日 (reader *second* correct).
+  Verified here at 60–70× at 六月收辰日 (p027) and 七月執丑日 (p029): 月 + 关 + **虫**, the 虫 directly
+  comparable to the 蛇 printed beside it, and no 灬 anywhere. 七月收巳日 (p029) is consistent at 14×.
+  Note the recension prints 騰 at 六月收辰日 and 螣 at the other three, while reader *first* wrote 騰
+  at all four and reader *second* wrote 螣 at all four — **neither reader tracks the recension**;
+  both are applying a uniform personal habit. Further anti-contamination evidence.
+- **釘丁打物, not 釘打物** — 七月閉未日 (reader *first* correct); the lone 丁 is a distinct character
+  in its own square on p030. Note this is *not* print-only material: the recension has it too.
+
+**Not settled, and deliberately left open:**
+
+- **與/興工 at 八月成巳日 and 八月閉申日 — UNRESOLVED.** Checkers 1 and 3 called it 與 at 65–80×;
+  checker 2 called it undecidable. This adjudicator could not settle it either. Pixel template
+  matching against semantically-forced same-page controls (添人口**與**子孫 and 破土**興**工 on
+  p032, 子孫**興**旺 on p033) was run and **failed to discriminate**: between-class and
+  within-class similarity overlap completely at this raster. Visually 八月成巳日 favours 與 (a
+  visible 与 hook where the 興 controls show a closed 同 box) and 八月閉申日 is genuinely ambiguous.
+  **This does not affect the ruling either way**: the recension reads 興工 (24×, 與工 = 0), so
+  whichever the print has, the readers did not copy the recension here. Defect H (§10.8) stays open.
+- **唧/喞 at 四月破亥日 — UNRESOLVED**, as all three checkers also found. The 即/卽 distinction is
+  below the resolution of this lithograph.
+- **愼/慎 (六月滿酉日), 內/内 (三月定申日), 毀/毁 (四月成丑日)** — reported settled by checker 3
+  alone. **Not verified here, and therefore not recorded as settled.** They remain reader
+  disagreements in the corpus.
+
+## 11.7 What would still have to be true
+
+The ruling is that the 39 reread cells were transcribed from the page images. It rests on eight
+print-only readings verified first-hand across seven cells, including two single-read cells, plus
+an aggregate text measurement pointing the same way. For it to be wrong, a reconstructor would have
+had to work from a source that is not the online recension, that carries 殺/煞 alternation within a
+single leaf, 做此避忌, 天帝聚垣, 損血財, 粧修 and 猪棧 — i.e. from a faithful copy of this
+print. That is not a contamination scenario; that is transcription.
+
+**18 of the 39 new cells were never opened by any checker or by this adjudicator.** They were not
+selected against — they simply contain no divergence token and no reader disagreement, so there was
+nothing decisive in them to test. The finding is therefore *positive for the cells examined and
+aggregate for the rest*, and the aggregate measure (§11.3) covers all 39.
+
+## 11.8 Gate — one row moves
+
+| Gate | §10.8 | Now |
+|---|---|---|
+| Recension-independent witness located | ✅ | ✅ |
+| Spot-check passed (contradiction-class) | ⚠️ | ⚠️ unchanged |
+| Grid covers the year | ⚠️ 79.7% | ⚠️ 79.7%, unchanged |
+| Provenance claims are true | ⚠️ | ⚠️ unchanged |
+| New readings verified against the source images | ❌ not possible | ✅ **done — read from the page** |
+| Derived scalar safe to display | ❌ | ❌ **still no** |
+
+**Ship verdict: SHIP THE CELL TEXT, NOT THE SCALAR. Unchanged.** This pass answered a sourcing
+question, and item 3 was never the gate on the scalar. Both blockers stand untouched: the tiers are
+still ours (§9.5), and the one tier that means "danger" still moves with punctuation that our own
+two readers placed differently in 20 of 32 cells (§10.6, §10.8).
+
+### Ordered list — revised
+
+1. ~~Fix the two false `_meta` sentences and the 七月定子日 drop reason.~~ *(still open — §10.4, §10.6)*
+2. Re-measure and re-state punctuation instability at its true value; make punctuation-invariance a
+   self-check, not a footnote.
+3. ~~Verify a sample of the 71 new readings against Witness A's images and settle §10.7.~~ **DONE — §11.**
+4. Transcribe the last 20 cells — all in 九月–十二月. Witness A is downloadable and the page mapping
+   is confirmed; images p035–p042 cover 九月–十二月.
+5. Close D and E, and decide 平-vs-MIXED precedence in the ruleset.
+6. Close G (十一月執巳日) and H (五月定戌日 興工) — and note H's 與/興 is now known to be
+   *unresolvable at this raster* (§11.6); closing it needs Witness B (40.2 MB) or a better scan.
+7. Only then re-run §8.4's spot-check on the full grid — and still label it *our derivation*.
