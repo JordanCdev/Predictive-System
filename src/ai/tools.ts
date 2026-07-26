@@ -45,7 +45,14 @@ export interface AiToolContext {
   /** Aggregate journal signals, read lazily at tool-call time so the advisor sees
    *  the current journal. Emitted ONLY under the profile's `journal` consent flag
    *  (off by default), and then as COUNTS only — the user's journal notes are raw
-   *  personal text and never leave the device under any flag. */
+   *  personal text and are never sent TO THE MODEL under any flag.
+   *
+   *  Say "to the model", not "never leave the device": since accounts shipped, a
+   *  signed-in user's journal — note text and all — syncs to their own Firestore
+   *  document. The model-scoped claim is the one this code enforces and the one
+   *  the tests guard; the device-scoped claim stopped being true and was repeated
+   *  in the privacy notice for a day because it lived in a comment nobody
+   *  re-read when sync went live. */
   journalSignals?: () => JournalSignals;
   /** Both candidate charts when the birth sits on a pillar boundary; empty
    *  otherwise. Surfaced so the advisor cannot narrate an ambiguous chart as if
@@ -359,7 +366,7 @@ function runTool(name: string, rawInput: unknown, ctx: AiToolContext): unknown {
             ? {
                 savedDecisions: sig.totalEntries,
                 byArea: sig.ranked.map((r) => ({ area: r.label, savedDecisions: r.entries, withLoggedOutcome: r.withOutcome })),
-                note: "Aggregate counts only, derived from what the user saved and shared under its own consent switch — their journal notes never leave their device. This is behaviour, not something they told you.",
+                note: "Aggregate counts only, derived from what the user saved and shared under its own consent switch — their journal note text is never sent to you under any flag. This is behaviour, not something they told you.",
               }
             : null;
         const [y, m, d] = ctx.todayIso.split("-").map(Number);

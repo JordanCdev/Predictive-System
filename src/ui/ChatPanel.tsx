@@ -516,7 +516,9 @@ export function ChatPanel({
       // Read lazily at tool-call time so the advisor sees the current journal.
       // Deriving is local and pure; get_priorities only EMITS anything from it
       // under the profile's own `journal` consent flag, and then counts only —
-      // journal notes never leave the device under any setting.
+      // journal note text is never sent to the model under any setting. (It does
+      // sync to the signed-in user's own account — that is storage, not egress to
+      // the model, and the privacy notice now draws that line explicitly.)
       journalSignals: () => deriveSignals(loadJournal()),
     }),
     [chart, dayun, birth, todayIso, evaluate, evaluateDay, boundary, priorities],

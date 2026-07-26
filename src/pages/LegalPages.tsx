@@ -20,7 +20,7 @@ import { Link } from "react-router-dom";
 const CONTACT = {
   service: "Wéi",
   email: "support@example.com",
-  updated: "25 July 2026",
+  updated: "26 July 2026",
 };
 
 function LegalShell({ title, children }: { title: string; children: React.ReactNode }) {
@@ -43,26 +43,31 @@ export function PrivacyPage() {
   return (
     <LegalShell title="Privacy">
       <p className="legal-lede">
-        The short version: the calculations happen in your browser, your data stays on your device, and we never sell
-        anything to anyone.
+        The short version: the calculations happen in your browser, nothing leaves your device unless you sign in or
+        ask the advisor a question, and we never sell anything to anyone.
       </p>
 
       <h3>What we store, and where</h3>
       <ul>
         <li>
-          <b>Today, everything is local.</b> Your birth details, saved people, life priorities and decision journal live
-          in your browser's local storage. They are not transmitted to us, and clearing your browser data deletes them.
-          Accounts and cloud sync are built but <b>not switched on</b>: there is currently no sign-in on this site and
-          no copy of your data on our servers.
+          <b>Signed out, everything is local.</b> Your birth details, saved people, life priorities and decision journal
+          live in your browser's local storage. They are not transmitted to us, and clearing your browser data deletes
+          them. You never have to sign in — the whole app works this way.
         </li>
         <li>
-          <b>If we do turn accounts on,</b> signing in would sync the same records to your private area of our database
-          so you could use them on another device, readable only by you and enforced by per-user security rules. We'd
-          say so here, and in the app, before that happens.
+          <b>Signed in, three of those records sync</b> to your private area of our database (Google Firestore, London
+          region) so you can use them on another device: your <b>saved people and their birth details</b>, your{" "}
+          <b>decision journal including the notes you type into it</b>, and your <b>saved advisor conversations</b>.
+          They are readable only by you, enforced by per-user security rules. Your life priorities, your daily
+          reflections and your AI-sharing switches do <b>not</b> sync — they stay on each device.
         </li>
         <li>
-          <b>From Google sign-in</b> — once accounts exist — we would receive your name, email address and profile
-          picture, and use them to identify your account and for nothing else.
+          <b>From sign-in</b> we receive your email address, and — if you use Google rather than an email link — your
+          name and profile picture. We use them to identify your account and for nothing else.
+        </li>
+        <li>
+          <b>We also hold a count of your AI messages per day</b> against your account, to enforce the daily limit that
+          stops one person exhausting a shared key. Two numbers and a date; no message content.
         </li>
       </ul>
 
@@ -96,14 +101,17 @@ export function PrivacyPage() {
       </ul>
       <p>
         <b>The text of your journal notes is never sent to the model under any setting.</b> There is no switch that
-        turns it on, because it never leaves your device. A field you haven't enabled is simply absent from what we
-        send, and the model is told it was withheld so it doesn't guess.
+        turns it on — only counts and derived signals ever reach the advisor, and that is enforced by a test, not just
+        by intention. A field you haven't enabled is simply absent from what we send, and the model is told it was
+        withheld so it doesn't guess. <b>Note the precise claim:</b> your note text is never sent to <i>the model</i>.
+        If you are signed in it does sync to your account, so that your journal is there on your other devices — see
+        “What we store, and where” above.
       </p>
 
       <h3>Payments</h3>
       <p>
         There are none. The app is free — no tiers, no subscriptions, nothing for sale — so we hold no payment details
-        and no billing records about you.
+        and nothing to bill you for. The only per-account record of use is the daily AI message count described above.
       </p>
 
       <h3>What we don't do</h3>
@@ -125,21 +133,36 @@ export function PrivacyPage() {
           Every AI-sharing switch described above is on that same page, and turning one off takes effect on your next
           question.
         </li>
-        <li>The app works entirely offline, and there is no account to create.</li>
         <li>
-          If we later enable accounts, deleting yours would remove the records held against it; email us and we'll
-          action it.
+          <b>You never have to sign in.</b> Signed out, the app works entirely offline and holds nothing about you
+          anywhere but your own browser.
         </li>
         <li>
-          Depending on where you live you may have rights to access, correct, export or erase your data. Email us and
-          we'll help.
+          <b>Deleting your account data.</b> Signing out stops syncing but does <b>not</b> delete what is already
+          stored — the two are different, and we would rather say so than let the button imply otherwise. There is
+          currently no in-app "delete my account" control; email us and we will erase your records by hand. Building
+          that control is on the list.
+        </li>
+        <li>
+          Depending on where you live you may have rights to access, correct, export or erase your data. The export
+          above covers access and portability without asking us. For the rest, email us and we'll help.
         </li>
       </ul>
 
+      <h3>Other people in your profile</h3>
+      <p>
+        The app lets you save charts for other people — a partner, a relative, a client. Please be aware of what that
+        means: <b>you are storing someone else's birth date, time and place</b>, and if you are signed in it syncs to
+        your account. If you ask the advisor about them, their chart summary goes to Anthropic in the same way yours
+        would. They cannot see or delete that record themselves — only you can, from the profile page. Save other
+        people's details only where they'd be comfortable with it, and remove them when you no longer need them.
+      </p>
+
       <h3>Retention</h3>
       <p>
-        Your data is local-only today, so it is kept until you clear it — by us, not at all. If accounts are enabled
-        later, account records would be kept while the account exists.
+        Anything on your device is kept until you clear it. Anything in your account is kept while the account exists —
+        we do not currently expire or prune it, so it stays until you ask us to erase it or delete it yourself. If you
+        stop using the app without asking for deletion, the records remain.
       </p>
     </LegalShell>
   );
