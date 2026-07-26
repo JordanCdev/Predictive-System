@@ -12,6 +12,8 @@ import { useProfile } from "../ui/profile/ProfileContext.tsx";
 import { useAuth } from "../ui/profile/AuthContext.tsx";
 import { PeoplePanel } from "../ui/profile/PeoplePanel.tsx";
 import { CompleteSignIn, SignInOptions } from "../ui/profile/SignInOptions.tsx";
+import { DeleteAccount } from "../ui/profile/DeleteAccount.tsx";
+import { wipeLocal } from "../ui/backup.ts";
 import { PrioritiesPanel } from "../ui/priorities/PrioritiesPanel.tsx";
 import { BackupPanel } from "../ui/BackupPanel.tsx";
 import { SELF_ID } from "../ui/profile/peopleStore.ts";
@@ -123,6 +125,7 @@ export function ProfilePage() {
               space-between row is what makes it look like an afterthought —
               so that state stacks instead. */}
           {user ? (
+            <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
               <div>
                 <b style={{ fontSize: 15 }}>Account</b>
@@ -135,6 +138,11 @@ export function ProfilePage() {
                 <button className="btn-ghost" style={{ width: "auto", padding: "8px 16px" }} onClick={signOut}>Sign out</button>
               </div>
             </div>
+            {/* Erasure sits behind a click, under the account it erases — not on
+                a separate settings page. A right you have to hunt for is a right
+                in name only. */}
+            <DeleteAccount onLocalWipe={() => { wipeLocal(window.localStorage); window.location.hash = "#/today"; window.location.reload(); }} />
+            </>
           ) : needsLinkEmail ? (
             <>
               <b style={{ fontSize: 15 }}>Account</b>

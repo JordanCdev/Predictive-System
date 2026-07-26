@@ -9,6 +9,7 @@ import {
   headlineVerdict,
   humanDate,
   humanHourRange,
+  objectivePlain,
   practicalBestHour,
   relativeDay,
   shortDate,
@@ -17,7 +18,7 @@ import {
 } from "../engine/index.ts";
 import { ConfidenceChip, ConfidencePanel, GoodMeter } from "./meters.tsx";
 import { ReasoningDossier } from "./ReasoningDossier.tsx";
-import { downloadICS } from "./ics.ts";
+import { discreetByDefault, downloadICS } from "./ics.ts";
 import { scoreColor } from "./format.ts";
 
 export interface Alternative {
@@ -180,11 +181,33 @@ function ExportActions({
   onToggleLog?: () => void;
   onDownloadReport?: () => void;
 }) {
+  // Defaults to hiding the activity for the objectives where a calendar entry
+  // would disclose something the user may not have meant to share (health, a
+  // job move, a purchase). Shown as a real checkbox rather than applied
+  // silently: someone adding a wedding to a calendar they share with their
+  // partner should be able to see why the title is vague, and untick it.
+  const [discreet, setDiscreet] = useState(() => discreetByDefault(objective.id));
+
   return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={() => downloadICS(rec, objective)}>
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+      <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={() => downloadICS(rec, objective, { discreet })}>
         <span aria-hidden="true">＋</span> Add to calendar
       </button>
+      <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--muted)", cursor: "pointer" }}>
+        <input type="checkbox" checked={discreet} onChange={(e) => setDiscreet(e.target.checked)} />
+        Don't name the activity
+        <span
+          title={
+            discreet
+              ? `Your calendar will show "Auspicious window (Wéi)" with no mention of ${objectivePlain(objective.id).short.toLowerCase()}.`
+              : `Your calendar will show "${objectivePlain(objective.id).gerund} — auspicious window (Wéi)", visible to anyone you share that calendar with.`
+          }
+          aria-hidden="true"
+          style={{ opacity: 0.7 }}
+        >
+          ⓘ
+        </span>
+      </label>
       {onToggleLog && (
         <button className="btn-ghost cal-add" style={{ width: "auto" }} onClick={onToggleLog} aria-pressed={logged}>
           <span aria-hidden="true">{logged ? "✓" : "誌"}</span> {logged ? "Saved to journal" : "Log this decision"}

@@ -138,10 +138,21 @@ export function PrivacyPage() {
           anywhere but your own browser.
         </li>
         <li>
-          <b>Deleting your account data.</b> Signing out stops syncing but does <b>not</b> delete what is already
-          stored — the two are different, and we would rather say so than let the button imply otherwise. There is
-          currently no in-app "delete my account" control; email us and we will erase your records by hand. Building
-          that control is on the list.
+          <b>Deleting your account.</b> There is a <b>Delete my account</b> control on the profile page, under your
+          account. It erases your saved people and their birth details, your journal including its notes, your saved
+          advisor conversations, and the sign-in itself — permanently, and we cannot recover it afterwards. Take the
+          export first if you want a copy. You choose separately whether to clear this browser's copy, so you can
+          delete the account and carry on using the app locally.
+        </li>
+        <li>
+          <b>Signing out is not deleting.</b> Signing out stops syncing and leaves everything in your account exactly
+          where it is. They are different actions and we would rather say so than let one imply the other.
+        </li>
+        <li>
+          <b>The one thing deletion leaves briefly.</b> A counter of how many advisor messages you sent on a given day
+          — two numbers and a date, no message content — cannot be removed by the app itself, because the same rule
+          that stops anyone resetting their own daily limit also stops the app deleting the counter. It is cleared on
+          our side when the account goes. The app tells you this when you delete, rather than reporting a clean sweep.
         </li>
         <li>
           Depending on where you live you may have rights to access, correct, export or erase your data. The export
@@ -160,9 +171,14 @@ export function PrivacyPage() {
 
       <h3>Retention</h3>
       <p>
-        Anything on your device is kept until you clear it. Anything in your account is kept while the account exists —
-        we do not currently expire or prune it, so it stays until you ask us to erase it or delete it yourself. If you
-        stop using the app without asking for deletion, the records remain.
+        Anything on your device is kept until you clear it. Anything in your account is kept <b>while the account
+        exists</b>, and goes when you delete it. We do not expire or prune it on a timer — a birth chart does not go
+        stale, and quietly deleting someone's journal after a year of not visiting would be worse than keeping it. If
+        you stop using the app without deleting your account, the records remain until you come back and remove them.
+      </p>
+      <p>
+        Two exceptions, both short-lived: the daily advisor message counter is per-day and is replaced each day, and an
+        unfinished email sign-in leaves the address you typed in your own browser until you complete or clear it.
       </p>
     </LegalShell>
   );

@@ -63,6 +63,40 @@ export const THREADS_KEY = THREADS_STORE_KEY;
  *  privacy note at the top of this file. */
 export const EXCLUDED_KEYS = ["wei_ai_key", "wei_ai_consent", "wei_ai_model", "wei_signin_email"] as const;
 
+/**
+ * Every key this app owns in localStorage — the personal stores AND the excluded
+ * ones. Used by "clear this browser's copy" during account deletion.
+ *
+ * Deliberately a SUPERSET of what a backup contains. A backup excludes the API
+ * key because a credential should not travel in a portable file; a wipe includes
+ * it because leaving a working API key behind on a device someone is walking
+ * away from is exactly the wrong call. Export and erase have opposite defaults
+ * for the same key, and that is correct.
+ */
+export const ALL_LOCAL_KEYS = [
+  PEOPLE_KEY,
+  LEGACY_PERSON_KEY,
+  JOURNAL_KEY,
+  REFLECTIONS_KEY,
+  PRIORITIES_KEY,
+  THREADS_KEY,
+  "wei_ai_active_thread",
+  "wei_priority_dismissed_v1",
+  ...EXCLUDED_KEYS,
+] as const;
+
+/** Remove every app-owned key from this browser. Returns the keys actually present. */
+export function wipeLocal(store: StorageLike): string[] {
+  const removed: string[] = [];
+  for (const k of ALL_LOCAL_KEYS) {
+    if (store.getItem(k) !== null) {
+      store.removeItem(k);
+      removed.push(k);
+    }
+  }
+  return removed;
+}
+
 /** A restore file bigger than this is not a Wéi backup — refuse before parsing. */
 export const MAX_BACKUP_BYTES = 8 * 1024 * 1024;
 

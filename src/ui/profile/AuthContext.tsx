@@ -33,6 +33,23 @@ export interface AuthValue {
   needsLinkEmail: boolean;
   /** Redeem the sign-in link in the current URL for this address. */
   completeLink: (email: string) => Promise<void>;
+  /**
+   * Erase every stored record and delete the account (Article 17). Resolves with
+   * a report of what went and what could not — never a bare boolean, because
+   * "deleted" with a silent exception is the failure mode that matters here.
+   * Rejects with `requiresRecentLogin: true` when Firebase wants a fresh
+   * sign-in first; that is a normal outcome, not an error to hide.
+   */
+  deleteAccount: () => Promise<DeleteOutcome>;
+}
+
+export interface DeleteOutcome {
+  ok: boolean;
+  requiresRecentLogin?: boolean;
+  deleted?: string[];
+  retained?: Array<{ path: string; reason: string }>;
+  failed?: Array<{ path: string; error: string }>;
+  error?: string;
 }
 
 const AuthCtx = createContext<AuthValue | null>(null);
@@ -143,6 +160,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const deleteAccount = useCallback(async (): Promise<DeleteOutcome> => {
+    setError(null);
+    try {
+      const m = await import("../../firebase/client.ts");
+      const report = await m.deleteAccount();
+      return { ok: true, ...report };
+    } catch (e) {
+      const code = (e as { code?: string })?.code;
+      if (code === "auth/requires-recent-login") {
+        // Firebase requires a fresh credential before deletion. Surfaced as a
+        // normal branch rather than an error string: the user did nothing wrong
+        // and the fix is "sign in again, then repeat", not "contact support".
+        return { ok: false, requiresRecentLogin: true };
+      }
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      return { ok: false, error: msg };
+    }
+  }, []);
+
   const getIdToken = useCallback(async () => {
     if (!firebaseEnabled) return null;
     try {
@@ -155,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthCtx.Provider
-      value={{ enabled: firebaseEnabled, ready, user, signIn, signOut, getIdToken, error, sendLink, linkSentTo, needsLinkEmail, completeLink }}
+      value={{ enabled: firebaseEnabled, ready, user, signIn, signOut, getIdToken, error, sendLink, linkSentTo, needsLinkEmail, completeLink, deleteAccount }}
     >
       {children}
     </AuthCtx.Provider>

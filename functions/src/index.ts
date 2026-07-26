@@ -11,3 +11,4 @@ import { initializeApp } from "firebase-admin/app";
 initializeApp();
 
 export { chat } from "./chat";
+export { onUserDeleted, onProfileDeleted } from "./onUserDeleted";

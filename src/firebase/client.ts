@@ -12,6 +12,7 @@ import {
   Auth,
   GoogleAuthProvider,
   User,
+  deleteUser,
   getAuth,
   isSignInWithEmailLink,
   onAuthStateChanged,
@@ -259,4 +260,109 @@ export async function saveThreadCloud(uid: string, thread: ChatThread): Promise<
 
 export async function deleteThreadCloud(uid: string, id: string): Promise<void> {
   await removeDoc(uid, AI_THREADS, id);
+}
+
+// ── erasure (Article 17) ─────────────────────────────────────────────────────
+//
+// Everything the client is PERMITTED to delete, deleted — then the account
+// itself. Two things make this harder than it looks and are handled explicitly
+// rather than hidden:
+//
+//  1. The web SDK cannot enumerate subcollections. There is no "delete
+//     everything under users/{uid}" call; the paths have to be named. So this
+//     list is hand-maintained, and the test in tests/erasure.test.ts fails if a
+//     new write path appears in this module without being added here. A store
+//     that is written but never erased is precisely the bug that left
+//     users/{uid}/meta/profile accumulating birth records forever.
+//
+//  2. users/{uid}/billing/usage CANNOT be deleted from the client — firestore.rules
+//     denies all client writes to `billing` so nobody can zero their own quota,
+//     and a delete is a write. Deleting it here would need that rule relaxed,
+//     which would reopen the abuse hole (delete = reset). It is left to the
+//     server, and this function REPORTS it rather than pretending it is gone.
+
+/** Docs under users/{uid} the client may erase. Keep in step with the writers above. */
+export const ERASABLE_DOCS: Array<[string, string]> = [
+  ["meta", "profile"],
+  ["meta", "people"],
+  ["meta", "journal"],
+];
+/** Whole collections under users/{uid} the client may erase, document by document. */
+export const ERASABLE_COLLECTIONS = [AI_THREADS];
+
+export interface ErasureReport {
+  /** Paths deleted, relative to users/{uid}. */
+  deleted: string[];
+  /** Paths this client is not permitted to delete, with why. Never empty-washed. */
+  retained: Array<{ path: string; reason: string }>;
+  /** Paths that errored, so a partial failure is visible rather than silent. */
+  failed: Array<{ path: string; error: string }>;
+}
+
+/**
+ * Erase every stored document for this user. Deletion continues past individual
+ * failures on purpose: a user asking for erasure is better served by "9 of 10
+ * gone, here is the one that did not" than by an abort that leaves an arbitrary
+ * prefix deleted and reports nothing.
+ */
+export async function eraseAccountData(uid: string): Promise<ErasureReport> {
+  const { db } = ensure();
+  const report: ErasureReport = {
+    deleted: [],
+    retained: [
+      {
+        path: "billing/usage",
+        reason:
+          "The daily AI message counter. Client writes to `billing` are denied by the security rules so that nobody can reset their own quota, and a delete is a write. It holds two numbers and a date — no message content — and is cleared server-side when the account is removed.",
+      },
+    ],
+    failed: [],
+  };
+
+  for (const [coll, id] of ERASABLE_DOCS) {
+    try {
+      await deleteDoc(doc(db, "users", uid, coll, id));
+      report.deleted.push(`${coll}/${id}`);
+    } catch (e) {
+      report.failed.push({ path: `${coll}/${id}`, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  for (const coll of ERASABLE_COLLECTIONS) {
+    try {
+      const snap = await getDocs(collection(db, "users", uid, coll));
+      for (const d of snap.docs) {
+        try {
+          await deleteDoc(d.ref);
+          report.deleted.push(`${coll}/${d.id}`);
+        } catch (e) {
+          report.failed.push({ path: `${coll}/${d.id}`, error: e instanceof Error ? e.message : String(e) });
+        }
+      }
+    } catch (e) {
+      report.failed.push({ path: `${coll}/*`, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  return report;
+}
+
+/** Raised when Firebase wants a fresh sign-in before it will delete the account. */
+export const REQUIRES_RECENT_LOGIN = "auth/requires-recent-login";
+
+/**
+ * Erase the stored data, then delete the account itself.
+ *
+ * Order matters and is not reversible if swapped: once the auth user is gone the
+ * client has no credential, the security rules stop matching, and any document
+ * still under users/{uid} becomes undeletable by anyone but an administrator.
+ * Data first, account second, always.
+ */
+export async function deleteAccount(): Promise<ErasureReport> {
+  const { auth: a } = ensure();
+  const user = a.currentUser;
+  if (!user) throw new Error("Not signed in.");
+  const report = await eraseAccountData(user.uid);
+  await deleteUser(user);
+  return report;
 }
